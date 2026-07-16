@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#040604" />
+<title>Lantern</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23040604'/%3E%3Ctext x='16' y='25' font-size='22' text-anchor='middle' fill='%233bf07e'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
+<style>
+  /* ═══════════════════════════════════════════════════════════════════
+     LANTERN — retro phosphor terminal
+     zero dependencies · system mono stack · CSS-only CRT effects
+     ═══════════════════════════════════════════════════════════════════ */
+  :root{
+    --bg:#040604; --bg-2:#070b08;
+    --panel:#0a0f0b; --panel-2:#0d130e; --well:#030504;
+    --line:#1d3323; --line-br:#2a4a33;
+    --green:#3bf07e; --green-hi:#8dffb0; --green-dim:rgba(59,240,126,.10);
+    --text:#c8e9cd; --muted:#79a886; --faint:#4d7058;
+    --amber:#ffb454; --amber-hi:#ffd9a0; --amber-dim:rgba(255,180,84,.07);
+    --amber-line:rgba(255,180,84,.5);
+    --red:#ff6d5e; --ok:#3bf07e;
+    --glow-g:0 0 10px rgba(59,240,126,.45);
+    --glow-a:0 0 10px rgba(255,180,84,.5);
+    --mono:ui-monospace,"Cascadia Mono","JetBrains Mono","Fira Code",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--text);
+    background:radial-gradient(ellipse 120% 90% at 50% -20%, #0a140c 0%, var(--bg) 60%) fixed;
+    font-family:var(--mono); font-size:13.5px; line-height:1.6;
+    display:flex; flex-direction:column;
+    -webkit-font-smoothing:antialiased;
+    animation:crt-on .45s ease-out;
+  }
+  @keyframes crt-on{
+    0%{transform:scale(1,.015); filter:brightness(5)}
+    55%{transform:scale(1,1.002); filter:brightness(1.7)}
+    100%{transform:none; filter:none}
+  }
+  button{font-family:inherit; cursor:pointer}
+  ::selection{background:var(--green); color:#02120a}
+  ::-webkit-scrollbar{width:10px; height:10px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#14251a; border:2px solid var(--bg); border-radius:6px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--line-br)}
+  *{scrollbar-width:thin; scrollbar-color:#14251a transparent}
+
+  /* ---- CRT overlays: scanlines, vignette, drifting sweep ---- */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:999; pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.20) 0 1px, transparent 1px 3px);
+    mix-blend-mode:multiply; animation:flicker 7s infinite;
+  }
+  body::after{
+    content:""; position:fixed; inset:0; z-index:998; pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 58%, rgba(0,0,0,.42) 100%);
+  }
+  .crt-sweep{
+    position:fixed; left:0; right:0; top:-30%; height:26%;
+    z-index:997; pointer-events:none;
+    background:linear-gradient(180deg, transparent, rgba(59,240,126,.028) 50%, transparent);
+    animation:sweep 9s linear infinite;
+  }
+  @keyframes sweep{0%{transform:translateY(0)}100%{transform:translateY(560%)}}
+  @keyframes flicker{
+    0%,100%{opacity:1} 96.5%{opacity:1} 97%{opacity:.82} 97.5%{opacity:1}
+    98.2%{opacity:.9} 98.6%{opacity:1}
+  }
+
+  /* ---- header: instrument strip ---- */
+  header{
+    display:flex; align-items:center; flex-wrap:wrap; gap:12px 16px;
+    padding:8px 16px; min-height:48px; flex:0 0 auto;
+    background:linear-gradient(180deg,#0b120d,#080d09);
+    border-bottom:1px solid var(--line);
+    box-shadow:0 1px 0 rgba(59,240,126,.06);
+  }
+  .brand{display:flex; align-items:baseline; gap:10px; letter-spacing:.22em; font-size:14px}
+  .brand .mark{
+    color:var(--amber); font-size:16px; letter-spacing:0;
+    text-shadow:0 0 7px rgba(255,180,84,.9), 0 0 22px rgba(255,180,84,.35);
+    animation:flame 3.2s ease-in-out infinite;
+  }
+  @keyframes flame{
+    0%,100%{text-shadow:0 0 7px rgba(255,180,84,.9),0 0 22px rgba(255,180,84,.35)}
+    35%{text-shadow:0 0 5px rgba(255,180,84,.75),0 0 14px rgba(255,180,84,.25)}
+    60%{text-shadow:0 0 9px rgba(255,180,84,1),0 0 28px rgba(255,180,84,.45)}
+  }
+  .brand b{font-weight:700; color:var(--green-hi); text-shadow:var(--glow-g); text-transform:uppercase}
+  .brand .ver{font-size:10px; letter-spacing:.18em; color:var(--faint)}
+  .sysline{font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--faint)}
+  .strip-spacer{flex:1}
+  .field{display:flex; align-items:center; gap:8px}
+  .micro{font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint)}
+  .micro::before{content:"[ "; color:var(--line-br)}
+  .micro::after{content:" ]"; color:var(--line-br)}
+  select, .folder-btn{
+    background:var(--well); color:var(--green-hi); border:1px solid var(--line-br);
+    border-radius:2px; padding:6px 10px; font-family:var(--mono); font-size:12px;
+    max-width:230px;
+  }
+  select:focus, .folder-btn:focus, textarea:focus, input:focus{
+    outline:1px solid var(--green); outline-offset:1px;
+    box-shadow:0 0 12px rgba(59,240,126,.25);
+  }
+  select:hover, .folder-btn:hover{border-color:var(--green)}
+  .folder-btn{
+    max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    direction:rtl; text-align:left; cursor:pointer;
+  }
+  .dot{
+    width:9px; height:9px; border-radius:1px; background:var(--faint);
+    transition:background .2s, box-shadow .2s;
+  }
+  .dot.ok{background:var(--green); box-shadow:var(--glow-g)}
+  .dot.run{background:var(--amber); box-shadow:var(--glow-a); animation:pulse 1.1s ease-in-out infinite}
+  .dot.err{background:var(--red); box-shadow:0 0 10px rgba(255,109,94,.6)}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .newchat{
+    background:transparent; border:1px solid var(--line-br); color:var(--muted);
+    border-radius:2px; padding:6px 12px; font-size:11px;
+    text-transform:uppercase; letter-spacing:.14em;
+  }
+  .newchat:hover{border-color:var(--green); color:var(--green-hi); box-shadow:0 0 10px rgba(59,240,126,.2)}
+
+  /* ---- transcript ---- */
+  main{flex:1; overflow-y:auto; scroll-behavior:smooth}
+  .col{max-width:860px; margin:0 auto; padding:26px 20px 8px}
+  .turn{margin-bottom:24px}
+  .who{
+    font-size:10px; letter-spacing:.26em; text-transform:uppercase;
+    color:var(--faint); margin-bottom:7px;
+  }
+  .who::before{content:"── "; color:var(--line-br)}
+  .user .who{color:var(--green)}
+  .assistant .who{color:var(--amber); text-shadow:0 0 8px rgba(255,180,84,.25)}
+  .user .bubble{
+    background:var(--green-dim); border:1px solid var(--line);
+    border-left:2px solid var(--green); border-radius:2px;
+    padding:11px 14px; white-space:pre-wrap; color:var(--green-hi);
+  }
+  .user .bubble::before{content:"❯ "; color:var(--green)}
+  .assistant .body{font-size:13.5px}
+  .assistant .body p{margin:0 0 10px}
+  .assistant .body code{
+    font-family:var(--mono); font-size:.92em; color:var(--green-hi);
+    background:var(--well); border:1px solid var(--line); border-radius:2px; padding:1px 5px;
+  }
+  .assistant .body pre{
+    background:var(--well); border:1px solid var(--line); border-left:2px solid var(--green);
+    border-radius:2px; padding:12px 14px; overflow:auto; margin:0 0 12px;
+    box-shadow:inset 0 0 30px rgba(59,240,126,.03);
+  }
+  .assistant .body pre code{background:none; border:none; padding:0; font-size:12.5px; line-height:1.6; color:var(--text)}
+  .assistant .body strong{color:var(--green-hi)}
+
+  /* ---- tool activity (auto reads) ---- */
+  .log{
+    display:flex; align-items:flex-start; gap:9px;
+    font-size:12px; color:var(--muted); padding:5px 2px;
+  }
+  .log .ic{color:var(--green); flex:0 0 auto; margin-top:1px; text-shadow:var(--glow-g)}
+  .log.err{color:var(--red)}
+  .log.err .ic{color:var(--red); text-shadow:0 0 8px rgba(255,109,94,.5)}
+  .log details{width:100%}
+  .log summary{list-style:none; cursor:pointer; color:var(--muted)}
+  .log summary:hover{color:var(--green-hi)}
+  .log summary::-webkit-details-marker{display:none}
+  .log summary::after{content:"  [+]"; color:var(--faint)}
+  .log details[open] summary::after{content:"  [–]"}
+  .log pre{
+    margin:7px 0 2px; background:var(--well); border:1px solid var(--line);
+    border-radius:2px; padding:9px 11px; overflow:auto; color:var(--text);
+    font-size:12px; max-height:280px;
+  }
+
+  /* ---- authorize card (the signature) ---- */
+  .authorize{
+    border:1px solid var(--amber-line);
+    background:linear-gradient(180deg, rgba(255,180,84,.09), rgba(255,180,84,.03));
+    border-radius:2px; padding:14px 16px; margin:6px 0 8px;
+    position:relative; overflow:hidden;
+    box-shadow:inset 0 0 44px rgba(255,180,84,.05);
+  }
+  .authorize.pending{animation:live 1.5s ease-in-out infinite}
+  @keyframes live{
+    0%,100%{box-shadow:inset 0 0 44px rgba(255,180,84,.05), 0 0 0 0 rgba(255,180,84,0)}
+    50%{box-shadow:inset 0 0 44px rgba(255,180,84,.08), 0 0 26px -6px rgba(255,180,84,.55)}
+  }
+  .authorize.pending::after{
+    content:"▚ AWAITING INPUT"; position:absolute; top:9px; right:12px;
+    font-size:9px; letter-spacing:.24em; color:var(--amber);
+    animation:blink 1.2s steps(2,start) infinite;
+  }
+  .authorize .head{display:flex; align-items:center; gap:9px; margin-bottom:9px; padding-right:130px}
+  .authorize .badge{
+    font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--amber); border:1px solid var(--amber-line); border-radius:1px; padding:2px 7px;
+    text-shadow:0 0 8px rgba(255,180,84,.4);
+  }
+  .authorize .what{font-weight:600; color:var(--amber-hi)}
+  .authorize pre{
+    font-family:var(--mono); font-size:12.5px; background:var(--well);
+    border:1px solid rgba(255,180,84,.25); border-radius:2px; padding:10px 12px;
+    overflow:auto; margin:0 0 11px; color:var(--text); max-height:260px; white-space:pre-wrap;
+  }
+  .authorize .path{font-size:12.5px; color:var(--amber); margin:0 0 10px}
+  .authorize .path::before{content:"→ "}
+  .acts{display:flex; gap:10px}
+  .btn-allow{
+    background:var(--amber); color:#170c00; border:1px solid var(--amber);
+    border-radius:2px; padding:8px 20px; font-weight:700; font-size:12px;
+    text-transform:uppercase; letter-spacing:.16em;
+  }
+  .btn-allow:hover{filter:brightness(1.1); box-shadow:var(--glow-a)}
+  .btn-deny{
+    background:transparent; color:var(--muted); border:1px solid var(--line-br);
+    border-radius:2px; padding:8px 16px; font-size:12px;
+    text-transform:uppercase; letter-spacing:.16em;
+  }
+  .btn-deny:hover{border-color:var(--red); color:var(--red); box-shadow:0 0 10px rgba(255,109,94,.25)}
+  .resolved{font-size:11px; letter-spacing:.14em; text-transform:uppercase}
+  .resolved.yes{color:var(--ok); text-shadow:var(--glow-g)}
+  .resolved.no{color:var(--red)}
+
+  /* ---- composer ---- */
+  footer{
+    flex:0 0 auto; border-top:1px solid var(--line);
+    background:linear-gradient(180deg,#0a100b,#070b08);
+    padding:14px 20px 16px;
+  }
+  .composer{max-width:860px; margin:0 auto; display:flex; gap:10px; align-items:flex-end}
+  .ps1{
+    color:var(--green); font-size:16px; line-height:44px; flex:0 0 auto;
+    text-shadow:var(--glow-g); user-select:none;
+  }
+  textarea{
+    flex:1; resize:none; background:var(--well); color:var(--green-hi);
+    border:1px solid var(--line-br); border-radius:2px; padding:11px 13px;
+    font-family:var(--mono); font-size:13.5px; line-height:1.55; max-height:200px;
+    caret-color:var(--green);
+  }
+  textarea::placeholder{color:var(--faint)}
+  .send{
+    background:var(--green); color:#02120a; border:1px solid var(--green);
+    border-radius:2px; height:44px; padding:0 20px; font-weight:700; font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.18em;
+  }
+  .send:hover{box-shadow:0 0 16px rgba(59,240,126,.45); filter:brightness(1.08)}
+  .send:disabled{opacity:.35; cursor:not-allowed; box-shadow:none}
+  .stop{
+    background:transparent; color:var(--muted); border:1px solid var(--line-br);
+    border-radius:2px; height:44px; padding:0 16px; font-size:12px;
+    text-transform:uppercase; letter-spacing:.14em;
+  }
+  .stop:hover{border-color:var(--red); color:var(--red)}
+  .hint{
+    max-width:860px; margin:9px auto 0; font-size:10.5px; color:var(--faint);
+    letter-spacing:.08em;
+  }
+  .hint::before{content:"// "; color:var(--line-br)}
+
+  /* ---- empty state: boot log ---- */
+  .empty{color:var(--muted); text-align:center; margin-top:7vh; font-size:13px}
+  .empty::before{
+    content:"   ╭─╮   \A╭──┴─┴──╮\A│ ╔═══╗ │\A│ ║ ▲ ║ │\A│ ║▒█▒║ │\A│ ╚═══╝ │\A╰──┬─┬──╯\A   ╰─╯   ";
+    display:block; white-space:pre;
+    color:var(--green); font-size:16px; line-height:1.25;
+    text-shadow:0 0 10px rgba(59,240,126,.6), 0 0 34px rgba(59,240,126,.25);
+    margin-bottom:22px; animation:lamp 3.2s ease-in-out infinite;
+  }
+  @keyframes lamp{
+    0%,100%{text-shadow:0 0 10px rgba(59,240,126,.6),0 0 34px rgba(59,240,126,.25)}
+    50%{text-shadow:0 0 7px rgba(59,240,126,.45),0 0 22px rgba(59,240,126,.15)}
+  }
+  .empty .mark{display:none}
+  .empty::after{
+    content:"▮"; color:var(--green); margin-left:6px;
+    animation:blink 1.1s steps(2,start) infinite; text-shadow:var(--glow-g);
+  }
+  @keyframes blink{to{visibility:hidden}}
+
+  /* ---- thinking ---- */
+  .thinking{
+    display:flex; align-items:center; gap:8px; color:var(--faint);
+    font-size:11.5px; letter-spacing:.1em; padding:4px 2px;
+  }
+  .thinking .d{width:5px; height:5px; border-radius:1px; background:var(--green); animation:tblink 1.2s infinite; box-shadow:var(--glow-g)}
+  .thinking .d:nth-child(2){animation-delay:.2s} .thinking .d:nth-child(3){animation-delay:.4s}
+  @keyframes tblink{0%,100%{opacity:.25}50%{opacity:1}}
+
+  /* ---- onboarding ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(2,4,3,.92);
+    display:flex; align-items:center; justify-content:center; padding:20px; z-index:20;
+    backdrop-filter:blur(3px);
+  }
+  .card{
+    width:100%; max-width:540px; background:#070c08;
+    border:1px solid var(--line-br); border-radius:3px; padding:0 26px 24px;
+    box-shadow:0 0 70px rgba(59,240,126,.14), inset 0 0 60px rgba(59,240,126,.03);
+  }
+  .card::before{
+    content:"■ FIRST-RUN CONFIG"; display:block; margin:0 -26px 22px;
+    padding:10px 16px; font-size:10px; letter-spacing:.28em; color:var(--faint);
+    border-bottom:1px solid var(--line); background:rgba(59,240,126,.04);
+  }
+  .card h1{
+    font-size:18px; margin:0 0 6px; display:flex; align-items:center; gap:10px;
+    color:var(--green-hi); letter-spacing:.14em; text-transform:uppercase;
+    text-shadow:var(--glow-g);
+  }
+  .card h1 .mark{color:var(--amber); text-shadow:0 0 10px rgba(255,180,84,.8); letter-spacing:0}
+  .card .sub{color:var(--muted); font-size:12.5px; margin:0 0 22px}
+  .step{margin-bottom:18px}
+  .step .lbl{font-size:12.5px; color:var(--muted); margin-bottom:7px}
+  .step .lbl b{color:var(--green-hi); font-weight:700}
+  .row{display:flex; gap:9px}
+  .row input{
+    flex:1; background:var(--well); color:var(--green-hi); border:1px solid var(--line-br);
+    border-radius:2px; padding:10px 12px; font-family:var(--mono); font-size:13px;
+    caret-color:var(--green);
+  }
+  .linkbtn{
+    background:var(--well); border:1px solid var(--line-br); color:var(--green-hi);
+    border-radius:2px; padding:10px 14px; font-size:12px; text-decoration:none;
+    display:inline-flex; align-items:center; white-space:nowrap; letter-spacing:.04em;
+  }
+  .linkbtn:hover{border-color:var(--green); box-shadow:0 0 12px rgba(59,240,126,.2)}
+  .primary{
+    background:var(--amber); color:#170c00; border:1px solid var(--amber); border-radius:2px;
+    padding:10px 16px; font-weight:700; font-size:12px;
+    text-transform:uppercase; letter-spacing:.14em;
+  }
+  .primary:hover{filter:brightness(1.1); box-shadow:var(--glow-a)}
+  .primary:disabled{opacity:.45; cursor:not-allowed; box-shadow:none}
+  .err-msg{color:var(--red); font-size:12px; margin-top:10px; min-height:16px}
+
+  @media (max-width:900px){ .sysline{display:none} }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important}
+    main{scroll-behavior:auto}
+    body::before{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="crt-sweep" aria-hidden="true"></div>
+
+<header>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver">v0.1</span></div>
+  <span class="sysline">localhost · your key · your files</span>
+  <div class="strip-spacer"></div>
+  <div class="field">
+    <span class="micro">Model</span>
+    <select id="model" title="Model"></select>
+  </div>
+  <div class="field">
+    <span class="micro">Folder</span>
+    <button class="folder-btn" id="folder" title="Click to change the working folder">…</button>
+  </div>
+  <button class="newchat" id="newchat" title="Start a fresh conversation">New chat</button>
+  <div class="field">
+    <span class="dot" id="dot"></span>
+  </div>
+</header>
+
+<main id="main">
+  <div class="col" id="log">
+    <div class="empty" id="empty">
+      <span class="mark">✦</span>
+      Ready. Ask Lantern to build, read, or change something in your folder.
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="composer">
+    <span class="ps1" aria-hidden="true">❯</span>
+    <textarea id="input" rows="1" placeholder="tell lantern what to do…  (enter to send · shift+enter for newline)"></textarea>
+    <button class="stop" id="stop" style="display:none">Stop</button>
+    <button class="send" id="send">Send</button>
+  </div>
+  <div class="hint" id="hint">writes and commands always ask before running</div>
+</footer>
+
+<!-- onboarding -->
+<div class="overlay" id="overlay" style="display:none">
+  <div class="card">
+    <h1><span class="mark">✦</span> Lantern</h1>
+    <p class="sub">Lantern uses your own Cerebras key. It stays on this computer and is never sent anywhere except Cerebras.</p>
+
+    <div class="step">
+      <div class="lbl"><b>01 /</b> Get a free API key from Cerebras (no credit card).</div>
+      <a class="linkbtn" href="https://cloud.cerebras.ai/" target="_blank" rel="noopener">open cloud.cerebras.ai ↗</a>
+    </div>
+
+    <div class="step">
+      <div class="lbl"><b>02 /</b> Paste your key here.</div>
+      <div class="row">
+        <input id="keyInput" type="password" placeholder="csk-…" autocomplete="off" spellcheck="false" />
+        <button class="primary" id="saveKey">Connect</button>
+      </div>
+      <div class="err-msg" id="keyErr"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (s)=>document.querySelector(s);
+const logEl = $("#log"), mainEl = $("#main"), emptyEl = $("#empty");
+const dot = $("#dot"), modelSel = $("#model"), folderBtn = $("#folder");
+const input = $("#input"), sendBtn = $("#send"), stopBtn = $("#stop");
+const overlay = $("#overlay"), keyInput = $("#keyInput"), keyErr = $("#keyErr");
+
+// Session token injected by the server; required on every API call.
+const TOKEN = "%%LANTERN_TOKEN%%";
+let SESSION = (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
+function api(path, opts){
+  opts = opts || {};
+  const headers = Object.assign({}, opts.headers || {}, { "X-Lantern-Token": TOKEN });
+  return fetch(path, Object.assign({}, opts, { headers }));
+}
+
+let running = false;
+let controller = null;   // AbortController for the active run
+
+function setDot(state){ dot.className = "dot" + (state?(" "+state):""); }
+function scroll(){ mainEl.scrollTop = mainEl.scrollHeight; }
+function hideEmpty(){ const e=document.getElementById("empty"); if(e) e.remove(); }
+
+// ---- tiny safe markdown ----
+function esc(s){ return s.replace(/[&<>]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function md(text){
+  const parts = text.split(/```/);
+  let html = "";
+  parts.forEach((seg,i)=>{
+    if(i%2===1){
+      const nl = seg.indexOf("\n");
+      const code = nl>=0 ? seg.slice(nl+1) : seg;
+      html += "<pre><code>"+esc(code.replace(/\n$/,""))+"</code></pre>";
+    } else {
+      let t = esc(seg)
+        .replace(/`([^`]+)`/g,"<code>$1</code>")
+        .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+        .replace(/\n{2,}/g,"</p><p>")
+        .replace(/\n/g,"<br>");
+      if(t.trim()) html += "<p>"+t+"</p>";
+    }
+  });
+  return html;
+}
+
+// ---- rendering ----
+function addTurn(cls){
+  const d = document.createElement("div");
+  d.className = "turn "+cls;
+  logEl.appendChild(d);
+  return d;
+}
+function userTurn(text){
+  hideEmpty();
+  const t = addTurn("user");
+  t.innerHTML = '<div class="who">You</div><div class="bubble"></div>';
+  t.querySelector(".bubble").textContent = text;
+  scroll();
+}
+function assistantText(text){
+  const t = addTurn("assistant");
+  t.innerHTML = '<div class="who">Lantern</div><div class="body"></div>';
+  t.querySelector(".body").innerHTML = md(text);
+  scroll();
+}
+function activity(name, summary){
+  const d = document.createElement("div");
+  d.className = "log";
+  d.innerHTML = '<span class="ic">›</span><span></span>';
+  d.querySelector("span:last-child").textContent = summary;
+  logEl.appendChild(d); scroll();
+}
+function toolResult(evt){
+  const d = document.createElement("div");
+  d.className = "log" + (evt.ok?"":" err");
+  const detail = (evt.detail||"").trim();
+  const long = detail.length>120 || detail.includes("\n");
+  const icon = evt.ok ? "✓" : "✕";
+  if(long){
+    d.innerHTML = '<span class="ic">'+icon+'</span><details><summary></summary><pre></pre></details>';
+    d.querySelector("summary").textContent = evt.name+" — output";
+    d.querySelector("pre").textContent = detail;
+  } else {
+    d.innerHTML = '<span class="ic">'+icon+'</span><span></span>';
+    d.querySelector("span:last-child").textContent = detail || (evt.ok?"done":"failed");
+  }
+  logEl.appendChild(d); scroll();
+}
+function authorizeCard(evt){
+  const card = document.createElement("div");
+  card.className = "authorize pending";
+  card.dataset.id = evt.id;
+  const isCmd = evt.name==="run_command";
+  let inner = '<div class="head"><span class="badge">'+(isCmd?"Run command":"Write file")+
+              '</span><span class="what">'+esc(evt.summary)+'</span></div>';
+  if(isCmd){
+    inner += '<pre>'+esc(evt.command||"")+'</pre>';
+  } else {
+    inner += '<div class="path">'+esc(evt.path||"")+'</div>';
+    if(evt.preview){
+      inner += '<pre>'+esc(evt.preview)+(evt.preview.length>=4000?"\n…":"")+'</pre>';
+    }
+  }
+  inner += '<div class="acts"><button class="btn-allow">Allow</button>'+
+           '<button class="btn-deny">Deny</button></div>';
+  card.innerHTML = inner;
+  logEl.appendChild(card); scroll();
+
+  const decide = (allowed)=>{
+    api("/api/approve",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({id:evt.id, allowed})});
+    card.classList.remove("pending");
+    card.querySelector(".acts").innerHTML =
+      '<span class="resolved '+(allowed?"yes":"no")+'">'+(allowed?"● allowed":"● denied")+'</span>';
+  };
+  card.querySelector(".btn-allow").onclick = ()=>decide(true);
+  card.querySelector(".btn-deny").onclick = ()=>decide(false);
+}
+let thinkingEl = null;
+function showThinking(){
+  hideEmpty();
+  thinkingEl = document.createElement("div");
+  thinkingEl.className = "thinking";
+  thinkingEl.innerHTML = '<span class="d"></span><span class="d"></span><span class="d"></span><span>Lantern is thinking…</span>';
+  logEl.appendChild(thinkingEl); scroll();
+}
+function clearThinking(){ if(thinkingEl){ thinkingEl.remove(); thinkingEl=null; } }
+function errorLine(msg){
+  clearThinking();
+  const d = document.createElement("div");
+  d.className="log err";
+  d.innerHTML='<span class="ic">✕</span><span></span>';
+  d.querySelector("span:last-child").textContent = msg;
+  logEl.appendChild(d); scroll();
+  setDot("err");
+}
+
+// ---- run a turn ----
+async function send(){
+  const text = input.value.trim();
+  if(!text || running) return;
+  input.value=""; input.style.height="auto";
+  userTurn(text);
+  running = true; sendBtn.disabled=true; stopBtn.style.display="";
+  setDot("run");
+  showThinking();
+
+  const payload = { message:text, sessionId:SESSION, model:modelSel.value };
+
+  controller = new AbortController();
+  try{
+    const res = await api("/api/chat",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload), signal:controller.signal
+    });
+    if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error||("HTTP "+res.status)); }
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf="";
+    while(true){
+      const {value,done} = await reader.read();
+      if(done) break;
+      buf += dec.decode(value,{stream:true});
+      let nl;
+      while((nl=buf.indexOf("\n"))>=0){
+        const line = buf.slice(0,nl).trim(); buf = buf.slice(nl+1);
+        if(!line) continue;
+        let evt; try{ evt=JSON.parse(line); }catch{ continue; }
+        handleEvent(evt);
+      }
+    }
+  }catch(e){
+    if(e.name==="AbortError"){ errorLine("Stopped."); }
+    else{ errorLine(e.message); }
+  }finally{
+    clearThinking();
+    running=false; sendBtn.disabled=false; stopBtn.style.display="none";
+    controller=null;
+    if(dot.className.indexOf("err")<0) setDot("ok");
+  }
+}
+
+function handleEvent(evt){
+  // First real output arrives -> drop the thinking placeholder. Reads and
+  // further steps re-show it while the model works on the next step.
+  if(evt.type!=="done") clearThinking();
+  switch(evt.type){
+    case "assistant_text": assistantText(evt.text); break;
+    case "tool_activity": activity(evt.name, evt.summary); if(running) showThinking(); break;
+    case "tool_request": authorizeCard(evt); break;        // waiting on the user, not the model
+    case "tool_result": toolResult(evt); if(running) showThinking(); break; // model works next
+    case "error": errorLine(evt.message); break;
+    case "done": break;
+  }
+}
+
+// ---- composer behavior ----
+input.addEventListener("input", ()=>{
+  input.style.height="auto";
+  input.style.height=Math.min(input.scrollHeight,200)+"px";
+});
+input.addEventListener("keydown",(e)=>{
+  if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); }
+});
+sendBtn.onclick = send;
+stopBtn.onclick = ()=>{ if(controller) controller.abort(); };
+$("#newchat").onclick = ()=>{
+  if(controller) controller.abort();
+  SESSION = (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
+  logEl.innerHTML = '<div class="empty" id="empty"><span class="mark">✦</span>Ready. Ask Lantern to build, read, or change something in your folder.</div>';
+  if(dot.className.indexOf("err")<0) setDot("ok");
+  input.focus();
+};
+
+// ---- model + folder controls ----
+modelSel.onchange = ()=>{
+  api("/api/model",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:modelSel.value})});
+};
+folderBtn.onclick = async ()=>{
+  const cur = folderBtn.title.replace(/^.*: /,"");
+  const next = prompt("Type the full path to the folder Lantern should work in:", folderBtn.dataset.path||"");
+  if(!next) return;
+  const r = await api("/api/cwd",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({cwd:next})});
+  const j = await r.json();
+  if(j.ok){ setFolder(j.cwd); }
+  else { alert(j.error||"That folder doesn't exist."); }
+};
+function setFolder(path){
+  folderBtn.dataset.path = path;
+  folderBtn.textContent = path;
+  folderBtn.title = "Working folder: "+path;
+}
+function fillModels(models, selected){
+  modelSel.innerHTML="";
+  models.forEach((m)=>{
+    const o=document.createElement("option"); o.value=m; o.textContent=m;
+    if(m===selected) o.selected=true;
+    modelSel.appendChild(o);
+  });
+  if(selected && !models.includes(selected)){
+    const o=document.createElement("option"); o.value=selected; o.textContent=selected; o.selected=true;
+    modelSel.prepend(o);
+  }
+}
+
+// ---- onboarding ----
+$("#saveKey").onclick = async ()=>{
+  const key = keyInput.value.trim();
+  keyErr.textContent="";
+  if(!key){ keyErr.textContent="Paste your key first."; return; }
+  const btn=$("#saveKey"); btn.disabled=true; btn.textContent="Checking…";
+  try{
+    const r = await api("/api/key",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({apiKey:key})});
+    const j = await r.json();
+    if(!r.ok){ keyErr.textContent = j.error||"That didn't work."; return; }
+    overlay.style.display="none";
+    const cfg = await (await api("/api/config")).json();
+    fillModels(j.models, cfg.model || j.models[0]);
+    if(!cfg.model){ modelSel.value=j.models[0];
+      api("/api/model",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:j.models[0]})}); }
+    setFolder(cfg.cwd);
+    setDot("ok");
+    input.focus();
+  }catch(e){ keyErr.textContent = e.message; }
+  finally{ btn.disabled=false; btn.textContent="Connect"; }
+};
+
+// ---- boot ----
+(async function boot(){
+  const cfg = await (await api("/api/config")).json();
+  setFolder(cfg.cwd);
+  if(!cfg.configured){ overlay.style.display="flex"; keyInput.focus(); return; }
+  try{
+    const { models } = await (await api("/api/models")).json();
+    fillModels(models||[], cfg.model || (models&&models[0]));
+    if(!cfg.model && models && models[0]){
+      api("/api/model",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:models[0]})});
+    }
+    setDot("ok"); input.focus();
+  }catch{
+    setDot("err");
+    errorLine("Couldn't reach Cerebras to load models. Check your connection.");
+  }
+})();
+</script>
+</body>
+</html>
