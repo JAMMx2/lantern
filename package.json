@@ -1,0 +1,37 @@
+{
+  "name": "lantern-agent",
+  "version": "0.1.0",
+  "description": "A private, local coding agent powered by your own Cerebras API key. Runs in your browser, works on your files, asks before it acts.",
+  "type": "module",
+  "bin": {
+    "lantern": "bin/lantern.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node bin/lantern.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "public"
+  ],
+  "keywords": [
+    "cerebras",
+    "coding-agent",
+    "llm",
+    "local",
+    "ai"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JAMMx2/lantern.git"
+  },
+  "homepage": "https://jammx2.github.io/lantern/",
+  "bugs": {
+    "url": "https://github.com/JAMMx2/lantern/issues"
+  },
+  "author": "JAMMx2"
+}

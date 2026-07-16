@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#040604" />
+<meta name="description" content="Lantern Lite — a private coding agent that runs entirely in your browser. No install, no server. Bring your own Cerebras key." />
+<meta property="og:title" content="Lantern Lite ✦ in-browser coding agent" />
+<meta property="og:description" content="A private coding agent in a single HTML file. No install, no server, no telemetry. Bring your own Cerebras key." />
+<title>Lantern Lite</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23040604'/%3E%3Ctext x='16' y='25' font-size='22' text-anchor='middle' fill='%233bf07e'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
+<style>
+  /* ═══════════════════════════════════════════════════════════════════
+     LANTERN LITE — retro phosphor terminal · single file · zero deps
+     ═══════════════════════════════════════════════════════════════════ */
+  :root{
+    --bg:#040604; --bg-2:#070b08;
+    --panel:#0a0f0b; --panel-2:#0d130e; --well:#030504;
+    --line:#1d3323; --line-br:#2a4a33;
+    --green:#3bf07e; --green-hi:#8dffb0; --green-dim:rgba(59,240,126,.10);
+    --text:#c8e9cd; --muted:#79a886; --faint:#4d7058;
+    --amber:#ffb454; --amber-hi:#ffd9a0; --amber-dim:rgba(255,180,84,.07);
+    --amber-line:rgba(255,180,84,.5);
+    --red:#ff6d5e; --ok:#3bf07e;
+    --glow-g:0 0 10px rgba(59,240,126,.45);
+    --glow-a:0 0 10px rgba(255,180,84,.5);
+    --mono:ui-monospace,"Cascadia Mono","JetBrains Mono","Fira Code",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--text);
+    background:radial-gradient(ellipse 120% 90% at 50% -20%, #0a140c 0%, var(--bg) 60%) fixed;
+    font-family:var(--mono); font-size:13.5px; line-height:1.6;
+    display:flex; flex-direction:column;
+    -webkit-font-smoothing:antialiased;
+    animation:crt-on .45s ease-out;
+  }
+  @keyframes crt-on{
+    0%{transform:scale(1,.015); filter:brightness(5)}
+    55%{transform:scale(1,1.002); filter:brightness(1.7)}
+    100%{transform:none; filter:none}
+  }
+  button{font-family:inherit; cursor:pointer}
+  ::selection{background:var(--green); color:#02120a}
+  ::-webkit-scrollbar{width:10px; height:10px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#14251a; border:2px solid var(--bg); border-radius:6px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--line-br)}
+  *{scrollbar-width:thin; scrollbar-color:#14251a transparent}
+
+  /* ---- CRT overlays ---- */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:999; pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.20) 0 1px, transparent 1px 3px);
+    mix-blend-mode:multiply; animation:flicker 7s infinite;
+  }
+  body::after{
+    content:""; position:fixed; inset:0; z-index:998; pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 58%, rgba(0,0,0,.42) 100%);
+  }
+  .crt-sweep{
+    position:fixed; left:0; right:0; top:-30%; height:26%;
+    z-index:997; pointer-events:none;
+    background:linear-gradient(180deg, transparent, rgba(59,240,126,.028) 50%, transparent);
+    animation:sweep 9s linear infinite;
+  }
+  @keyframes sweep{0%{transform:translateY(0)}100%{transform:translateY(560%)}}
+  @keyframes flicker{
+    0%,100%{opacity:1} 96.5%{opacity:1} 97%{opacity:.82} 97.5%{opacity:1}
+    98.2%{opacity:.9} 98.6%{opacity:1}
+  }
+
+  /* ---- header ---- */
+  header{
+    display:flex; align-items:center; flex-wrap:wrap; gap:10px 14px;
+    padding:8px 16px; min-height:48px; flex:0 0 auto;
+    background:linear-gradient(180deg,#0b120d,#080d09);
+    border-bottom:1px solid var(--line);
+    box-shadow:0 1px 0 rgba(59,240,126,.06);
+  }
+  .brand{display:flex; align-items:baseline; gap:10px; letter-spacing:.22em; font-size:14px}
+  .brand .mark{
+    color:var(--amber); font-size:16px; letter-spacing:0;
+    text-shadow:0 0 7px rgba(255,180,84,.9), 0 0 22px rgba(255,180,84,.35);
+    animation:flame 3.2s ease-in-out infinite;
+  }
+  @keyframes flame{
+    0%,100%{text-shadow:0 0 7px rgba(255,180,84,.9),0 0 22px rgba(255,180,84,.35)}
+    35%{text-shadow:0 0 5px rgba(255,180,84,.75),0 0 14px rgba(255,180,84,.25)}
+    60%{text-shadow:0 0 9px rgba(255,180,84,1),0 0 28px rgba(255,180,84,.45)}
+  }
+  .brand b{font-weight:700; color:var(--green-hi); text-shadow:var(--glow-g); text-transform:uppercase}
+  .brand .lite{
+    font-size:9px; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--amber); border:1px solid var(--amber-line); border-radius:1px;
+    padding:2px 6px; margin-left:2px;
+  }
+  .spacer{flex:1}
+  .micro{font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint)}
+  .micro::before{content:"[ "; color:var(--line-br)}
+  .micro::after{content:" ]"; color:var(--line-br)}
+  .field{display:flex; align-items:center; gap:8px}
+  select,.chip{
+    background:var(--well); color:var(--green-hi); border:1px solid var(--line-br);
+    border-radius:2px; padding:6px 10px; font-family:var(--mono); font-size:12px; max-width:220px;
+  }
+  select:focus,.chip:focus,textarea:focus,input:focus{
+    outline:1px solid var(--green); outline-offset:1px;
+    box-shadow:0 0 12px rgba(59,240,126,.25);
+  }
+  .chip{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px}
+  .chip:hover,select:hover{border-color:var(--green)}
+  .dot{width:9px; height:9px; border-radius:1px; background:var(--faint); transition:background .2s, box-shadow .2s}
+  .dot.ok{background:var(--green); box-shadow:var(--glow-g)}
+  .dot.run{background:var(--amber); box-shadow:var(--glow-a); animation:pulse 1.1s ease-in-out infinite}
+  .dot.err{background:var(--red); box-shadow:0 0 10px rgba(255,109,94,.6)}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .newchat{
+    background:transparent; border:1px solid var(--line-br); color:var(--muted);
+    border-radius:2px; padding:6px 12px; font-size:11px;
+    text-transform:uppercase; letter-spacing:.14em;
+  }
+  .newchat:hover{border-color:var(--green); color:var(--green-hi); box-shadow:0 0 10px rgba(59,240,126,.2)}
+
+  .stage{flex:1; display:flex; min-height:0}
+  main{flex:1; overflow-y:auto; scroll-behavior:smooth}
+  .col{max-width:860px; margin:0 auto; padding:24px 20px 8px}
+
+  /* ---- workspace side panel (fallback mode) ---- */
+  aside{
+    width:280px; flex:0 0 auto; border-left:1px solid var(--line);
+    background:#070c08; display:none; flex-direction:column; min-height:0;
+  }
+  aside.show{display:flex}
+  aside h3{
+    margin:0; padding:13px 15px; font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--muted); border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(59,240,126,.03);
+  }
+  aside h3::before{content:"▤ "; color:var(--green)}
+  .wsfiles{flex:1; overflow-y:auto; padding:8px}
+  .wsfile{
+    display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 9px;
+    border:1px solid var(--line); border-radius:2px; margin-bottom:7px;
+    font-size:12px; background:var(--well);
+  }
+  .wsfile .nm{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--green-hi)}
+  .wsfile .dl{
+    background:transparent; border:1px solid var(--line-br); color:var(--green);
+    border-radius:2px; padding:3px 8px; font-size:10px;
+    text-transform:uppercase; letter-spacing:.1em;
+  }
+  .wsfile .dl:hover{border-color:var(--green); box-shadow:0 0 8px rgba(59,240,126,.25)}
+  .wsempty{color:var(--faint); font-size:11.5px; padding:14px; text-align:center; line-height:1.7}
+  .wsactions{padding:10px; border-top:1px solid var(--line); display:flex; gap:8px}
+  .wsactions button{
+    flex:1; background:var(--well); border:1px solid var(--line-br); color:var(--green-hi);
+    border-radius:2px; padding:8px; font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+  }
+  .wsactions button:hover{border-color:var(--green); box-shadow:0 0 8px rgba(59,240,126,.2)}
+
+  /* ---- transcript ---- */
+  .turn{margin-bottom:24px}
+  .who{font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:var(--faint); margin-bottom:7px}
+  .who::before{content:"── "; color:var(--line-br)}
+  .user .who{color:var(--green)}
+  .assistant .who{color:var(--amber); text-shadow:0 0 8px rgba(255,180,84,.25)}
+  .user .bubble{
+    background:var(--green-dim); border:1px solid var(--line);
+    border-left:2px solid var(--green); border-radius:2px;
+    padding:11px 14px; white-space:pre-wrap; color:var(--green-hi);
+  }
+  .user .bubble::before{content:"❯ "; color:var(--green)}
+  .assistant .body p{margin:0 0 10px}
+  .assistant .body code{
+    font-family:var(--mono); font-size:.92em; color:var(--green-hi);
+    background:var(--well); border:1px solid var(--line); border-radius:2px; padding:1px 5px;
+  }
+  .assistant .body pre{
+    background:var(--well); border:1px solid var(--line); border-left:2px solid var(--green);
+    border-radius:2px; padding:12px 14px; overflow:auto; margin:0 0 12px;
+    box-shadow:inset 0 0 30px rgba(59,240,126,.03);
+  }
+  .assistant .body pre code{background:none; border:none; padding:0; font-size:12.5px; line-height:1.6; color:var(--text)}
+  .assistant .body strong{color:var(--green-hi)}
+
+  .log{display:flex; align-items:flex-start; gap:9px; font-size:12px; color:var(--muted); padding:5px 2px}
+  .log .ic{color:var(--green); flex:0 0 auto; margin-top:1px; text-shadow:var(--glow-g)}
+  .log.err{color:var(--red)}
+  .log.err .ic{color:var(--red); text-shadow:0 0 8px rgba(255,109,94,.5)}
+  .log details{width:100%}
+  .log summary{list-style:none; cursor:pointer}
+  .log summary:hover{color:var(--green-hi)}
+  .log summary::-webkit-details-marker{display:none}
+  .log summary::after{content:"  [+]"; color:var(--faint)}
+  .log details[open] summary::after{content:"  [–]"}
+  .log pre{
+    margin:7px 0 2px; background:var(--well); border:1px solid var(--line);
+    border-radius:2px; padding:9px 11px; overflow:auto; color:var(--text);
+    font-size:12px; max-height:280px;
+  }
+
+  /* ---- authorize card ---- */
+  .authorize{
+    border:1px solid var(--amber-line);
+    background:linear-gradient(180deg, rgba(255,180,84,.09), rgba(255,180,84,.03));
+    border-radius:2px; padding:14px 16px; margin:6px 0 8px;
+    position:relative; overflow:hidden;
+    box-shadow:inset 0 0 44px rgba(255,180,84,.05);
+  }
+  .authorize.pending{animation:live 1.5s ease-in-out infinite}
+  @keyframes live{
+    0%,100%{box-shadow:inset 0 0 44px rgba(255,180,84,.05), 0 0 0 0 rgba(255,180,84,0)}
+    50%{box-shadow:inset 0 0 44px rgba(255,180,84,.08), 0 0 26px -6px rgba(255,180,84,.55)}
+  }
+  .authorize.pending::after{
+    content:"▚ AWAITING INPUT"; position:absolute; top:9px; right:12px;
+    font-size:9px; letter-spacing:.24em; color:var(--amber);
+    animation:blink 1.2s steps(2,start) infinite;
+  }
+  .authorize .head{display:flex; align-items:center; gap:9px; margin-bottom:9px; padding-right:130px}
+  .authorize .badge{
+    font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--amber); border:1px solid var(--amber-line); border-radius:1px; padding:2px 7px;
+    text-shadow:0 0 8px rgba(255,180,84,.4);
+  }
+  .authorize .what{font-weight:600; color:var(--amber-hi)}
+  .authorize .path{font-size:12.5px; color:var(--amber); margin:0 0 10px}
+  .authorize .path::before{content:"→ "}
+  .authorize pre{
+    font-family:var(--mono); font-size:12.5px; background:var(--well);
+    border:1px solid rgba(255,180,84,.25); border-radius:2px; padding:10px 12px;
+    overflow:auto; margin:0 0 11px; color:var(--text); max-height:260px; white-space:pre-wrap;
+  }
+  .acts{display:flex; gap:10px}
+  .btn-allow{
+    background:var(--amber); color:#170c00; border:1px solid var(--amber);
+    border-radius:2px; padding:8px 20px; font-weight:700; font-size:12px;
+    text-transform:uppercase; letter-spacing:.16em;
+  }
+  .btn-allow:hover{filter:brightness(1.1); box-shadow:var(--glow-a)}
+  .btn-deny{
+    background:transparent; color:var(--muted); border:1px solid var(--line-br);
+    border-radius:2px; padding:8px 16px; font-size:12px;
+    text-transform:uppercase; letter-spacing:.16em;
+  }
+  .btn-deny:hover{border-color:var(--red); color:var(--red); box-shadow:0 0 10px rgba(255,109,94,.25)}
+  .resolved{font-size:11px; letter-spacing:.14em; text-transform:uppercase}
+  .resolved.yes{color:var(--ok); text-shadow:var(--glow-g)}
+  .resolved.no{color:var(--red)}
+
+  /* ---- thinking ---- */
+  .thinking{display:flex; align-items:center; gap:8px; color:var(--faint); font-size:11.5px; letter-spacing:.1em; padding:4px 2px}
+  .thinking .d{width:5px; height:5px; border-radius:1px; background:var(--green); animation:tblink 1.2s infinite; box-shadow:var(--glow-g)}
+  .thinking .d:nth-child(2){animation-delay:.2s} .thinking .d:nth-child(3){animation-delay:.4s}
+  @keyframes tblink{0%,100%{opacity:.25}50%{opacity:1}}
+
+  /* ---- composer ---- */
+  footer{
+    flex:0 0 auto; border-top:1px solid var(--line);
+    background:linear-gradient(180deg,#0a100b,#070b08);
+    padding:14px 20px 16px;
+  }
+  .composer{max-width:860px; margin:0 auto; display:flex; gap:10px; align-items:flex-end}
+  .ps1{color:var(--green); font-size:16px; line-height:44px; flex:0 0 auto; text-shadow:var(--glow-g); user-select:none}
+  textarea{
+    flex:1; resize:none; background:var(--well); color:var(--green-hi);
+    border:1px solid var(--line-br); border-radius:2px; padding:11px 13px;
+    font-family:var(--mono); font-size:13.5px; line-height:1.55; max-height:200px;
+    caret-color:var(--green);
+  }
+  textarea::placeholder{color:var(--faint)}
+  .send{
+    background:var(--green); color:#02120a; border:1px solid var(--green);
+    border-radius:2px; height:44px; padding:0 20px; font-weight:700; font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.18em;
+  }
+  .send:hover{box-shadow:0 0 16px rgba(59,240,126,.45); filter:brightness(1.08)}
+  .send:disabled{opacity:.35; cursor:not-allowed; box-shadow:none}
+  .stop{
+    background:transparent; color:var(--muted); border:1px solid var(--line-br);
+    border-radius:2px; height:44px; padding:0 16px; font-size:12px;
+    text-transform:uppercase; letter-spacing:.14em;
+  }
+  .stop:hover{border-color:var(--red); color:var(--red)}
+  .hint{max-width:860px; margin:9px auto 0; font-size:10.5px; color:var(--faint); letter-spacing:.08em}
+  .hint::before{content:"// "; color:var(--line-br)}
+
+  /* ---- onboarding / settings ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(2,4,3,.92);
+    display:flex; align-items:center; justify-content:center; padding:20px; z-index:20;
+    backdrop-filter:blur(3px); overflow:auto;
+  }
+  .card{
+    width:100%; max-width:560px; background:#070c08;
+    border:1px solid var(--line-br); border-radius:3px; padding:0 26px 24px;
+    box-shadow:0 0 70px rgba(59,240,126,.14), inset 0 0 60px rgba(59,240,126,.03);
+  }
+  .card::before{
+    content:"■ CONFIG"; display:block; margin:0 -26px 22px;
+    padding:10px 16px; font-size:10px; letter-spacing:.28em; color:var(--faint);
+    border-bottom:1px solid var(--line); background:rgba(59,240,126,.04);
+  }
+  .card h1{
+    font-size:18px; margin:0 0 6px; display:flex; align-items:center; gap:10px;
+    color:var(--green-hi); letter-spacing:.14em; text-transform:uppercase;
+    text-shadow:var(--glow-g);
+  }
+  .card h1 .mark{color:var(--amber); text-shadow:0 0 10px rgba(255,180,84,.8); letter-spacing:0}
+  .card .sub{color:var(--muted); font-size:12.5px; margin:0 0 20px}
+  .step{margin-bottom:18px}
+  .step .lbl{font-size:12.5px; color:var(--muted); margin-bottom:7px}
+  .step .lbl b{color:var(--green-hi); font-weight:700}
+  .row{display:flex; gap:9px}
+  .row input{
+    flex:1; background:var(--well); color:var(--green-hi); border:1px solid var(--line-br);
+    border-radius:2px; padding:10px 12px; font-family:var(--mono); font-size:13px;
+    caret-color:var(--green);
+  }
+  .linkbtn{
+    background:var(--well); border:1px solid var(--line-br); color:var(--green-hi);
+    border-radius:2px; padding:10px 14px; font-size:12px; text-decoration:none;
+    display:inline-flex; align-items:center; white-space:nowrap; letter-spacing:.04em;
+  }
+  .linkbtn:hover{border-color:var(--green); box-shadow:0 0 12px rgba(59,240,126,.2)}
+  .primary{
+    background:var(--amber); color:#170c00; border:1px solid var(--amber); border-radius:2px;
+    padding:10px 16px; font-weight:700; font-size:12px;
+    text-transform:uppercase; letter-spacing:.14em;
+  }
+  .primary:hover{filter:brightness(1.1); box-shadow:var(--glow-a)}
+  .primary:disabled{opacity:.45; cursor:not-allowed; box-shadow:none}
+  .toggle{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin-top:9px; cursor:pointer}
+  .toggle input{width:15px; height:15px; accent-color:var(--green)}
+  .err-msg{color:var(--red); font-size:12px; margin-top:10px; min-height:16px}
+  .caps{
+    background:var(--well); border:1px solid var(--line); border-radius:2px;
+    padding:12px 14px; font-size:12px; color:var(--muted); margin-top:4px;
+  }
+  .caps .r{display:flex; gap:8px; align-items:flex-start; margin:5px 0}
+  .caps .y{color:var(--ok); text-shadow:var(--glow-g)}
+  .caps .n{color:var(--red)}
+
+  /* ---- empty state: boot log ---- */
+  .empty{color:var(--muted); text-align:center; margin-top:7vh; font-size:13px}
+  .empty::before{
+    content:"   ╭─╮   \A╭──┴─┴──╮\A│ ╔═══╗ │\A│ ║ ▲ ║ │\A│ ║▒█▒║ │\A│ ╚═══╝ │\A╰──┬─┬──╯\A   ╰─╯   ";
+    display:block; white-space:pre;
+    color:var(--green); font-size:16px; line-height:1.25;
+    text-shadow:0 0 10px rgba(59,240,126,.6), 0 0 34px rgba(59,240,126,.25);
+    margin-bottom:22px; animation:lamp 3.2s ease-in-out infinite;
+  }
+  @keyframes lamp{
+    0%,100%{text-shadow:0 0 10px rgba(59,240,126,.6),0 0 34px rgba(59,240,126,.25)}
+    50%{text-shadow:0 0 7px rgba(59,240,126,.45),0 0 22px rgba(59,240,126,.15)}
+  }
+  .empty .mark{display:none}
+  .empty::after{
+    content:"▮"; color:var(--green); margin-left:6px;
+    animation:blink 1.1s steps(2,start) infinite; text-shadow:var(--glow-g);
+  }
+  @keyframes blink{to{visibility:hidden}}
+
+  @media (max-width:720px){ aside{position:fixed; right:0; top:52px; bottom:0; z-index:15} }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important}
+    main{scroll-behavior:auto}
+    body::before{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="crt-sweep" aria-hidden="true"></div>
+
+<header>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="lite">Lite</span></div>
+  <div class="spacer"></div>
+  <div class="field"><span class="micro">Model</span><select id="model" title="Model"></select></div>
+  <button class="chip" id="folder" title="Where Lantern reads and writes">Workspace</button>
+  <button class="newchat" id="newchat" title="Start a fresh conversation">New chat</button>
+  <button class="chip" id="settings" title="Key & settings">⚙</button>
+  <span class="dot" id="dot"></span>
+</header>
+
+<div class="stage">
+  <main id="main">
+    <div class="col" id="log">
+      <div class="empty" id="empty"><span class="mark">✦</span>Ready. Ask Lantern to build, read, or change something.</div>
+    </div>
+  </main>
+  <aside id="ws">
+    <h3>Workspace <span class="micro" id="wscount"></span></h3>
+    <div class="wsfiles" id="wsfiles"><div class="wsempty">Files the agent creates appear here to download.</div></div>
+    <div class="wsactions">
+      <button id="wsupload">Add files…</button>
+      <button id="wszip">Download .zip</button>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <div class="composer">
+    <span class="ps1" aria-hidden="true">❯</span>
+    <textarea id="input" rows="1" placeholder="tell lantern what to do…  (enter to send · shift+enter for newline)"></textarea>
+    <button class="stop" id="stop" style="display:none">Stop</button>
+    <button class="send" id="send">Send</button>
+  </div>
+  <div class="hint" id="hint">writes always ask first · running commands isn't possible in a browser — use the app version for that</div>
+</footer>
+
+<input type="file" id="filepick" multiple style="display:none" />
+
+<!-- onboarding -->
+<div class="overlay" id="overlay">
+  <div class="card">
+    <h1><span class="mark">✦</span> Lantern Lite</h1>
+    <p class="sub">A coding agent that runs entirely in your browser — no install, no server. It uses your own Cerebras key, kept on this device.</p>
+
+    <div class="step">
+      <div class="lbl"><b>01 /</b> Get a free API key from Cerebras (no credit card).</div>
+      <a class="linkbtn" href="https://cloud.cerebras.ai/" target="_blank" rel="noopener">open cloud.cerebras.ai ↗</a>
+    </div>
+    <div class="step">
+      <div class="lbl"><b>02 /</b> Paste your key.</div>
+      <div class="row">
+        <input id="keyInput" type="password" placeholder="csk-…" autocomplete="off" spellcheck="false" />
+        <button class="primary" id="saveKey">Connect</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="sessionOnly" /> Don't save it — forget when I close this tab</label>
+      <div class="err-msg" id="keyErr"></div>
+    </div>
+    <div class="step">
+      <div class="lbl"><b>What this browser can do:</b></div>
+      <div class="caps" id="caps"></div>
+    </div>
+    <div class="row" id="settingsActions" style="display:none; gap:9px">
+      <button class="chip" id="forgetKey">Forget saved key</button>
+      <button class="chip" id="closeSettings">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = (s)=>document.querySelector(s);
+const CEREBRAS = "https://api.cerebras.ai/v1";
+const LS_KEY="lantern_lite_key", LS_MODEL="lantern_lite_model";
+
+// ---------- capability detection ----------
+const HAS_FS = typeof window.showDirectoryPicker === "function";
+
+// ---------- key storage ----------
+let apiKey = localStorage.getItem(LS_KEY) || sessionStorage.getItem(LS_KEY) || "";
+function storeKey(k, sessionOnly){
+  apiKey = k;
+  if(sessionOnly){ sessionStorage.setItem(LS_KEY,k); localStorage.removeItem(LS_KEY); }
+  else { localStorage.setItem(LS_KEY,k); sessionStorage.removeItem(LS_KEY); }
+}
+function clearKey(){ apiKey=""; localStorage.removeItem(LS_KEY); sessionStorage.removeItem(LS_KEY); }
+
+// ---------- file backend (real folder OR virtual workspace) ----------
+const store = {
+  mode: "virtual",     // "real" | "virtual"
+  dir: null,           // FileSystemDirectoryHandle in real mode
+  files: new Map(),    // path -> string, in virtual mode (+ uploaded files for reading)
+  safe(path){
+    const p=String(path).replace(/\\/g,"/").replace(/^\/+/,"").replace(/^\.\//,"");
+    if(!p) throw new Error("Invalid path: "+path);
+    if(p.split("/").some(s=>s===".."||s==="")) throw new Error("Path escapes the workspace: "+path);
+    return p;
+  },
+  async list(path="."){
+    if(this.mode==="real"){
+      const dir = await this._dirOf(path, false);
+      const out=[]; for await (const [name,h] of dir.entries()) out.push(h.kind==="directory"?name+"/":name);
+      return out.sort().join("\n")||"(empty folder)";
+    } else {
+      const p = path==="."||path===""?"":this.safe(path)+"/";
+      const set=new Set();
+      for(const key of this.files.keys()){
+        if(!key.startsWith(p)) continue;
+        const rest=key.slice(p.length); const seg=rest.split("/")[0];
+        set.add(rest.includes("/")?seg+"/":seg);
+      }
+      return [...set].sort().join("\n")||"(empty workspace)";
+    }
+  },
+  async read(path){
+    const p=this.safe(path);
+    if(this.mode==="real"){
+      const {dir,base}=await this._fileParent(p,false);
+      const fh=await dir.getFileHandle(base); const f=await fh.getFile(); return await f.text();
+    } else {
+      if(!this.files.has(p)) throw new Error("No such file in workspace: "+path);
+      return this.files.get(p);
+    }
+  },
+  async write(path, content){
+    const p=this.safe(path);
+    if(this.mode==="real"){
+      const {dir,base}=await this._fileParent(p,true);
+      const fh=await dir.getFileHandle(base,{create:true});
+      const w=await fh.createWritable(); await w.write(content??""); await w.close();
+    } else {
+      this.files.set(p, content??"");
+    }
+    renderWorkspace();
+    return "Wrote "+((content??"").length)+" characters to "+path;
+  },
+  async _dirOf(path, create){
+    let dir=this.dir; const parts=(path==="."||path==="")?[]:this.safe(path).split("/").filter(Boolean);
+    for(const part of parts) dir=await dir.getDirectoryHandle(part,{create});
+    return dir;
+  },
+  async _fileParent(p, create){
+    const parts=p.split("/"); const base=parts.pop();
+    let dir=this.dir; for(const part of parts) dir=await dir.getDirectoryHandle(part,{create});
+    return {dir,base};
+  }
+};
+
+// ---------- tool definitions ----------
+const TOOL_DEFS=[
+  {type:"function",function:{name:"list_dir",description:"List files and folders in the working folder/workspace.",
+    parameters:{type:"object",properties:{path:{type:"string",description:"Relative path; defaults to the root."}}}}},
+  {type:"function",function:{name:"read_file",description:"Read the text contents of a file.",
+    parameters:{type:"object",properties:{path:{type:"string"}},required:["path"]}}},
+  {type:"function",function:{name:"write_file",description:"Create or overwrite a file. Always requires user approval.",
+    parameters:{type:"object",properties:{path:{type:"string"},content:{type:"string"}},required:["path","content"]}}}
+];
+const NEEDS_APPROVAL=new Set(["write_file"]);
+function summarize(name,args){
+  if(name==="read_file") return "Read the file "+args.path;
+  if(name==="list_dir") return "List "+(args.path||"the workspace");
+  if(name==="write_file") return "Create or overwrite the file "+args.path;
+  return name;
+}
+async function runTool(name,args){
+  if(name==="list_dir") return {ok:true,content:await store.list(args.path)};
+  if(name==="read_file"){ let c=await store.read(args.path); if(c.length>100000) c=c.slice(0,100000)+"\n…(truncated)"; return {ok:true,content:c}; }
+  if(name==="write_file") return {ok:true,content:await store.write(args.path,args.content)};
+  return {ok:false,content:"Unknown tool "+name};
+}
+
+function systemPrompt(){
+  const where = store.mode==="real"
+    ? "a real folder on the user's computer that they connected"
+    : "an in-browser workspace (files the user can download; they can also upload files for you to read)";
+  return `You are Lantern Lite, a coding assistant running entirely in the user's web browser, powered by their Cerebras API key.
+
+You are working in ${where}. You have three tools: list_dir, read_file, write_file.
+- Explore with list_dir and read_file before changing things.
+- Use write_file to create or change files. It requires the user's approval each time — they see the exact file before it's written. If denied, adapt; never work around a denial.
+- You CANNOT run shell commands or install anything — that's not possible in a browser. If a task needs that, say so and explain what the user would run themselves (or point them to the installable app version).
+
+Work in small, clear steps and explain what you're doing in plain, non-technical language. Assume the user may not be a programmer.`;
+}
+
+// ---------- Cerebras ----------
+async function listModels(){
+  const r=await fetch(CEREBRAS+"/models",{headers:{Authorization:"Bearer "+apiKey}});
+  if(!r.ok) throw new Error("Key check failed ("+r.status+")");
+  const j=await r.json(); return (j.data||[]).map(m=>m.id).filter(Boolean).sort();
+}
+async function chat(messages){
+  const r=await fetch(CEREBRAS+"/chat/completions",{method:"POST",
+    headers:{Authorization:"Bearer "+apiKey,"Content-Type":"application/json"},
+    body:JSON.stringify({model:$("#model").value, messages, tools:TOOL_DEFS, tool_choice:"auto"})});
+  if(!r.ok){ let d=""; try{d=(await r.json())?.error?.message}catch{ d=await r.text(); } throw new Error("Cerebras "+r.status+": "+d); }
+  const j=await r.json(); return j.choices?.[0]?.message ?? {role:"assistant",content:""};
+}
+
+// ---------- agent loop (client-side) ----------
+const MAX_STEPS=30, CHAR_BUDGET=24000;
+let conversation=[];   // persisted transcript
+let running=false, runId=0, cancelApproval=null;
+function trimConversation(){
+  const size=()=>conversation.reduce((n,m)=>n+(m.content?m.content.length:0),0);
+  while(conversation.length>2 && size()>CHAR_BUDGET){
+    conversation.shift();
+    while(conversation.length && conversation[0].role==="tool") conversation.shift();
+  }
+}
+
+async function runAgent(userText, myRun){
+  conversation.push({role:"user",content:userText});
+  trimConversation();
+  for(let step=0; step<MAX_STEPS; step++){
+    if(runId!==myRun) return;
+    const messages=[{role:"system",content:systemPrompt()},...conversation];
+    let reply;
+    try{ reply=await chat(messages); }catch(e){ if(runId===myRun) errorLine(e.message); return; }
+    if(runId!==myRun) return;
+    const calls=reply.tool_calls||[];
+    if(reply.content) assistantText(reply.content);
+    if(!calls.length){ conversation.push({role:"assistant",content:reply.content||""}); return; }
+    conversation.push({role:"assistant",content:reply.content||"",tool_calls:calls});
+    for(const c of calls){
+      if(runId!==myRun) return;
+      const name=c.function?.name; let args={};
+      try{ args=JSON.parse(c.function?.arguments||"{}"); }catch{}
+      const sum=summarize(name,args);
+      let allowed=true;
+      if(NEEDS_APPROVAL.has(name)){ allowed=await approve({name,summary:sum,path:args.path,preview:String(args.content??"").slice(0,4000)}); }
+      else { activity(sum); if(running) showThinking(); }
+      if(runId!==myRun) return;
+      let res;
+      if(!allowed) res={ok:false,content:"The user denied this action."};
+      else { try{ res=await runTool(name,args);}catch(e){ res={ok:false,content:e.message}; } }
+      toolResult(name,res); if(runId===myRun) showThinking();
+      conversation.push({role:"tool",tool_call_id:c.id,content:res.content});
+    }
+  }
+  if(runId===myRun) errorLine("Stopped after "+MAX_STEPS+" steps. Try smaller pieces.");
+}
+
+// ---------- rendering ----------
+const logEl=$("#log"), mainEl=$("#main");
+function scroll(){ mainEl.scrollTop=mainEl.scrollHeight; }
+function hideEmpty(){ const e=$("#empty"); if(e) e.remove(); }
+function esc(s){ return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function md(t){
+  const parts=t.split(/```/); let h="";
+  parts.forEach((seg,i)=>{
+    if(i%2===1){ const nl=seg.indexOf("\n"); const code=nl>=0?seg.slice(nl+1):seg; h+="<pre><code>"+esc(code.replace(/\n$/,""))+"</code></pre>"; }
+    else { let x=esc(seg).replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>").replace(/\n{2,}/g,"</p><p>").replace(/\n/g,"<br>"); if(x.trim()) h+="<p>"+x+"</p>"; }
+  });
+  return h;
+}
+function addTurn(cls){ const d=document.createElement("div"); d.className="turn "+cls; logEl.appendChild(d); return d; }
+function userTurn(t){ hideEmpty(); const el=addTurn("user"); el.innerHTML='<div class="who">You</div><div class="bubble"></div>'; el.querySelector(".bubble").textContent=t; scroll(); }
+function assistantText(t){ clearThinking(); const el=addTurn("assistant"); el.innerHTML='<div class="who">Lantern</div><div class="body"></div>'; el.querySelector(".body").innerHTML=md(t); scroll(); }
+function activity(sum){ clearThinking(); const d=document.createElement("div"); d.className="log"; d.innerHTML='<span class="ic">›</span><span></span>'; d.querySelector("span:last-child").textContent=sum; logEl.appendChild(d); scroll(); }
+function toolResult(name,res){
+  clearThinking();
+  const d=document.createElement("div"); d.className="log"+(res.ok?"":" err");
+  const detail=(res.content||"").trim(); const long=detail.length>120||detail.includes("\n"); const icon=res.ok?"✓":"✕";
+  if(long){ d.innerHTML='<span class="ic">'+icon+'</span><details><summary></summary><pre></pre></details>'; d.querySelector("summary").textContent=name+" — output"; d.querySelector("pre").textContent=detail; }
+  else { d.innerHTML='<span class="ic">'+icon+'</span><span></span>'; d.querySelector("span:last-child").textContent=detail||(res.ok?"done":"failed"); }
+  logEl.appendChild(d); scroll();
+}
+function approve(req){
+  clearThinking();
+  return new Promise((resolve)=>{
+    const card=document.createElement("div"); card.className="authorize pending";
+    let inner='<div class="head"><span class="badge">Write file</span><span class="what">'+esc(req.summary)+'</span></div>';
+    inner+='<div class="path">'+esc(req.path||"")+'</div>';
+    if(req.preview) inner+='<pre>'+esc(req.preview)+(req.preview.length>=4000?"\n…":"")+'</pre>';
+    inner+='<div class="acts"><button class="btn-allow">Allow</button><button class="btn-deny">Deny</button></div>';
+    card.innerHTML=inner; logEl.appendChild(card); scroll();
+    let done=false;
+    const decide=(ok)=>{ if(done) return; done=true; cancelApproval=null;
+      card.classList.remove("pending");
+      card.querySelector(".acts").innerHTML='<span class="resolved '+(ok?"yes":"no")+'">'+(ok?"● allowed":"● denied")+'</span>';
+      resolve(ok); };
+    cancelApproval=()=>decide(false);   // Stop / New chat resolves the pending card as denied
+    card.querySelector(".btn-allow").onclick=()=>decide(true);
+    card.querySelector(".btn-deny").onclick=()=>decide(false);
+  });
+}
+let thinkingEl=null;
+function showThinking(){ hideEmpty(); if(thinkingEl) return; thinkingEl=document.createElement("div"); thinkingEl.className="thinking"; thinkingEl.innerHTML='<span class="d"></span><span class="d"></span><span class="d"></span><span>Lantern is thinking…</span>'; logEl.appendChild(thinkingEl); scroll(); }
+function clearThinking(){ if(thinkingEl){ thinkingEl.remove(); thinkingEl=null; } }
+function errorLine(msg){ clearThinking(); const d=document.createElement("div"); d.className="log err"; d.innerHTML='<span class="ic">✕</span><span></span>'; d.querySelector("span:last-child").textContent=msg; logEl.appendChild(d); scroll(); setDot("err"); }
+function setDot(s){ $("#dot").className="dot"+(s?" "+s:""); }
+
+// ---------- workspace panel ----------
+function renderWorkspace(){
+  const show = store.mode==="virtual";
+  $("#ws").classList.toggle("show", show);
+  if(!show) return;
+  const box=$("#wsfiles"); const keys=[...store.files.keys()].sort();
+  $("#wscount").textContent = keys.length?("· "+keys.length):"";
+  if(!keys.length){ box.innerHTML='<div class="wsempty">Files the agent creates appear here to download. Use “Add files…” to let it read your files.</div>'; return; }
+  box.innerHTML="";
+  for(const k of keys){
+    const row=document.createElement("div"); row.className="wsfile";
+    row.innerHTML='<span class="nm" title="'+esc(k)+'">'+esc(k)+'</span><button class="dl">Download</button>';
+    row.querySelector(".dl").onclick=()=>downloadOne(k, store.files.get(k));
+    box.appendChild(row);
+  }
+}
+function downloadOne(name, text){
+  const blob=new Blob([text],{type:"application/octet-stream"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name.split("/").pop(); a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+
+// minimal store-only ZIP writer (no dependencies)
+const CRC=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(bytes){ let c=0xFFFFFFFF; for(let i=0;i<bytes.length;i++) c=CRC[(c^bytes[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function makeZip(files){ // files: [{name, bytes:Uint8Array}]
+  const enc=new TextEncoder(); const chunks=[]; const central=[]; let offset=0;
+  const u16=n=>[n&255,(n>>8)&255]; const u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];
+  for(const f of files){
+    const nameB=enc.encode(f.name); const crc=crc32(f.bytes); const sz=f.bytes.length;
+    const local=[0x50,0x4b,0x03,0x04, ...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0), ...u32(crc),...u32(sz),...u32(sz), ...u16(nameB.length),...u16(0)];
+    const lh=new Uint8Array(local.length+nameB.length); lh.set(local,0); lh.set(nameB,local.length);
+    chunks.push(lh, f.bytes);
+    const cen=[0x50,0x4b,0x01,0x02, ...u16(20),...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0), ...u32(crc),...u32(sz),...u32(sz), ...u16(nameB.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0), ...u32(offset)];
+    const ch=new Uint8Array(cen.length+nameB.length); ch.set(cen,0); ch.set(nameB,cen.length); central.push(ch);
+    offset+=lh.length+f.bytes.length;
+  }
+  let cenSize=0; central.forEach(c=>cenSize+=c.length);
+  const end=[0x50,0x4b,0x05,0x06, ...u16(0),...u16(0), ...u16(files.length),...u16(files.length), ...u32(cenSize),...u32(offset), ...u16(0)];
+  const parts=[...chunks,...central,new Uint8Array(end)];
+  let total=0; parts.forEach(p=>total+=p.length); const out=new Uint8Array(total); let o=0; for(const p of parts){ out.set(p,o); o+=p.length; }
+  return out;
+}
+$("#wszip").onclick=()=>{
+  const enc=new TextEncoder(); const keys=[...store.files.keys()];
+  if(!keys.length){ return; }
+  const files=keys.map(k=>({name:k, bytes:enc.encode(store.files.get(k))}));
+  const zip=makeZip(files); const blob=new Blob([zip],{type:"application/zip"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="lantern-workspace.zip"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+};
+$("#wsupload").onclick=()=>$("#filepick").click();
+$("#filepick").onchange=async (e)=>{
+  for(const file of e.target.files){ const text=await file.text(); store.files.set(file.name, text); }
+  renderWorkspace(); e.target.value="";
+};
+
+// ---------- folder / mode control ----------
+$("#folder").onclick=async ()=>{
+  if(HAS_FS){
+    try{
+      const dir=await window.showDirectoryPicker({mode:"readwrite"});
+      store.mode="real"; store.dir=dir;
+      $("#folder").textContent=dir.name; $("#folder").title="Working folder: "+dir.name;
+      $("#ws").classList.remove("show");
+    }catch(e){
+      if(e && e.name==="AbortError") return;  // user cancelled the picker
+      alert("Couldn't open a folder here. Picking a real folder usually works only when this page is hosted over https (for example on GitHub Pages), not when it's opened directly from a file on disk. Lantern will keep using the in-browser workspace, where the files it creates appear on the right to download.");
+    }
+  } else {
+    alert("Your browser can't open a real folder — that needs Chrome or Edge. Lantern is using an in-browser workspace instead: the files it creates appear on the right to download, and you can upload files for it to read.");
+  }
+};
+
+// ---------- compose ----------
+const input=$("#input"), sendBtn=$("#send"), stopBtn=$("#stop");
+input.addEventListener("input",()=>{ input.style.height="auto"; input.style.height=Math.min(input.scrollHeight,200)+"px"; });
+input.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); send(); } });
+sendBtn.onclick=send;
+stopBtn.onclick=()=>{ runId++; if(cancelApproval) cancelApproval(); };
+$("#newchat").onclick=()=>{ runId++; if(cancelApproval) cancelApproval(); conversation=[]; logEl.innerHTML='<div class="empty" id="empty"><span class="mark">✦</span>Ready. Ask Lantern to build, read, or change something.</div>'; if($("#dot").className.indexOf("err")<0) setDot("ok"); input.focus(); };
+
+async function send(){
+  const text=input.value.trim(); if(!text||running) return;
+  if(!apiKey){ openOnboarding(); return; }
+  input.value=""; input.style.height="auto";
+  userTurn(text);
+  runId++; const myRun=runId;
+  running=true; sendBtn.disabled=true; stopBtn.style.display=""; setDot("run"); showThinking();
+  try{ await runAgent(text, myRun); }
+  catch(e){ errorLine(e.message); }
+  finally{ clearThinking(); running=false; sendBtn.disabled=false; stopBtn.style.display="none"; if($("#dot").className.indexOf("err")<0) setDot("ok"); }
+}
+
+// ---------- settings / onboarding ----------
+function fillModels(models, selected){
+  const sel=$("#model"); sel.innerHTML="";
+  models.forEach(m=>{ const o=document.createElement("option"); o.value=m; o.textContent=m; if(m===selected)o.selected=true; sel.appendChild(o); });
+  if(selected && !models.includes(selected)){ const o=document.createElement("option"); o.value=selected; o.textContent=selected; o.selected=true; sel.prepend(o); }
+  sel.onchange=()=>localStorage.setItem(LS_MODEL, sel.value);
+}
+function renderCaps(){
+  const rows=[
+    ["y","Chat & generate code — works in every browser"],
+    [HAS_FS?"y":"n", HAS_FS?"Read & write a real folder you pick":"Read/write a real folder (needs Chrome or Edge)"],
+    ["y","Workspace files you download, and files you upload to read"],
+    ["n","Run commands / install packages — not possible in a browser"]
+  ];
+  $("#caps").innerHTML=rows.map(([c,t])=>'<div class="r"><span class="'+c+'">'+(c==="y"?"✓":"✕")+'</span><span>'+t+'</span></div>').join("");
+}
+function openOnboarding(){ $("#overlay").style.display="flex"; renderCaps(); $("#settingsActions").style.display=apiKey?"flex":"none"; $("#keyInput").focus(); }
+$("#settings").onclick=()=>openOnboarding();
+$("#closeSettings").onclick=()=>{ $("#overlay").style.display="none"; };
+$("#forgetKey").onclick=()=>{ clearKey(); setDot(""); $("#keyInput").value=""; $("#settingsActions").style.display="none"; $("#keyErr").textContent="Key forgotten. Paste a new one to continue."; };
+$("#saveKey").onclick=async ()=>{
+  const k=$("#keyInput").value.trim(); $("#keyErr").textContent="";
+  if(!k){ $("#keyErr").textContent="Paste your key first."; return; }
+  const btn=$("#saveKey"); btn.disabled=true; btn.textContent="Checking…";
+  try{
+    storeKey(k, $("#sessionOnly").checked);
+    const models=await listModels();
+    fillModels(models, localStorage.getItem(LS_MODEL)||models[0]);
+    if(!localStorage.getItem(LS_MODEL)) localStorage.setItem(LS_MODEL, models[0]);
+    $("#overlay").style.display="none"; setDot("ok"); renderWorkspace(); input.focus();
+  }catch(e){ clearKey(); $("#keyErr").textContent=e.message; }
+  finally{ btn.disabled=false; btn.textContent="Connect"; }
+};
+
+// ---------- boot ----------
+(async function(){
+  renderWorkspace();
+  if(!apiKey){ openOnboarding(); return; }
+  try{
+    const models=await listModels();
+    fillModels(models, localStorage.getItem(LS_MODEL)||models[0]);
+    setDot("ok"); input.focus();
+  }catch(e){ openOnboarding(); }
+})();
+</script>
+</body>
+</html>
