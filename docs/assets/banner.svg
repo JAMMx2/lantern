@@ -151,7 +151,7 @@
     <rect x="926" y="172" width="44" height="21.5"/>
   </g>
 
-  <text x="660" y="236" font-size="15" fill="#79a886" text-anchor="middle" letter-spacing="5">A PRIVATE CODING AGENT · LOCAL · BYO CEREBRAS KEY</text>
+  <text x="660" y="236" font-size="15" fill="#79a886" text-anchor="middle" letter-spacing="5">A PRIVATE CODING AGENT · CEREBRAS CLOUD OR LOCAL OLLAMA</text>
 
   <g font-size="16">
     <text x="330" y="290" fill="#3bf07e" filter="url(#glowG)">❯</text>
