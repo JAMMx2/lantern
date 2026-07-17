@@ -1,7 +1,7 @@
 {
   "name": "lantern-agent",
-  "version": "0.1.0",
-  "description": "A private, local coding agent powered by your own Cerebras API key. Runs in your browser, works on your files, asks before it acts.",
+  "version": "0.2.0",
+  "description": "A private, local coding agent for any OpenAI-compatible AI \u2014 free Cerebras cloud tier or fully local Ollama. Runs in your browser, works on your files, asks before it acts.",
   "type": "module",
   "bin": {
     "lantern": "bin/lantern.js"

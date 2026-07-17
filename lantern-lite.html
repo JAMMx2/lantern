@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="dark" />
 <meta name="theme-color" content="#040604" />
-<meta name="description" content="Lantern Lite — a private coding agent that runs entirely in your browser. No install, no server. Bring your own Cerebras key." />
+<meta name="description" content="Lantern Lite — a private coding agent that runs entirely in your browser. No install, no server. Bring your own model: Cerebras cloud or local Ollama." />
 <meta property="og:title" content="Lantern Lite ✦ in-browser coding agent" />
-<meta property="og:description" content="A private coding agent in a single HTML file. No install, no server, no telemetry. Bring your own Cerebras key." />
+<meta property="og:description" content="A private coding agent in a single HTML file. No install, no server, no telemetry. Bring your own model — free Cerebras cloud tier or local Ollama." />
 <title>Lantern Lite</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23040604'/%3E%3Ctext x='16' y='25' font-size='22' text-anchor='middle' fill='%233bf07e'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
 <style>
@@ -337,6 +337,7 @@
   .toggle{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin-top:9px; cursor:pointer}
   .toggle input{width:15px; height:15px; accent-color:var(--green)}
   .err-msg{color:var(--red); font-size:12px; margin-top:10px; min-height:16px}
+  .prov-note{font-size:11.5px; color:var(--faint); margin-top:8px; line-height:1.7; min-height:16px}
   .caps{
     background:var(--well); border:1px solid var(--line); border-radius:2px;
     padding:12px 14px; font-size:12px; color:var(--muted); margin-top:4px;
@@ -418,14 +419,26 @@
 <div class="overlay" id="overlay">
   <div class="card">
     <h1><span class="mark">✦</span> Lantern Lite</h1>
-    <p class="sub">A coding agent that runs entirely in your browser — no install, no server. It uses your own Cerebras key, kept on this device.</p>
+    <p class="sub">A coding agent that runs entirely in your browser — no install, no server. Bring your own AI: the free Cerebras cloud tier, local Ollama, or any OpenAI-compatible endpoint.</p>
 
     <div class="step">
-      <div class="lbl"><b>01 /</b> Get a free API key from Cerebras (no credit card).</div>
-      <a class="linkbtn" href="https://cloud.cerebras.ai/" target="_blank" rel="noopener">open cloud.cerebras.ai ↗</a>
+      <div class="lbl"><b>01 /</b> Choose your provider.</div>
+      <div class="row">
+        <select id="provider" style="flex:1; max-width:none">
+          <option value="cerebras">Cerebras cloud — fastest, free tier</option>
+          <option value="ollama">Ollama on this computer — free forever, private</option>
+          <option value="custom">Custom OpenAI-compatible URL…</option>
+        </select>
+      </div>
+      <div class="row" id="urlRow" style="display:none; margin-top:9px">
+        <input id="baseUrl" type="text" placeholder="https://api.example.com/v1" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="prov-note" id="provNote"></div>
     </div>
     <div class="step">
-      <div class="lbl"><b>02 /</b> Paste your key.</div>
+      <div class="lbl"><b>02 /</b> Connect.
+        <a class="linkbtn" id="keyLink" href="https://cloud.cerebras.ai/" target="_blank" rel="noopener" style="margin-left:8px; padding:4px 9px; font-size:11px">get a free key ↗</a>
+      </div>
       <div class="row">
         <input id="keyInput" type="password" placeholder="csk-…" autocomplete="off" spellcheck="false" />
         <button class="primary" id="saveKey">Connect</button>
@@ -447,8 +460,19 @@
 <script>
 "use strict";
 const $ = (s)=>document.querySelector(s);
-const CEREBRAS = "https://api.cerebras.ai/v1";
-const LS_KEY="lantern_lite_key", LS_MODEL="lantern_lite_model";
+const PRESETS = {
+  cerebras: { url:"https://api.cerebras.ai/v1", ph:"csk-…",
+    link:"https://cloud.cerebras.ai/", linkText:"get a free key ↗",
+    note:"Free tier: ~1M tokens/day, no credit card. The fastest option." },
+  ollama:   { url:"http://localhost:11434/v1", ph:"no key needed — leave blank",
+    link:"https://ollama.com/download", linkText:"get ollama ↗",
+    note:"Free forever, offline, fully private. Install Ollama, run: ollama pull qwen2.5-coder:7b — and if you opened this page from the web, start Ollama with OLLAMA_ORIGINS=\"*\" so the browser may connect." },
+  custom:   { url:"", ph:"key (leave blank if not required)",
+    link:"", linkText:"",
+    note:"Any OpenAI-compatible endpoint works: Groq, OpenRouter, LM Studio, llama.cpp…" },
+};
+const LS_KEY="lantern_lite_key", LS_MODEL="lantern_lite_model", LS_URL="lantern_lite_url";
+let baseUrl = localStorage.getItem(LS_URL) || PRESETS.cerebras.url;
 
 // ---------- capability detection ----------
 const HAS_FS = typeof window.showDirectoryPicker === "function";
@@ -550,7 +574,7 @@ function systemPrompt(){
   const where = store.mode==="real"
     ? "a real folder on the user's computer that they connected"
     : "an in-browser workspace (files the user can download; they can also upload files for you to read)";
-  return `You are Lantern Lite, a coding assistant running entirely in the user's web browser, powered by their Cerebras API key.
+  return `You are Lantern Lite, a coding assistant running entirely in the user's web browser, powered by their own AI provider.
 
 You are working in ${where}. You have three tools: list_dir, read_file, write_file.
 - Explore with list_dir and read_file before changing things.
@@ -562,15 +586,15 @@ Work in small, clear steps and explain what you're doing in plain, non-technical
 
 // ---------- Cerebras ----------
 async function listModels(){
-  const r=await fetch(CEREBRAS+"/models",{headers:{Authorization:"Bearer "+apiKey}});
-  if(!r.ok) throw new Error("Key check failed ("+r.status+")");
+  const r=await fetch(baseUrl+"/models",{headers:{Authorization:"Bearer "+apiKey}});
+  if(!r.ok) throw new Error("Couldn\u2019t connect ("+r.status+")");
   const j=await r.json(); return (j.data||[]).map(m=>m.id).filter(Boolean).sort();
 }
 async function chat(messages){
-  const r=await fetch(CEREBRAS+"/chat/completions",{method:"POST",
+  const r=await fetch(baseUrl+"/chat/completions",{method:"POST",
     headers:{Authorization:"Bearer "+apiKey,"Content-Type":"application/json"},
     body:JSON.stringify({model:$("#model").value, messages, tools:TOOL_DEFS, tool_choice:"auto"})});
-  if(!r.ok){ let d=""; try{d=(await r.json())?.error?.message}catch{ d=await r.text(); } throw new Error("Cerebras "+r.status+": "+d); }
+  if(!r.ok){ let d=""; try{d=(await r.json())?.error?.message}catch{ d=await r.text(); } throw new Error("Provider "+r.status+": "+d); }
   const j=await r.json(); return j.choices?.[0]?.message ?? {role:"assistant",content:""};
 }
 
@@ -778,16 +802,35 @@ function renderCaps(){
   ];
   $("#caps").innerHTML=rows.map(([c,t])=>'<div class="r"><span class="'+c+'">'+(c==="y"?"✓":"✕")+'</span><span>'+t+'</span></div>').join("");
 }
-function openOnboarding(){ $("#overlay").style.display="flex"; renderCaps(); $("#settingsActions").style.display=apiKey?"flex":"none"; $("#keyInput").focus(); }
+function providerFor(u){ if(!u||u===PRESETS.cerebras.url) return "cerebras"; if(u===PRESETS.ollama.url) return "ollama"; return "custom"; }
+function syncProvider(){
+  const p=PRESETS[$("#provider").value];
+  $("#urlRow").style.display = $("#provider").value==="custom" ? "" : "none";
+  $("#provNote").textContent = p.note;
+  $("#keyInput").placeholder = p.ph;
+  $("#keyLink").style.display = p.link ? "" : "none";
+  if(p.link){ $("#keyLink").href=p.link; $("#keyLink").textContent=p.linkText; }
+}
+$("#provider").onchange=syncProvider;
+function openOnboarding(){
+  $("#provider").value = providerFor(baseUrl);
+  if($("#provider").value==="custom") $("#baseUrl").value = baseUrl||"";
+  syncProvider();
+  $("#overlay").style.display="flex"; renderCaps(); $("#settingsActions").style.display=apiKey?"flex":"none"; $("#keyInput").focus();
+}
 $("#settings").onclick=()=>openOnboarding();
 $("#closeSettings").onclick=()=>{ $("#overlay").style.display="none"; };
 $("#forgetKey").onclick=()=>{ clearKey(); setDot(""); $("#keyInput").value=""; $("#settingsActions").style.display="none"; $("#keyErr").textContent="Key forgotten. Paste a new one to continue."; };
 $("#saveKey").onclick=async ()=>{
+  const prov=$("#provider").value;
+  const url = prov==="custom" ? $("#baseUrl").value.trim() : PRESETS[prov].url;
   const k=$("#keyInput").value.trim(); $("#keyErr").textContent="";
-  if(!k){ $("#keyErr").textContent="Paste your key first."; return; }
+  if(prov==="custom" && !url){ $("#keyErr").textContent="Enter the endpoint URL first."; return; }
+  if(prov==="cerebras" && !k){ $("#keyErr").textContent="Paste your key first."; return; }
   const btn=$("#saveKey"); btn.disabled=true; btn.textContent="Checking…";
   try{
-    storeKey(k, $("#sessionOnly").checked);
+    baseUrl=url; localStorage.setItem(LS_URL, url);
+    storeKey(k||"local", $("#sessionOnly").checked);
     const models=await listModels();
     fillModels(models, localStorage.getItem(LS_MODEL)||models[0]);
     if(!localStorage.getItem(LS_MODEL)) localStorage.setItem(LS_MODEL, models[0]);

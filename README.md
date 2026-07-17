@@ -7,14 +7,15 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-3bf07e?style=flat-square&labelColor=0a0f0b)](LICENSE)
 [![Node ≥ 18](https://img.shields.io/badge/node-%E2%89%A518-3bf07e?style=flat-square&labelColor=0a0f0b&logo=nodedotjs&logoColor=3bf07e)](https://nodejs.org)
 [![Dependencies: 0](https://img.shields.io/badge/dependencies-0-3bf07e?style=flat-square&labelColor=0a0f0b)](package.json)
+[![Ollama](https://img.shields.io/badge/ollama-supported-3bf07e?style=flat-square&labelColor=0a0f0b)](https://ollama.com)
 [![Lantern Lite](https://img.shields.io/badge/lantern%20lite-single%20HTML%20file-ffb454?style=flat-square&labelColor=0a0f0b)](https://jammx2.github.io/lantern/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ffb454?style=flat-square&labelColor=0a0f0b)](CONTRIBUTING.md)
 
-**A private coding agent that runs on _your_ computer, powered by _your own_ Cerebras API key.**
+**A private coding agent that runs on _your_ computer, powered by _your own_ AI — the free Cerebras cloud tier, a fully local model via [Ollama](https://ollama.com), or any OpenAI-compatible endpoint.**
 
 It reads files, writes files, and runs commands in a folder you choose — but it **always shows you
 exactly what it's about to do and waits for your OK** before it changes anything.
-Nothing goes anywhere except to Cerebras, using your key.
+Nothing goes anywhere except to the provider you chose — and with Ollama, nothing leaves your machine at all.
 
 **[⚡ Try Lantern Lite in your browser →](https://jammx2.github.io/lantern/)** — no install, no server, just your key
 
@@ -55,7 +56,23 @@ The approval card is the whole idea — nothing writes or runs until you say so:
 | Run commands / install packages | ✅ | ❌ not possible in a browser |
 | Install required | Node.js | none — just a browser |
 
-Both use your own Cerebras key, and both ask before writing anything.
+Both work with every provider below, and both ask before writing anything.
+
+---
+
+## Choose your AI
+
+Lantern speaks to any OpenAI-compatible endpoint. Pick one at first run — or press **⚙** any time to switch:
+
+| | Cost | Privacy | Needs |
+|---|---|---|---|
+| **Cerebras cloud** (default) | free tier, ~1M tokens/day | your code goes to Cerebras only | a free API key |
+| **Ollama — local** | **free forever, no tokens, no account** | **total — nothing leaves your machine, works offline** | [Ollama](https://ollama.com) + `ollama pull qwen2.5-coder:7b` (~8 GB RAM) |
+| **Custom URL** | varies | varies | Groq, OpenRouter, LM Studio, llama.cpp, a home server… |
+
+For local models, pick one that supports tool calling — `qwen2.5-coder:7b` or `llama3.1:8b` are good starts. Bigger machine, bigger model.
+
+> **Cerebras note:** on **Aug 17, 2026** Cerebras retires `glm-4.7` and raises free-tier rate limits. Lantern fetches the model list live from your key, so new models simply appear — if a saved model is retired, just pick another from the dropdown.
 
 ---
 
@@ -75,10 +92,10 @@ git clone https://github.com/JAMMx2/lantern.git
 - **Linux:** run `bash install/install-linux.sh`.
 - **Windows:** open the `install` folder, right-click `install-windows.ps1` → **Run with PowerShell**.
 
-Your browser opens to Lantern. The first time, it asks for your Cerebras key:
+Your browser opens to Lantern. The first time, it asks you to pick a provider:
 
-- Click **Open cloud.cerebras.ai**, sign in, and create a free API key (no credit card — the free tier gives you a generous daily allowance).
-- Paste the key in and click **Connect**.
+- **Cerebras cloud** (fastest): create a free API key at cloud.cerebras.ai (no credit card), paste it, **Connect**.
+- **Ollama** (free forever, local): install it from ollama.com, run `ollama pull qwen2.5-coder:7b`, **Connect** — no key at all.
 
 Then pick the **folder** you want Lantern to work in (top right), choose a **model**, and start typing.
 
@@ -100,7 +117,7 @@ Lantern remembers the conversation, so you can say *"now change line 3 of that f
 
 ## What makes it safe
 
-- **You bring your own key.** It's stored only on your computer (in `~/.lantern/config.json`, owner-only permissions) and sent only to Cerebras.
+- **You bring your own AI.** Keys are stored only on your computer (in `~/.lantern/config.json`, owner-only permissions) and sent only to the provider you chose. With local Ollama there is no key and no cloud at all.
 - **Writes and commands always ask first.** You see the full file or the exact command before it runs.
 - **Files stay in the folder you pick.** Lantern can't read or write outside it — including through symlinks that point elsewhere (checked by resolving real paths). No touching the rest of your computer's files.
 - **Locked to your machine.** Lantern only listens on your own computer (localhost) and rejects requests from any website open in your browser, using a one-time token and a host check — so a malicious page can't quietly drive the agent.
@@ -114,7 +131,7 @@ See [SECURITY.md](SECURITY.md) for the threat model and how to report issues.
 
 ## Lantern Lite (no install)
 
-Open [`lantern-lite.html`](lantern-lite.html) — double-click it, or use the **[hosted version](https://jammx2.github.io/lantern/)**. Paste your Cerebras key (there's a "don't save it" option for shared computers), and go.
+Open [`lantern-lite.html`](lantern-lite.html) — double-click it, or use the **[hosted version](https://jammx2.github.io/lantern/)**. Pick your provider — Cerebras key (there's a "don't save it" option for shared computers), local Ollama, or a custom endpoint — and go.
 
 <img src="docs/assets/screenshot-lite-setup.png" alt="Lantern Lite first-run setup" width="560" />
 
@@ -122,7 +139,7 @@ Open [`lantern-lite.html`](lantern-lite.html) — double-click it, or use the **
 - **On Safari, Firefox, or when opened directly from disk:** Lantern uses an in-browser workspace instead — files it creates appear on the right to **download** (individually or as a `.zip`), and you can **upload** files to let it read them.
 - **Hosting over https is what unlocks real-folder access** on Chrome/Edge — which is why this repo ships with a GitHub Actions workflow that publishes Lite to GitHub Pages automatically (see below).
 
-Your key is stored only in your browser on your device (or not at all, if you chose session-only), and is sent only to Cerebras.
+Your key is stored only in your browser on your device (or not at all, if you chose session-only), and is sent only to your chosen provider. Using Ollama from the hosted page? Start it with `OLLAMA_ORIGINS="*"` so the browser may connect.
 
 ### Deploy your own copy
 
@@ -153,7 +170,7 @@ lantern/
 
 - **Requirements:** Node 18+ (uses native `fetch`, `http`, `fs`, `child_process`). No `npm install` needed.
 - **Run directly:** `node bin/lantern.js` (or `npm start`). Set `PORT` to change the port (default 4317; it auto-increments if busy).
-- **API:** Cerebras is OpenAI-compatible at `https://api.cerebras.ai/v1`. The model list is fetched live from your key; if a model errors on tool use, pick one that supports function calling.
+- **API:** any OpenAI-compatible endpoint works — Cerebras (`https://api.cerebras.ai/v1`), Ollama (`http://localhost:11434/v1`), Groq, OpenRouter, LM Studio… The model list is fetched live from the endpoint; if a model errors on tool use, pick one that supports function calling.
 - **Extending:** add a tool by (1) implementing it in `tools.js`, (2) adding its JSON schema to `TOOL_DEFS`, (3) deciding whether it belongs in `NEEDS_APPROVAL`.
 - **The UI** is a deliberate retro phosphor terminal — scanlines, glow, and approval cards are pure CSS. No images, fonts, or scripts are loaded from anywhere. If you rename the product, change the name in `package.json`, the wordmarks in `public/index.html` + `lantern-lite.html`, and the config folder in `src/config.js`.
 
