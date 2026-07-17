@@ -184,6 +184,12 @@ Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
+## The mark
+
+The lantern mark is an ASCII sprite rendered with the pipeline from [JAMMSPRITE](https://github.com/JAMMx2/JAMMSPRITE) — same ramp, solid fill, and despeckle that powers its animated cats.
+
+---
+
 ## License
 
 [MIT](LICENSE) © 2026 JAMMx2
