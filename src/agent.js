@@ -1,4 +1,4 @@
-import { chatCompletion } from "./cerebras.js";
+import { relayChat } from "./cerebras.js";
 import {
   TOOL_DEFS,
   NEEDS_APPROVAL,
@@ -9,7 +9,7 @@ import {
 const MAX_STEPS = 30;
 
 const SYSTEM_PROMPT = (root) =>
-  `You are Lantern, a local coding assistant running on the user's own computer, powered by their Cerebras API key.
+  `You are Lantern, a local coding assistant running on the user's own computer, powered by the user's own AI provider.
 
 You are working inside this folder: ${root}
 All file paths you use are relative to that folder.
@@ -22,12 +22,14 @@ You have four tools: list_dir, read_file, write_file, run_command.
 Work in small, clear steps. Before using a tool, briefly tell the user in plain, non-technical language what you're about to do and why. After finishing, summarize what changed. Assume the user may not be a programmer.`;
 
 // Keep the running transcript from growing past the model's context budget.
-// Cerebras' free tier is small (~8k), so trim oldest turns, but never drop a
-// dangling tool result (which must follow its assistant tool_call).
+// Trim in one big cut (down to half the budget) instead of shaving one turn
+// per request: between cuts the conversation prefix stays byte-identical,
+// which is what providers' prompt caches key on.
 const CHAR_BUDGET = 24_000;
 function trimConversation(conv) {
   const size = () => conv.reduce((n, m) => n + (m.content ? m.content.length : 0), 0);
-  while (conv.length > 2 && size() > CHAR_BUDGET) {
+  if (size() <= CHAR_BUDGET) return;
+  while (conv.length > 2 && size() > CHAR_BUDGET / 2) {
     conv.shift();
     // Don't leave a leading orphan tool message.
     while (conv.length && conv[0].role === "tool") conv.shift();
@@ -37,15 +39,14 @@ function trimConversation(conv) {
 /**
  * Run the agent to completion, mutating the persisted conversation in place.
  * @param {object} o
- * @param {string} o.apiKey
- * @param {string} o.model
+ * @param {Array}  o.providers  ordered relay chain [{name, baseUrl, apiKey, model}]
  * @param {string} o.root  working directory
  * @param {Array}  o.conversation  persisted [{role, content, tool_calls?}] for this session
  * @param {string} o.message  the new user message
  * @param {(evt:object)=>void} o.emit  push an NDJSON event to the client
  * @param {(req:object)=>Promise<boolean>} o.requestApproval  resolve to allow/deny
  */
-export async function runAgent({ apiKey, baseUrl, model, root, conversation, message, emit, requestApproval }) {
+export async function runAgent({ providers, root, conversation, message, emit, requestApproval }) {
   conversation.push({ role: "user", content: message });
   trimConversation(conversation);
 
@@ -54,7 +55,13 @@ export async function runAgent({ apiKey, baseUrl, model, root, conversation, mes
 
     let reply;
     try {
-      reply = await chatCompletion({ apiKey, baseUrl, model, messages, tools: TOOL_DEFS });
+      reply = await relayChat({
+        providers,
+        messages,
+        tools: TOOL_DEFS,
+        onDelta: (text) => emit({ type: "assistant_delta", text }),
+        onProvider: (p) => emit({ type: "provider", name: p.name || p.baseUrl }),
+      });
     } catch (e) {
       emit({ type: "error", message: e.message });
       return;
@@ -63,7 +70,9 @@ export async function runAgent({ apiKey, baseUrl, model, root, conversation, mes
     const toolCalls = reply.tool_calls || [];
 
     if (reply.content) {
-      emit({ type: "assistant_text", text: reply.content });
+      // Deltas already streamed the text; this closes the bubble with the
+      // final assembled markdown.
+      emit({ type: "assistant_done", text: reply.content });
     }
 
     // No tools requested -> the turn is done.

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 
-import { loadConfig, saveConfig } from "./config.js";
+import { loadConfig, saveConfig, nameFor } from "./config.js";
 import { listModels } from "./cerebras.js";
 import { runAgent } from "./agent.js";
 
@@ -93,7 +93,9 @@ async function serveStatic(req, res) {
 
 async function handleChat(req, res) {
   const cfg = loadConfig();
-  if (!cfg.apiKey) return send(res, 400, { error: "No API key configured." });
+  if (!cfg.providers || !cfg.providers.length) {
+    return send(res, 400, { error: "No provider configured." });
+  }
 
   let payload;
   try {
@@ -103,8 +105,11 @@ async function handleChat(req, res) {
   }
 
   const root = cfg.lastCwd && existsSync(cfg.lastCwd) ? cfg.lastCwd : process.cwd();
-  const model = payload.model || cfg.model;
-  if (!model) return send(res, 400, { error: "No model selected." });
+  // The header dropdown picks the primary provider's model per-request.
+  const providers = cfg.providers.map((p, i) =>
+    i === 0 && payload.model ? { ...p, model: payload.model } : p
+  );
+  if (!providers[0].model) return send(res, 400, { error: "No model selected." });
 
   // Stream newline-delimited JSON events as they happen.
   res.writeHead(200, {
@@ -139,9 +144,7 @@ async function handleChat(req, res) {
 
   try {
     await runAgent({
-      apiKey: cfg.apiKey,
-      baseUrl: cfg.baseUrl,
-      model,
+      providers,
       root,
       conversation: getConversation(payload.sessionId),
       message: String(payload.message || ""),
@@ -174,34 +177,56 @@ async function router(req, res) {
   if (req.method === "GET" && url === "/api/config") {
     const cfg = loadConfig();
     return send(res, 200, {
-      configured: Boolean(cfg.apiKey),
-      model: cfg.model,
-      baseUrl: cfg.baseUrl,
+      configured: Boolean(cfg.providers && cfg.providers.length),
+      // Never echo API keys back to the page.
+      providers: (cfg.providers || []).map((p) => ({
+        name: p.name, baseUrl: p.baseUrl, model: p.model, hasKey: Boolean(p.apiKey && p.apiKey !== "local"),
+      })),
       cwd: cfg.lastCwd && existsSync(cfg.lastCwd) ? cfg.lastCwd : process.cwd(),
     });
   }
 
-  if (req.method === "POST" && url === "/api/key") {
+  // Validate one endpoint and list its usable models (no persistence).
+  if (req.method === "POST" && url === "/api/provider/test") {
     const body = await readBody(req);
-    const baseUrl = String(body.baseUrl || "https://api.cerebras.ai/v1").trim();
-    // Local endpoints (Ollama, LM Studio) don't need a real key; use a
-    // placeholder so the Authorization header stays well-formed.
+    const baseUrl = String(body.baseUrl || "").trim();
     const apiKey = String(body.apiKey || "").trim() || "local";
-    // Validate by attempting to list models at that endpoint.
+    if (!baseUrl) return send(res, 400, { error: "Missing endpoint URL." });
     try {
       const models = await listModels(apiKey, baseUrl);
-      saveConfig({ apiKey, baseUrl });
       return send(res, 200, { ok: true, models });
     } catch (e) {
       return send(res, 400, { error: `Couldn't connect: ${e.message}` });
     }
   }
 
+  // Save the whole relay chain. Rows may omit apiKey to keep the stored one.
+  if (req.method === "POST" && url === "/api/providers") {
+    const body = await readBody(req);
+    const rows = Array.isArray(body.providers) ? body.providers : [];
+    if (!rows.length) return send(res, 400, { error: "Add at least one provider." });
+    const prev = loadConfig().providers || [];
+    const providers = rows.map((r) => {
+      const baseUrl = String(r.baseUrl || "").trim().replace(/\/+$/, "");
+      const kept = prev.find((p) => p.baseUrl === baseUrl);
+      return {
+        name: r.name || nameFor(baseUrl),
+        baseUrl,
+        apiKey: String(r.apiKey || "").trim() || (kept ? kept.apiKey : "local"),
+        model: String(r.model || "").trim() || (kept ? kept.model : ""),
+      };
+    }).filter((p) => p.baseUrl);
+    if (!providers.length) return send(res, 400, { error: "Add at least one provider." });
+    saveConfig({ providers });
+    return send(res, 200, { ok: true });
+  }
+
   if (req.method === "GET" && url === "/api/models") {
     const cfg = loadConfig();
-    if (!cfg.apiKey) return send(res, 400, { error: "No API key." });
+    const primary = (cfg.providers || [])[0];
+    if (!primary) return send(res, 400, { error: "No provider configured." });
     try {
-      const models = await listModels(cfg.apiKey, cfg.baseUrl);
+      const models = await listModels(primary.apiKey, primary.baseUrl);
       return send(res, 200, { models });
     } catch (e) {
       return send(res, 400, { error: e.message });
@@ -210,7 +235,12 @@ async function router(req, res) {
 
   if (req.method === "POST" && url === "/api/model") {
     const { model } = await readBody(req);
-    saveConfig({ model: String(model || "") });
+    const cfg = loadConfig();
+    const providers = cfg.providers || [];
+    if (providers.length) {
+      providers[0] = { ...providers[0], model: String(model || "") };
+      saveConfig({ providers });
+    }
     return send(res, 200, { ok: true });
   }
 

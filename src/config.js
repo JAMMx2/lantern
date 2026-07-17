@@ -5,18 +5,38 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 const DIR = join(homedir(), ".lantern");
 const FILE = join(DIR, "config.json");
 
+// v0.3: an ordered relay chain instead of a single provider.
 const DEFAULTS = {
-  apiKey: "",
-  baseUrl: "https://api.cerebras.ai/v1",
-  model: "",
+  providers: [], // [{ name, baseUrl, apiKey, model }]
   lastCwd: "",
 };
+
+export function nameFor(baseUrl = "") {
+  if (baseUrl.includes("cerebras")) return "cerebras";
+  if (baseUrl.includes("groq")) return "groq";
+  if (baseUrl.includes("sambanova")) return "sambanova";
+  if (baseUrl.includes("googleapis")) return "gemini";
+  if (baseUrl.includes(":11434")) return "ollama";
+  return "custom";
+}
 
 export function loadConfig() {
   try {
     if (!existsSync(FILE)) return { ...DEFAULTS };
-    const raw = readFileSync(FILE, "utf8");
-    return { ...DEFAULTS, ...JSON.parse(raw) };
+    const raw = JSON.parse(readFileSync(FILE, "utf8"));
+    const cfg = { ...DEFAULTS, ...raw };
+    // Migrate a v0.2 single-provider config into a one-link chain.
+    if ((!cfg.providers || !cfg.providers.length) && raw.apiKey) {
+      cfg.providers = [
+        {
+          name: nameFor(raw.baseUrl || ""),
+          baseUrl: raw.baseUrl || "https://api.cerebras.ai/v1",
+          apiKey: raw.apiKey,
+          model: raw.model || "",
+        },
+      ];
+    }
+    return cfg;
   } catch {
     return { ...DEFAULTS };
   }
