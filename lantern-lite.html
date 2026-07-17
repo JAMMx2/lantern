@@ -338,6 +338,21 @@
   .toggle input{width:15px; height:15px; accent-color:var(--green)}
   .err-msg{color:var(--red); font-size:12px; margin-top:10px; min-height:16px}
   .prov-note{font-size:11.5px; color:var(--faint); margin-top:8px; line-height:1.7; min-height:16px}
+  .cursor{color:var(--green); animation:blink 1.1s steps(2,start) infinite; text-shadow:var(--glow-g)}
+  .prow{display:flex; flex-wrap:wrap; gap:6px; align-items:center; border:1px solid var(--line);
+    border-left:2px solid var(--line-br); border-radius:2px; padding:8px; margin-bottom:8px; background:var(--well)}
+  .prow.ok{border-left-color:var(--green)}
+  .prow select,.prow input{background:#020403; border:1px solid var(--line-br); color:var(--green-hi);
+    border-radius:2px; padding:6px 8px; font-family:var(--mono); font-size:12px}
+  .prow .p-key{flex:1; min-width:120px}
+  .prow .p-url{flex:1 1 100%; min-width:180px}
+  .prow .p-model{max-width:160px}
+  .prow .p-status{font-size:10px; letter-spacing:.12em; color:var(--faint); flex-basis:100%}
+  .prow .p-status.ok{color:var(--ok)}
+  .prow .p-status.err{color:var(--red)}
+  .minibtn{background:transparent; border:1px solid var(--line-br); color:var(--muted);
+    border-radius:2px; padding:5px 10px; font-size:11px; text-transform:uppercase; letter-spacing:.1em; cursor:pointer}
+  .minibtn:hover{border-color:var(--green); color:var(--green-hi)}
   .caps{
     background:var(--well); border:1px solid var(--line); border-radius:2px;
     padding:12px 14px; font-size:12px; color:var(--muted); margin-top:4px;
@@ -383,7 +398,8 @@
   <div class="field"><span class="micro">Model</span><select id="model" title="Model"></select></div>
   <button class="chip" id="folder" title="Where Lantern reads and writes">Workspace</button>
   <button class="newchat" id="newchat" title="Start a fresh conversation">New chat</button>
-  <button class="chip" id="settings" title="Key & settings">⚙</button>
+  <button class="chip" id="settings" title="Providers &amp; settings">⚙</button>
+  <span class="micro" id="prov" title="Active provider"></span>
   <span class="dot" id="dot"></span>
 </header>
 
@@ -419,31 +435,20 @@
 <div class="overlay" id="overlay">
   <div class="card">
     <h1><span class="mark">✦</span> Lantern Lite</h1>
-    <p class="sub">A coding agent that runs entirely in your browser — no install, no server. Bring your own AI: the free Cerebras cloud tier, local Ollama, or any OpenAI-compatible endpoint.</p>
+    <p class="sub">A coding agent that runs entirely in your browser — no install, no server. Build a relay chain: Lantern tries providers top-to-bottom and hops when one rate-limits. Free tiers stack.</p>
 
     <div class="step">
-      <div class="lbl"><b>01 /</b> Choose your provider.</div>
-      <div class="row">
-        <select id="provider" style="flex:1; max-width:none">
-          <option value="cerebras">Cerebras cloud — fastest, free tier</option>
-          <option value="ollama">Ollama on this computer — free forever, private</option>
-          <option value="custom">Custom OpenAI-compatible URL…</option>
-        </select>
-      </div>
-      <div class="row" id="urlRow" style="display:none; margin-top:9px">
-        <input id="baseUrl" type="text" placeholder="https://api.example.com/v1" autocomplete="off" spellcheck="false" />
-      </div>
-      <div class="prov-note" id="provNote"></div>
+      <div class="lbl"><b>01 /</b> Providers — fastest first.</div>
+      <div id="chain"></div>
+      <button class="minibtn" id="addProv">+ add fallback provider</button>
+      <div class="prov-note">Suggested free chain: Cerebras → Groq → Gemini. Ollama users on a hosted page: start it with OLLAMA_ORIGINS="*".</div>
     </div>
     <div class="step">
-      <div class="lbl"><b>02 /</b> Connect.
-        <a class="linkbtn" id="keyLink" href="https://cloud.cerebras.ai/" target="_blank" rel="noopener" style="margin-left:8px; padding:4px 9px; font-size:11px">get a free key ↗</a>
-      </div>
+      <div class="lbl"><b>02 /</b> Save.</div>
       <div class="row">
-        <input id="keyInput" type="password" placeholder="csk-…" autocomplete="off" spellcheck="false" />
-        <button class="primary" id="saveKey">Connect</button>
+        <button class="primary" id="saveChain">Save chain</button>
       </div>
-      <label class="toggle"><input type="checkbox" id="sessionOnly" /> Don't save it — forget when I close this tab</label>
+      <label class="toggle"><input type="checkbox" id="sessionOnly" /> Don't save keys — forget when I close this tab</label>
       <div class="err-msg" id="keyErr"></div>
     </div>
     <div class="step">
@@ -461,30 +466,41 @@
 "use strict";
 const $ = (s)=>document.querySelector(s);
 const PRESETS = {
-  cerebras: { url:"https://api.cerebras.ai/v1", ph:"csk-…",
-    link:"https://cloud.cerebras.ai/", linkText:"get a free key ↗",
-    note:"Free tier: ~1M tokens/day, no credit card. The fastest option." },
-  ollama:   { url:"http://localhost:11434/v1", ph:"no key needed — leave blank",
-    link:"https://ollama.com/download", linkText:"get ollama ↗",
-    note:"Free forever, offline, fully private. Install Ollama, run: ollama pull qwen2.5-coder:7b — and if you opened this page from the web, start Ollama with OLLAMA_ORIGINS=\"*\" so the browser may connect." },
-  custom:   { url:"", ph:"key (leave blank if not required)",
-    link:"", linkText:"",
-    note:"Any OpenAI-compatible endpoint works: Groq, OpenRouter, LM Studio, llama.cpp…" },
+  cerebras:  { url:"https://api.cerebras.ai/v1", link:"https://cloud.cerebras.ai/", note:"~1M tokens/day free · fastest" },
+  groq:      { url:"https://api.groq.com/openai/v1", link:"https://console.groq.com/keys", note:"14.4k requests/day free · very fast" },
+  sambanova: { url:"https://api.sambanova.ai/v1", link:"https://cloud.sambanova.ai/", note:"free tier · big models, fast" },
+  gemini:    { url:"https://generativelanguage.googleapis.com/v1beta/openai", link:"https://aistudio.google.com/apikey", note:"generous free tier" },
+  ollama:    { url:"http://localhost:11434/v1", link:"https://ollama.com/download", note:"local · free · needs OLLAMA_ORIGINS" },
+  custom:    { url:"", link:"", note:"any OpenAI-compatible endpoint" },
 };
-const LS_KEY="lantern_lite_key", LS_MODEL="lantern_lite_model", LS_URL="lantern_lite_url";
-let baseUrl = localStorage.getItem(LS_URL) || PRESETS.cerebras.url;
+const LS_CHAIN="lantern_lite_chain", LS_KEY="lantern_lite_key", LS_MODEL="lantern_lite_model", LS_URL="lantern_lite_url";
+
+// ---------- relay chain storage ----------
+let chain = [];
+function loadChain(){
+  try{
+    const raw = sessionStorage.getItem(LS_CHAIN) || localStorage.getItem(LS_CHAIN);
+    if(raw){ chain = JSON.parse(raw) || []; return; }
+  }catch{}
+  // migrate a v0.2 single-provider setup
+  const oldKey = localStorage.getItem(LS_KEY) || sessionStorage.getItem(LS_KEY);
+  if(oldKey){
+    chain = [{ name:presetFor(localStorage.getItem(LS_URL)||PRESETS.cerebras.url),
+      baseUrl: localStorage.getItem(LS_URL)||PRESETS.cerebras.url,
+      apiKey: oldKey, model: localStorage.getItem(LS_MODEL)||"" }];
+  }
+}
+function saveChain(sessionOnly){
+  const raw = JSON.stringify(chain);
+  if(sessionOnly){ sessionStorage.setItem(LS_CHAIN, raw); localStorage.removeItem(LS_CHAIN); }
+  else { localStorage.setItem(LS_CHAIN, raw); sessionStorage.removeItem(LS_CHAIN); }
+}
+function clearChain(){ chain=[]; localStorage.removeItem(LS_CHAIN); sessionStorage.removeItem(LS_CHAIN);
+  localStorage.removeItem(LS_KEY); sessionStorage.removeItem(LS_KEY); }
+function presetFor(url){ for(const [k,v] of Object.entries(PRESETS)){ if(v.url && v.url===url) return k; } return "custom"; }
 
 // ---------- capability detection ----------
 const HAS_FS = typeof window.showDirectoryPicker === "function";
-
-// ---------- key storage ----------
-let apiKey = localStorage.getItem(LS_KEY) || sessionStorage.getItem(LS_KEY) || "";
-function storeKey(k, sessionOnly){
-  apiKey = k;
-  if(sessionOnly){ sessionStorage.setItem(LS_KEY,k); localStorage.removeItem(LS_KEY); }
-  else { localStorage.setItem(LS_KEY,k); sessionStorage.removeItem(LS_KEY); }
-}
-function clearKey(){ apiKey=""; localStorage.removeItem(LS_KEY); sessionStorage.removeItem(LS_KEY); }
 
 // ---------- file backend (real folder OR virtual workspace) ----------
 const store = {
@@ -584,18 +600,69 @@ You are working in ${where}. You have three tools: list_dir, read_file, write_fi
 Work in small, clear steps and explain what you're doing in plain, non-technical language. Assume the user may not be a programmer.`;
 }
 
-// ---------- Cerebras ----------
-async function listModels(){
-  const r=await fetch(baseUrl+"/models",{headers:{Authorization:"Bearer "+apiKey}});
+// ---------- provider relay (streaming) ----------
+const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil/i;
+async function listModels(url, key){
+  const r=await fetch(url.replace(/\/+$/,"")+"/models",{headers:{Authorization:"Bearer "+(key||"local")}});
   if(!r.ok) throw new Error("Couldn\u2019t connect ("+r.status+")");
-  const j=await r.json(); return (j.data||[]).map(m=>m.id).filter(Boolean).sort();
+  const j=await r.json();
+  const ids=(j.data||[]).map(m=>m.id).filter(Boolean).filter(id=>!NON_CHAT.test(id)).sort();
+  if(!ids.length) throw new Error("No usable models at this endpoint.");
+  return ids;
 }
-async function chat(messages){
-  const r=await fetch(baseUrl+"/chat/completions",{method:"POST",
-    headers:{Authorization:"Bearer "+apiKey,"Content-Type":"application/json"},
-    body:JSON.stringify({model:$("#model").value, messages, tools:TOOL_DEFS, tool_choice:"auto"})});
-  if(!r.ok){ let d=""; try{d=(await r.json())?.error?.message}catch{ d=await r.text(); } throw new Error("Provider "+r.status+": "+d); }
-  const j=await r.json(); return j.choices?.[0]?.message ?? {role:"assistant",content:""};
+async function chatStream({url, key, model, messages, tools, onDelta}){
+  const body={model, messages, stream:true};
+  if(tools&&tools.length){ body.tools=tools; body.tool_choice="auto"; }
+  const r=await fetch(url.replace(/\/+$/,"")+"/chat/completions",{method:"POST",
+    headers:{Authorization:"Bearer "+(key||"local"),"Content-Type":"application/json"},
+    body:JSON.stringify(body)});
+  if(!r.ok){ let d=""; try{d=(await r.json())?.error?.message}catch{ try{d=await r.text()}catch{} }
+    const e=new Error("Provider "+r.status+": "+(d||"")); e.status=r.status; throw e; }
+  let content=""; const calls=[]; let streamedSome=false;
+  const reader=r.body.getReader(); const dec=new TextDecoder(); let buf="";
+  const line=(l)=>{
+    if(!l.startsWith("data:")) return;
+    const p=l.slice(5).trim(); if(!p||p==="[DONE]") return;
+    let evt; try{ evt=JSON.parse(p);}catch{ return; }
+    const delta=evt.choices?.[0]?.delta; if(!delta) return;
+    if(delta.content){ content+=delta.content; streamedSome=true; if(onDelta) onDelta(delta.content); }
+    for(const tc of delta.tool_calls||[]){
+      const i=tc.index??0;
+      if(!calls[i]) calls[i]={id:tc.id||("call_"+i),type:"function",function:{name:"",arguments:""}};
+      if(tc.id) calls[i].id=tc.id;
+      if(tc.function?.name) calls[i].function.name+=tc.function.name;
+      if(tc.function?.arguments) calls[i].function.arguments+=tc.function.arguments;
+    }
+  };
+  try{
+    while(true){ const {value,done}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      let nl; while((nl=buf.indexOf("\n"))>=0){ line(buf.slice(0,nl).trim()); buf=buf.slice(nl+1); } }
+    if(buf.trim()) line(buf.trim());
+  }catch(e){ e.streamedSome=streamedSome; throw e; }
+  const tc=calls.filter(Boolean);
+  return {role:"assistant", content, tool_calls: tc.length?tc:undefined};
+}
+const benchUntil=new Map();
+async function relayChat({messages, tools, onDelta, onProvider}){
+  if(!chain.length) throw new Error("No providers configured.");
+  const fresh=chain.filter(p=>(benchUntil.get(p.baseUrl)||0)<Date.now());
+  const order=fresh.length?fresh:chain;
+  let lastErr;
+  for(const p of order){
+    try{
+      if(onProvider) onProvider(p);
+      const reply=await chatStream({url:p.baseUrl, key:p.apiKey, model:p.model, messages, tools, onDelta});
+      benchUntil.delete(p.baseUrl);
+      return reply;
+    }catch(e){
+      lastErr=e;
+      if(e.streamedSome) throw e;
+      const st=e.status|0;
+      benchUntil.set(p.baseUrl, Date.now()+(st===429?60000:(st===401||st===403)?300000:20000));
+    }
+  }
+  throw new Error("All providers failed. Last: "+(lastErr?lastErr.message:"unknown"));
 }
 
 // ---------- agent loop (client-side) ----------
@@ -604,7 +671,10 @@ let conversation=[];   // persisted transcript
 let running=false, runId=0, cancelApproval=null;
 function trimConversation(){
   const size=()=>conversation.reduce((n,m)=>n+(m.content?m.content.length:0),0);
-  while(conversation.length>2 && size()>CHAR_BUDGET){
+  if(size()<=CHAR_BUDGET) return;
+  // One big cut instead of shaving every turn: the remaining prefix stays
+  // byte-identical between cuts, which providers' prompt caches key on.
+  while(conversation.length>2 && size()>CHAR_BUDGET/2){
     conversation.shift();
     while(conversation.length && conversation[0].role==="tool") conversation.shift();
   }
@@ -617,10 +687,14 @@ async function runAgent(userText, myRun){
     if(runId!==myRun) return;
     const messages=[{role:"system",content:systemPrompt()},...conversation];
     let reply;
-    try{ reply=await chat(messages); }catch(e){ if(runId===myRun) errorLine(e.message); return; }
+    try{
+      reply=await relayChat({messages, tools:TOOL_DEFS,
+        onDelta:(t)=>{ if(runId===myRun) streamDelta(t); },
+        onProvider:(p)=>{ if(runId===myRun) setProv(p.name||p.baseUrl); }});
+    }catch(e){ if(runId===myRun){ streamDone(); errorLine(e.message); } return; }
     if(runId!==myRun) return;
     const calls=reply.tool_calls||[];
-    if(reply.content) assistantText(reply.content);
+    if(reply.content) streamDone(reply.content); else streamDone();
     if(!calls.length){ conversation.push({role:"assistant",content:reply.content||""}); return; }
     conversation.push({role:"assistant",content:reply.content||"",tool_calls:calls});
     for(const c of calls){
@@ -658,6 +732,22 @@ function md(t){
 function addTurn(cls){ const d=document.createElement("div"); d.className="turn "+cls; logEl.appendChild(d); return d; }
 function userTurn(t){ hideEmpty(); const el=addTurn("user"); el.innerHTML='<div class="who">You</div><div class="bubble"></div>'; el.querySelector(".bubble").textContent=t; scroll(); }
 function assistantText(t){ clearThinking(); const el=addTurn("assistant"); el.innerHTML='<div class="who">Lantern</div><div class="body"></div>'; el.querySelector(".body").innerHTML=md(t); scroll(); }
+let streamEl=null, streamRaw="";
+function streamDelta(t){
+  clearThinking();
+  if(!streamEl){ hideEmpty(); const el=addTurn("assistant");
+    el.innerHTML='<div class="who">Lantern</div><div class="body"></div>';
+    streamEl=el.querySelector(".body"); streamRaw=""; }
+  streamRaw+=t;
+  streamEl.innerHTML=md(streamRaw)+'<span class="cursor">▮</span>';
+  scroll();
+}
+function streamDone(t){
+  if(streamEl){ streamEl.innerHTML=md(t||streamRaw); streamEl=null; streamRaw=""; }
+  else if(t){ assistantText(t); }
+  scroll();
+}
+function setProv(n){ $("#prov").textContent=n||""; }
 function activity(sum){ clearThinking(); const d=document.createElement("div"); d.className="log"; d.innerHTML='<span class="ic">›</span><span></span>'; d.querySelector("span:last-child").textContent=sum; logEl.appendChild(d); scroll(); }
 function toolResult(name,res){
   clearThinking();
@@ -776,7 +866,7 @@ $("#newchat").onclick=()=>{ runId++; if(cancelApproval) cancelApproval(); conver
 
 async function send(){
   const text=input.value.trim(); if(!text||running) return;
-  if(!apiKey){ openOnboarding(); return; }
+  if(!chain.length){ openSetup(); return; }
   input.value=""; input.style.height="auto";
   userTurn(text);
   runId++; const myRun=runId;
@@ -791,7 +881,7 @@ function fillModels(models, selected){
   const sel=$("#model"); sel.innerHTML="";
   models.forEach(m=>{ const o=document.createElement("option"); o.value=m; o.textContent=m; if(m===selected)o.selected=true; sel.appendChild(o); });
   if(selected && !models.includes(selected)){ const o=document.createElement("option"); o.value=selected; o.textContent=selected; o.selected=true; sel.prepend(o); }
-  sel.onchange=()=>localStorage.setItem(LS_MODEL, sel.value);
+  sel.onchange=()=>{ if(chain[0]){ chain[0].model=sel.value; saveChain(!!sessionStorage.getItem(LS_CHAIN)); } };
 }
 function renderCaps(){
   const rows=[
@@ -802,52 +892,104 @@ function renderCaps(){
   ];
   $("#caps").innerHTML=rows.map(([c,t])=>'<div class="r"><span class="'+c+'">'+(c==="y"?"✓":"✕")+'</span><span>'+t+'</span></div>').join("");
 }
-function providerFor(u){ if(!u||u===PRESETS.cerebras.url) return "cerebras"; if(u===PRESETS.ollama.url) return "ollama"; return "custom"; }
-function syncProvider(){
-  const p=PRESETS[$("#provider").value];
-  $("#urlRow").style.display = $("#provider").value==="custom" ? "" : "none";
-  $("#provNote").textContent = p.note;
-  $("#keyInput").placeholder = p.ph;
-  $("#keyLink").style.display = p.link ? "" : "none";
-  if(p.link){ $("#keyLink").href=p.link; $("#keyLink").textContent=p.linkText; }
+function chainRow(p){
+  p = p || { name:"cerebras", baseUrl:PRESETS.cerebras.url, apiKey:"", model:"" };
+  const row=document.createElement("div");
+  row.className="prow"+(p.apiKey?" ok":"");
+  row.dataset.ok = p.apiKey ? "1" : "";
+  const preset = presetFor(p.baseUrl||PRESETS.cerebras.url);
+  row.innerHTML =
+    '<select class="p-preset">'+Object.keys(PRESETS).map(k=>'<option value="'+k+'"'+(k===preset?" selected":"")+'>'+k+'</option>').join("")+'</select>'+
+    '<input class="p-key" type="password" placeholder="API key" autocomplete="off" spellcheck="false" />'+
+    '<button class="minibtn p-test">Test</button>'+
+    '<select class="p-model" style="display:none"></select>'+
+    '<a class="minibtn p-link" target="_blank" rel="noopener" style="text-decoration:none">key ↗</a>'+
+    '<button class="minibtn p-del" title="Remove">✕</button>'+
+    '<input class="p-url" type="text" placeholder="https://api.example.com/v1" style="display:none" autocomplete="off" spellcheck="false" />'+
+    '<span class="p-status"></span>';
+  const sel=row.querySelector(".p-preset"), urlIn=row.querySelector(".p-url");
+  const keyIn=row.querySelector(".p-key"), mSel=row.querySelector(".p-model");
+  const status=row.querySelector(".p-status"), link=row.querySelector(".p-link");
+  if(preset==="custom"){ urlIn.style.display=""; urlIn.value=p.baseUrl||""; }
+  if(p.apiKey){ keyIn.value=p.apiKey; }
+  if(p.model){ mSel.style.display=""; mSel.innerHTML='<option>'+esc(p.model)+'</option>'; }
+  if(p.apiKey){ status.textContent="SAVED"; status.className="p-status ok"; }
+  function syncRow(){
+    const k=sel.value;
+    urlIn.style.display = k==="custom" ? "" : "none";
+    keyIn.placeholder = k==="ollama" ? "no key needed" : "API key";
+    link.style.display = PRESETS[k].link ? "" : "none";
+    link.href = PRESETS[k].link||"#";
+    status.textContent = PRESETS[k].note.toUpperCase(); status.className="p-status";
+    row.dataset.ok=""; row.classList.remove("ok");
+    mSel.style.display="none"; mSel.innerHTML="";
+  }
+  sel.onchange=syncRow;
+  row.querySelector(".p-test").onclick=async ()=>{
+    const k=sel.value;
+    const url = k==="custom" ? urlIn.value.trim() : PRESETS[k].url;
+    if(!url){ status.textContent="ENTER A URL FIRST"; status.className="p-status err"; return; }
+    status.textContent="TESTING…"; status.className="p-status";
+    try{
+      const models=await listModels(url, keyIn.value.trim());
+      mSel.innerHTML=models.map(m=>'<option>'+esc(m)+'</option>').join("");
+      mSel.style.display="";
+      row.dataset.ok="1"; row.classList.add("ok");
+      status.textContent="OK · "+models.length+" MODELS"; status.className="p-status ok";
+    }catch(e){ status.textContent=String(e.message).toUpperCase().slice(0,80); status.className="p-status err"; }
+  };
+  row.querySelector(".p-del").onclick=()=>row.remove();
+  return row;
 }
-$("#provider").onchange=syncProvider;
-function openOnboarding(){
-  $("#provider").value = providerFor(baseUrl);
-  if($("#provider").value==="custom") $("#baseUrl").value = baseUrl||"";
-  syncProvider();
-  $("#overlay").style.display="flex"; renderCaps(); $("#settingsActions").style.display=apiKey?"flex":"none"; $("#keyInput").focus();
+function openSetup(){
+  const box=$("#chain"); box.innerHTML="";
+  (chain.length?chain:[null]).forEach(p=>box.appendChild(chainRow(p)));
+  $("#overlay").style.display="flex"; renderCaps();
+  $("#settingsActions").style.display=chain.length?"flex":"none";
+  $("#keyErr").textContent="";
 }
-$("#settings").onclick=()=>openOnboarding();
+$("#settings").onclick=()=>openSetup();
 $("#closeSettings").onclick=()=>{ $("#overlay").style.display="none"; };
-$("#forgetKey").onclick=()=>{ clearKey(); setDot(""); $("#keyInput").value=""; $("#settingsActions").style.display="none"; $("#keyErr").textContent="Key forgotten. Paste a new one to continue."; };
-$("#saveKey").onclick=async ()=>{
-  const prov=$("#provider").value;
-  const url = prov==="custom" ? $("#baseUrl").value.trim() : PRESETS[prov].url;
-  const k=$("#keyInput").value.trim(); $("#keyErr").textContent="";
-  if(prov==="custom" && !url){ $("#keyErr").textContent="Enter the endpoint URL first."; return; }
-  if(prov==="cerebras" && !k){ $("#keyErr").textContent="Paste your key first."; return; }
-  const btn=$("#saveKey"); btn.disabled=true; btn.textContent="Checking…";
+$("#forgetKey").onclick=()=>{ clearChain(); setProv(""); setDot(""); $("#settingsActions").style.display="none"; $("#keyErr").textContent="Chain forgotten. Build a new one to continue."; $("#chain").innerHTML=""; $("#chain").appendChild(chainRow()); };
+$("#addProv").onclick=()=>$("#chain").appendChild(chainRow());
+$("#saveChain").onclick=async ()=>{
+  $("#keyErr").textContent="";
+  const rows=[...$("#chain").querySelectorAll(".prow")];
+  if(!rows.length){ $("#keyErr").textContent="Add at least one provider."; return; }
+  const next=[];
+  for(const row of rows){
+    const k=row.querySelector(".p-preset").value;
+    const url = k==="custom" ? row.querySelector(".p-url").value.trim() : PRESETS[k].url;
+    if(!url){ $("#keyErr").textContent="A custom row is missing its URL."; return; }
+    if(!row.dataset.ok){ $("#keyErr").textContent="Press Test on each new provider first."; return; }
+    next.push({ name:k, baseUrl:url,
+      apiKey:row.querySelector(".p-key").value.trim(),
+      model:row.querySelector(".p-model").value||"" });
+  }
+  chain=next;
+  saveChain($("#sessionOnly").checked);
+  setProv(chain[0].name);
   try{
-    baseUrl=url; localStorage.setItem(LS_URL, url);
-    storeKey(k||"local", $("#sessionOnly").checked);
-    const models=await listModels();
-    fillModels(models, localStorage.getItem(LS_MODEL)||models[0]);
-    if(!localStorage.getItem(LS_MODEL)) localStorage.setItem(LS_MODEL, models[0]);
-    $("#overlay").style.display="none"; setDot("ok"); renderWorkspace(); input.focus();
-  }catch(e){ clearKey(); $("#keyErr").textContent=e.message; }
-  finally{ btn.disabled=false; btn.textContent="Connect"; }
+    const models=await listModels(chain[0].baseUrl, chain[0].apiKey);
+    fillModels(models, (chain[0].model && models.includes(chain[0].model)) ? chain[0].model : models[0]);
+    if(!chain[0].model || !models.includes(chain[0].model)){ chain[0].model=models[0]; saveChain($("#sessionOnly").checked); }
+  }catch(e){}
+  $("#overlay").style.display="none"; setDot("ok"); renderWorkspace(); input.focus();
 };
 
 // ---------- boot ----------
 (async function(){
   renderWorkspace();
-  if(!apiKey){ openOnboarding(); return; }
+  loadChain();
+  if(!chain.length){ openSetup(); return; }
+  setProv(chain[0].name||"");
+  // Returning user with a saved chain: skip the config screen entirely.
+  $("#overlay").style.display="none";
   try{
-    const models=await listModels();
-    fillModels(models, localStorage.getItem(LS_MODEL)||models[0]);
+    const models=await listModels(chain[0].baseUrl, chain[0].apiKey);
+    fillModels(models, (chain[0].model && models.includes(chain[0].model)) ? chain[0].model : models[0]);
     setDot("ok"); input.focus();
-  }catch(e){ openOnboarding(); }
+  }catch(e){ openSetup(); }
 })();
 </script>
 </body>

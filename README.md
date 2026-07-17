@@ -56,23 +56,27 @@ The approval card is the whole idea — nothing writes or runs until you say so:
 | Run commands / install packages | ✅ | ❌ not possible in a browser |
 | Install required | Node.js | none — just a browser |
 
-Both work with every provider below, and both ask before writing anything.
+Both run the same relay chain, both stream, and both ask before writing anything.
 
 ---
 
-## Choose your AI
+## The relay — free tiers, stacked
 
-Lantern speaks to any OpenAI-compatible endpoint. Pick one at first run — or press **⚙** any time to switch:
+Lantern doesn't use *a* provider. It holds a **relay chain** of OpenAI-compatible endpoints, tried top-to-bottom — and when one rate-limits you (HTTP 429), it hops to the next **automatically, mid-session**, then benches the limited one for a minute. Your free quotas stack:
 
-| | Cost | Privacy | Needs |
+| Link | Speed | Free tier | Get a key |
 |---|---|---|---|
-| **Cerebras cloud** (default) | free tier, ~1M tokens/day | your code goes to Cerebras only | a free API key |
-| **Ollama — local** | **free forever, no tokens, no account** | **total — nothing leaves your machine, works offline** | [Ollama](https://ollama.com) + `ollama pull qwen2.5-coder:7b` (~8 GB RAM) |
-| **Custom URL** | varies | varies | Groq, OpenRouter, LM Studio, llama.cpp, a home server… |
+| **Cerebras** | ~1,800 tok/s | ~1M tokens/day | [cloud.cerebras.ai](https://cloud.cerebras.ai/) |
+| **Groq** | 500–3,000+ tok/s | 14,400 requests/day, forever | [console.groq.com/keys](https://console.groq.com/keys) |
+| **SambaNova** | 400–600+ tok/s | persistent free tier, huge models | [cloud.sambanova.ai](https://cloud.sambanova.ai/) |
+| **Gemini** | fast | generous free tier | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| **Ollama — local** | your hardware | **free forever, offline, fully private** | none — [install](https://ollama.com) + `ollama pull qwen2.5-coder:7b` |
 
-For local models, pick one that supports tool calling — `qwen2.5-coder:7b` or `llama3.1:8b` are good starts. Bigger machine, bigger model.
+Build the chain at first run (or press **⚙** any time): add a row per provider, **Test**, pick a model, **Save chain**. One provider is fine too — the chain can be a single link.
 
-> **Cerebras note:** on **Aug 17, 2026** Cerebras retires `glm-4.7` and raises free-tier rate limits. Lantern fetches the model list live from your key, so new models simply appear — if a saved model is retired, just pick another from the dropdown.
+Responses **stream in live**, token by token, and the header shows which link answered. Lantern also keeps its prompts byte-stable between requests, so providers with prompt caching (Cerebras's cache-aware limits, for one) give you more free tokens and faster starts.
+
+For local models, pick one that supports tool calling — `qwen2.5-coder:7b` or `llama3.1:8b` are good starts.
 
 ---
 
@@ -92,10 +96,11 @@ git clone https://github.com/JAMMx2/lantern.git
 - **Linux:** run `bash install/install-linux.sh`.
 - **Windows:** open the `install` folder, right-click `install-windows.ps1` → **Run with PowerShell**.
 
-Your browser opens to Lantern. The first time, it asks you to pick a provider:
+Your browser opens to Lantern. The first time, it asks you to build your relay chain:
 
-- **Cerebras cloud** (fastest): create a free API key at cloud.cerebras.ai (no credit card), paste it, **Connect**.
-- **Ollama** (free forever, local): install it from ollama.com, run `ollama pull qwen2.5-coder:7b`, **Connect** — no key at all.
+- Quickest start: one **Cerebras** row — free key from cloud.cerebras.ai (no credit card), paste, **Test**, **Save chain**.
+- Add **Groq** and **Gemini** rows as fallbacks so a rate limit never stops you.
+- **Ollama** (free forever, local): install from ollama.com, run `ollama pull qwen2.5-coder:7b`, add it as the last link.
 
 Then pick the **folder** you want Lantern to work in (top right), choose a **model**, and start typing.
 
@@ -170,7 +175,8 @@ lantern/
 
 - **Requirements:** Node 18+ (uses native `fetch`, `http`, `fs`, `child_process`). No `npm install` needed.
 - **Run directly:** `node bin/lantern.js` (or `npm start`). Set `PORT` to change the port (default 4317; it auto-increments if busy).
-- **API:** any OpenAI-compatible endpoint works — Cerebras (`https://api.cerebras.ai/v1`), Ollama (`http://localhost:11434/v1`), Groq, OpenRouter, LM Studio… The model list is fetched live from the endpoint; if a model errors on tool use, pick one that supports function calling.
+- **API:** any OpenAI-compatible endpoint works — Cerebras, Groq, SambaNova, Gemini (OpenAI mode), Ollama, LM Studio… The relay lives in `src/cerebras.js`: streaming SSE client with incremental tool-call assembly, plus per-provider cooldown benching (60s after a 429). Model lists are fetched live and filtered to chat-capable models.
+- **Events:** the server streams NDJSON — `provider`, `assistant_delta`, `assistant_done`, `tool_request`, `tool_result`, `error`, `done`.
 - **Extending:** add a tool by (1) implementing it in `tools.js`, (2) adding its JSON schema to `TOOL_DEFS`, (3) deciding whether it belongs in `NEEDS_APPROVAL`.
 - **The UI** is a deliberate retro phosphor terminal — scanlines, glow, and approval cards are pure CSS. No images, fonts, or scripts are loaded from anywhere. If you rename the product, change the name in `package.json`, the wordmarks in `public/index.html` + `lantern-lite.html`, and the config folder in `src/config.js`.
 
