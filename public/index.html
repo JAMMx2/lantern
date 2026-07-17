@@ -109,7 +109,7 @@
   select:hover, .folder-btn:hover{border-color:var(--green)}
   .folder-btn{
     max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    direction:rtl; text-align:left; cursor:pointer;
+    text-align:left; cursor:pointer;
   }
   .dot{
     width:9px; height:9px; border-radius:1px; background:var(--faint);
@@ -340,6 +340,24 @@
   .err-msg{color:var(--red); font-size:12px; margin-top:10px; min-height:16px}
 
   .prov-note{font-size:11.5px; color:var(--faint); margin-top:8px; line-height:1.7; min-height:16px}
+  .cursor{color:var(--green); animation:blink 1.1s steps(2,start) infinite; text-shadow:var(--glow-g)}
+  .prow{
+    display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+    border:1px solid var(--line); border-left:2px solid var(--line-br);
+    border-radius:2px; padding:8px; margin-bottom:8px; background:var(--well);
+  }
+  .prow.ok{border-left-color:var(--green)}
+  .prow select,.prow input{background:#020403; border:1px solid var(--line-br); color:var(--green-hi);
+    border-radius:2px; padding:6px 8px; font-family:var(--mono); font-size:12px}
+  .prow .p-key{flex:1; min-width:130px}
+  .prow .p-url{flex:1 1 100%; min-width:200px}
+  .prow .p-model{max-width:170px}
+  .prow .p-status{font-size:10px; letter-spacing:.12em; color:var(--faint); flex-basis:100%}
+  .prow .p-status.ok{color:var(--ok)}
+  .prow .p-status.err{color:var(--red)}
+  .minibtn{background:transparent; border:1px solid var(--line-br); color:var(--muted);
+    border-radius:2px; padding:5px 10px; font-size:11px; text-transform:uppercase; letter-spacing:.1em}
+  .minibtn:hover{border-color:var(--green); color:var(--green-hi)}
   @media (max-width:900px){ .sysline{display:none} }
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important; transition:none !important}
@@ -352,7 +370,7 @@
 <div class="crt-sweep" aria-hidden="true"></div>
 
 <header>
-  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver">v0.2</span></div>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver">v0.3</span></div>
   <span class="sysline">localhost · your model · your files</span>
   <div class="strip-spacer"></div>
   <div class="field">
@@ -366,6 +384,7 @@
   <button class="newchat" id="newchat" title="Start a fresh conversation">New chat</button>
   <button class="newchat" id="settings" title="Provider &amp; key">⚙</button>
   <div class="field">
+    <span class="micro" id="prov" title="Active provider"></span>
     <span class="dot" id="dot"></span>
   </div>
 </header>
@@ -393,34 +412,22 @@
 <div class="overlay" id="overlay" style="display:none">
   <div class="card">
     <h1><span class="mark">✦</span> Lantern</h1>
-    <p class="sub">Bring your own AI: the free Cerebras cloud tier, a fully local model via Ollama, or any OpenAI-compatible endpoint. Keys stay on this computer.</p>
+    <p class="sub">Build your relay chain: Lantern tries providers top-to-bottom and hops to the next when one rate-limits. Free tiers stack. Keys stay on this computer.</p>
 
     <div class="step">
-      <div class="lbl"><b>01 /</b> Choose your provider.</div>
-      <div class="row">
-        <select id="provider" style="flex:1; max-width:none">
-          <option value="cerebras">Cerebras cloud — fastest, free tier</option>
-          <option value="ollama">Ollama on this computer — free forever, private</option>
-          <option value="custom">Custom OpenAI-compatible URL…</option>
-        </select>
-      </div>
-      <div class="row" id="urlRow" style="display:none; margin-top:9px">
-        <input id="baseUrl" type="text" placeholder="https://api.example.com/v1" autocomplete="off" spellcheck="false" />
-      </div>
-      <div class="prov-note" id="provNote"></div>
+      <div class="lbl"><b>01 /</b> Providers — fastest first.</div>
+      <div id="chain"></div>
+      <button class="minibtn" id="addProv">+ add fallback provider</button>
+      <div class="prov-note">Suggested free chain: Cerebras → Groq → Gemini. Add Ollama last as the offline safety net.</div>
     </div>
 
     <div class="step">
-      <div class="lbl" id="keyLbl"><b>02 /</b> Connect.</div>
+      <div class="lbl"><b>02 /</b> Save.</div>
       <div class="row">
-        <a class="linkbtn" id="keyLink" href="https://cloud.cerebras.ai/" target="_blank" rel="noopener">get a free key ↗</a>
-        <input id="keyInput" type="password" placeholder="csk-…" autocomplete="off" spellcheck="false" />
-        <button class="primary" id="saveKey">Connect</button>
+        <button class="primary" id="saveChain">Save chain</button>
+        <button class="newchat" id="closeSetup" style="display:none">Close</button>
       </div>
       <div class="err-msg" id="keyErr"></div>
-      <div class="row" id="setupActions" style="display:none; margin-top:6px">
-        <button class="newchat" id="closeSetup">Close</button>
-      </div>
     </div>
   </div>
 </div>
@@ -602,17 +609,40 @@ async function send(){
     else{ errorLine(e.message); }
   }finally{
     clearThinking();
+    streamDone();
     running=false; sendBtn.disabled=false; stopBtn.style.display="none";
     controller=null;
     if(dot.className.indexOf("err")<0) setDot("ok");
   }
 }
 
+let streamEl = null, streamRaw = "";
+function streamDelta(text){
+  if(!streamEl){
+    hideEmpty();
+    const t = addTurn("assistant");
+    t.innerHTML = '<div class="who">Lantern</div><div class="body"></div>';
+    streamEl = t.querySelector(".body"); streamRaw = "";
+  }
+  streamRaw += text;
+  streamEl.innerHTML = md(streamRaw) + '<span class="cursor">▮</span>';
+  scroll();
+}
+function streamDone(text){
+  if(streamEl){ streamEl.innerHTML = md(text || streamRaw); streamEl = null; streamRaw = ""; }
+  else if(text){ assistantText(text); }
+  scroll();
+}
+function setProv(name){ $("#prov").textContent = name || ""; }
+
 function handleEvent(evt){
   // First real output arrives -> drop the thinking placeholder. Reads and
   // further steps re-show it while the model works on the next step.
   if(evt.type!=="done") clearThinking();
   switch(evt.type){
+    case "provider": setProv(evt.name); break;
+    case "assistant_delta": streamDelta(evt.text); break;
+    case "assistant_done": streamDone(evt.text); if(running) showThinking(); break;
     case "assistant_text": assistantText(evt.text); break;
     case "tool_activity": activity(evt.name, evt.summary); if(running) showThinking(); break;
     case "tool_request": authorizeCard(evt); break;        // waiting on the user, not the model
@@ -657,7 +687,7 @@ folderBtn.onclick = async ()=>{
 };
 function setFolder(path){
   folderBtn.dataset.path = path;
-  folderBtn.textContent = path;
+  folderBtn.textContent = path.length > 42 ? "…" + path.slice(-41) : path;
   folderBtn.title = "Working folder: "+path;
 }
 function fillModels(models, selected){
@@ -673,82 +703,140 @@ function fillModels(models, selected){
   }
 }
 
-// ---- provider setup ----
+// ---- relay chain setup ----
 const PRESETS = {
-  cerebras: { url:"https://api.cerebras.ai/v1", ph:"csk-…",
-    link:"https://cloud.cerebras.ai/", linkText:"get a free key ↗",
-    note:"Free tier: ~1M tokens/day, no credit card. The fastest option." },
-  ollama:   { url:"http://localhost:11434/v1", ph:"no key needed — leave blank",
-    link:"https://ollama.com/download", linkText:"get ollama ↗",
-    note:"Runs on YOUR machine — free forever, offline, nothing leaves your computer. Install Ollama, then run: ollama pull qwen2.5-coder:7b" },
-  custom:   { url:"", ph:"key (leave blank if not required)",
-    link:"", linkText:"",
-    note:"Any OpenAI-compatible endpoint works: Groq, OpenRouter, LM Studio, llama.cpp, a home server…" },
+  cerebras:  { url:"https://api.cerebras.ai/v1", link:"https://cloud.cerebras.ai/", note:"~1M tokens/day free · fastest" },
+  groq:      { url:"https://api.groq.com/openai/v1", link:"https://console.groq.com/keys", note:"14.4k requests/day free · very fast" },
+  sambanova: { url:"https://api.sambanova.ai/v1", link:"https://cloud.sambanova.ai/", note:"free tier · big models, fast" },
+  gemini:    { url:"https://generativelanguage.googleapis.com/v1beta/openai", link:"https://aistudio.google.com/apikey", note:"generous free tier" },
+  ollama:    { url:"http://localhost:11434/v1", link:"https://ollama.com/download", note:"local · free forever · no key" },
+  custom:    { url:"", link:"", note:"any OpenAI-compatible endpoint" },
 };
-let CURRENT = { baseUrl: PRESETS.cerebras.url, configured:false };
-const provSel=$("#provider"), urlRow=$("#urlRow"), baseUrlIn=$("#baseUrl");
-const provNote=$("#provNote"), keyLink=$("#keyLink");
-function providerFor(url){
-  if(!url || url===PRESETS.cerebras.url) return "cerebras";
-  if(url===PRESETS.ollama.url) return "ollama";
+let CURRENT = { providers: [], configured:false };
+
+function presetFor(url){
+  for(const [k,v] of Object.entries(PRESETS)){ if(v.url && v.url===url) return k; }
   return "custom";
 }
-function syncProvider(){
-  const p = PRESETS[provSel.value];
-  urlRow.style.display = provSel.value==="custom" ? "" : "none";
-  provNote.textContent = p.note;
-  keyInput.placeholder = p.ph;
-  keyLink.style.display = p.link ? "" : "none";
-  if(p.link){ keyLink.href = p.link; keyLink.textContent = p.linkText; }
+function chainRow(p){
+  p = p || { name:"cerebras", baseUrl:PRESETS.cerebras.url, model:"", hasKey:false };
+  const row = document.createElement("div");
+  row.className = "prow" + (p.hasKey ? " ok" : "");
+  row.dataset.saved = p.hasKey ? "1" : "";
+  const preset = presetFor(p.baseUrl || PRESETS[p.name||"cerebras"].url);
+  row.innerHTML =
+    '<select class="p-preset">' +
+      Object.keys(PRESETS).map(k=>'<option value="'+k+'"'+(k===preset?" selected":"")+'>'+k+'</option>').join("") +
+    '</select>' +
+    '<input class="p-key" type="password" placeholder="API key" autocomplete="off" spellcheck="false" />' +
+    '<button class="minibtn p-test">Test</button>' +
+    '<select class="p-model" style="display:none"></select>' +
+    '<a class="minibtn p-link" target="_blank" rel="noopener" style="text-decoration:none">key ↗</a>' +
+    '<button class="minibtn p-del" title="Remove">✕</button>' +
+    '<input class="p-url" type="text" placeholder="https://api.example.com/v1" style="display:none" autocomplete="off" spellcheck="false" />' +
+    '<span class="p-status"></span>';
+  const sel=row.querySelector(".p-preset"), urlIn=row.querySelector(".p-url");
+  const keyIn=row.querySelector(".p-key"), modelSel2=row.querySelector(".p-model");
+  const status=row.querySelector(".p-status"), link=row.querySelector(".p-link");
+  if(preset==="custom"){ urlIn.style.display=""; urlIn.value = p.baseUrl||""; }
+  if(p.model){ modelSel2.style.display=""; modelSel2.innerHTML='<option>'+esc(p.model)+'</option>'; }
+  if(p.hasKey){ keyIn.placeholder="key saved — leave blank to keep"; status.textContent="SAVED"; status.className="p-status ok"; }
+  function syncRow(){
+    const k = sel.value;
+    urlIn.style.display = k==="custom" ? "" : "none";
+    keyIn.placeholder = k==="ollama" ? "no key needed" : (row.dataset.saved ? "key saved — leave blank to keep" : "API key");
+    link.style.display = PRESETS[k].link ? "" : "none";
+    link.href = PRESETS[k].link || "#";
+    status.textContent = PRESETS[k].note.toUpperCase();
+    status.className = "p-status";
+    row.dataset.saved=""; row.classList.remove("ok");
+    modelSel2.style.display="none"; modelSel2.innerHTML="";
+  }
+  sel.onchange = syncRow;
+  row.querySelector(".p-test").onclick = async ()=>{
+    const k = sel.value;
+    const url = k==="custom" ? urlIn.value.trim() : PRESETS[k].url;
+    if(!url){ status.textContent="ENTER A URL FIRST"; status.className="p-status err"; return; }
+    status.textContent="TESTING…"; status.className="p-status";
+    try{
+      const r = await api("/api/provider/test",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({baseUrl:url, apiKey:keyIn.value.trim()})});
+      const j = await r.json();
+      if(!r.ok) throw new Error(j.error||"failed");
+      modelSel2.innerHTML = j.models.map(m=>'<option>'+esc(m)+'</option>').join("");
+      modelSel2.style.display="";
+      row.dataset.saved="1"; row.classList.add("ok");
+      status.textContent = "OK · "+j.models.length+" MODELS"; status.className="p-status ok";
+    }catch(e){ status.textContent = String(e.message).toUpperCase().slice(0,80); status.className="p-status err"; }
+  };
+  row.querySelector(".p-del").onclick = ()=>row.remove();
+  return row;
 }
-provSel.onchange = syncProvider;
 function openSetup(){
-  provSel.value = providerFor(CURRENT.baseUrl);
-  if(provSel.value==="custom") baseUrlIn.value = CURRENT.baseUrl||"";
-  $("#setupActions").style.display = CURRENT.configured ? "" : "none";
-  syncProvider();
-  overlay.style.display="flex"; keyInput.focus();
+  const box = $("#chain"); box.innerHTML="";
+  const list = CURRENT.providers.length ? CURRENT.providers : [null];
+  list.forEach(p=>box.appendChild(chainRow(p)));
+  $("#closeSetup").style.display = CURRENT.configured ? "" : "none";
+  keyErr.textContent="";
+  overlay.style.display="flex";
 }
 $("#settings").onclick = openSetup;
 $("#closeSetup").onclick = ()=>{ overlay.style.display="none"; };
+$("#addProv").onclick = ()=>$("#chain").appendChild(chainRow());
 
-$("#saveKey").onclick = async ()=>{
-  const p = provSel.value;
-  const url = p==="custom" ? baseUrlIn.value.trim() : PRESETS[p].url;
-  const key = keyInput.value.trim();
+$("#saveChain").onclick = async ()=>{
   keyErr.textContent="";
-  if(p==="custom" && !url){ keyErr.textContent="Enter the endpoint URL first."; return; }
-  if(p==="cerebras" && !key){ keyErr.textContent="Paste your key first."; return; }
-  const btn=$("#saveKey"); btn.disabled=true; btn.textContent="Checking…";
+  const rows = [...$("#chain").querySelectorAll(".prow")];
+  if(!rows.length){ keyErr.textContent="Add at least one provider."; return; }
+  const providers = [];
+  for(const row of rows){
+    const k = row.querySelector(".p-preset").value;
+    const url = k==="custom" ? row.querySelector(".p-url").value.trim() : PRESETS[k].url;
+    if(!url){ keyErr.textContent="A custom row is missing its URL."; return; }
+    if(!row.dataset.saved){ keyErr.textContent="Press Test on each new provider first."; return; }
+    providers.push({
+      name:k, baseUrl:url,
+      apiKey: row.querySelector(".p-key").value.trim(),
+      model: row.querySelector(".p-model").value || "",
+    });
+  }
+  const btn=$("#saveChain"); btn.disabled=true; btn.textContent="Saving…";
   try{
-    const r = await api("/api/key",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({apiKey:key, baseUrl:url})});
+    const r = await api("/api/providers",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({providers})});
     const j = await r.json();
-    if(!r.ok){ keyErr.textContent = j.error||"That didn't work."; return; }
-    CURRENT = { baseUrl:url, configured:true };
-    overlay.style.display="none";
+    if(!r.ok) throw new Error(j.error||"Couldn't save.");
     const cfg = await (await api("/api/config")).json();
-    fillModels(j.models, (cfg.model && j.models.includes(cfg.model)) ? cfg.model : j.models[0]);
-    if(!cfg.model || !j.models.includes(cfg.model)){ modelSel.value=j.models[0];
-      api("/api/model",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({model:j.models[0]})}); }
-    setFolder(cfg.cwd);
-    setDot("ok");
-    input.focus();
+    CURRENT = { providers:cfg.providers||[], configured:!!cfg.configured };
+    setProv(CURRENT.providers[0] ? CURRENT.providers[0].name : "");
+    const mr = await api("/api/models");
+    if(mr.ok){
+      const { models } = await mr.json();
+      const want = CURRENT.providers[0] && CURRENT.providers[0].model;
+      fillModels(models||[], (want && models.includes(want)) ? want : (models||[])[0]);
+      if(!want || !models.includes(want)){
+        api("/api/model",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({model:models[0]})});
+      }
+    }
+    overlay.style.display="none";
+    setDot("ok"); input.focus();
   }catch(e){ keyErr.textContent = e.message; }
-  finally{ btn.disabled=false; btn.textContent="Connect"; }
+  finally{ btn.disabled=false; btn.textContent="Save chain"; }
 };
 
 // ---- boot ----
 (async function boot(){
   const cfg = await (await api("/api/config")).json();
-  CURRENT = { baseUrl: cfg.baseUrl || PRESETS.cerebras.url, configured: !!cfg.configured };
+  CURRENT = { providers: cfg.providers||[], configured: !!cfg.configured };
+  setProv(CURRENT.providers[0] ? CURRENT.providers[0].name : "");
   setFolder(cfg.cwd);
   if(!cfg.configured){ openSetup(); return; }
   try{
     const { models } = await (await api("/api/models")).json();
-    fillModels(models||[], cfg.model || (models&&models[0]));
-    if(!cfg.model && models && models[0]){
+    const want = CURRENT.providers[0] && CURRENT.providers[0].model;
+    fillModels(models||[], (want && models.includes(want)) ? want : (models&&models[0]));
+    if((!want || !models.includes(want)) && models && models[0]){
       api("/api/model",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({model:models[0]})});
     }
