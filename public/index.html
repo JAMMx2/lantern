@@ -339,6 +339,7 @@
   .primary:disabled{opacity:.45; cursor:not-allowed; box-shadow:none}
   .err-msg{color:var(--red); font-size:12px; margin-top:10px; min-height:16px}
 
+  .prov-note{font-size:11.5px; color:var(--faint); margin-top:8px; line-height:1.7; min-height:16px}
   @media (max-width:900px){ .sysline{display:none} }
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important; transition:none !important}
@@ -351,8 +352,8 @@
 <div class="crt-sweep" aria-hidden="true"></div>
 
 <header>
-  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver">v0.1</span></div>
-  <span class="sysline">localhost · your key · your files</span>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver">v0.2</span></div>
+  <span class="sysline">localhost · your model · your files</span>
   <div class="strip-spacer"></div>
   <div class="field">
     <span class="micro">Model</span>
@@ -363,6 +364,7 @@
     <button class="folder-btn" id="folder" title="Click to change the working folder">…</button>
   </div>
   <button class="newchat" id="newchat" title="Start a fresh conversation">New chat</button>
+  <button class="newchat" id="settings" title="Provider &amp; key">⚙</button>
   <div class="field">
     <span class="dot" id="dot"></span>
   </div>
@@ -391,20 +393,34 @@
 <div class="overlay" id="overlay" style="display:none">
   <div class="card">
     <h1><span class="mark">✦</span> Lantern</h1>
-    <p class="sub">Lantern uses your own Cerebras key. It stays on this computer and is never sent anywhere except Cerebras.</p>
+    <p class="sub">Bring your own AI: the free Cerebras cloud tier, a fully local model via Ollama, or any OpenAI-compatible endpoint. Keys stay on this computer.</p>
 
     <div class="step">
-      <div class="lbl"><b>01 /</b> Get a free API key from Cerebras (no credit card).</div>
-      <a class="linkbtn" href="https://cloud.cerebras.ai/" target="_blank" rel="noopener">open cloud.cerebras.ai ↗</a>
+      <div class="lbl"><b>01 /</b> Choose your provider.</div>
+      <div class="row">
+        <select id="provider" style="flex:1; max-width:none">
+          <option value="cerebras">Cerebras cloud — fastest, free tier</option>
+          <option value="ollama">Ollama on this computer — free forever, private</option>
+          <option value="custom">Custom OpenAI-compatible URL…</option>
+        </select>
+      </div>
+      <div class="row" id="urlRow" style="display:none; margin-top:9px">
+        <input id="baseUrl" type="text" placeholder="https://api.example.com/v1" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="prov-note" id="provNote"></div>
     </div>
 
     <div class="step">
-      <div class="lbl"><b>02 /</b> Paste your key here.</div>
+      <div class="lbl" id="keyLbl"><b>02 /</b> Connect.</div>
       <div class="row">
+        <a class="linkbtn" id="keyLink" href="https://cloud.cerebras.ai/" target="_blank" rel="noopener">get a free key ↗</a>
         <input id="keyInput" type="password" placeholder="csk-…" autocomplete="off" spellcheck="false" />
         <button class="primary" id="saveKey">Connect</button>
       </div>
       <div class="err-msg" id="keyErr"></div>
+      <div class="row" id="setupActions" style="display:none; margin-top:6px">
+        <button class="newchat" id="closeSetup">Close</button>
+      </div>
     </div>
   </div>
 </div>
@@ -657,21 +673,63 @@ function fillModels(models, selected){
   }
 }
 
-// ---- onboarding ----
+// ---- provider setup ----
+const PRESETS = {
+  cerebras: { url:"https://api.cerebras.ai/v1", ph:"csk-…",
+    link:"https://cloud.cerebras.ai/", linkText:"get a free key ↗",
+    note:"Free tier: ~1M tokens/day, no credit card. The fastest option." },
+  ollama:   { url:"http://localhost:11434/v1", ph:"no key needed — leave blank",
+    link:"https://ollama.com/download", linkText:"get ollama ↗",
+    note:"Runs on YOUR machine — free forever, offline, nothing leaves your computer. Install Ollama, then run: ollama pull qwen2.5-coder:7b" },
+  custom:   { url:"", ph:"key (leave blank if not required)",
+    link:"", linkText:"",
+    note:"Any OpenAI-compatible endpoint works: Groq, OpenRouter, LM Studio, llama.cpp, a home server…" },
+};
+let CURRENT = { baseUrl: PRESETS.cerebras.url, configured:false };
+const provSel=$("#provider"), urlRow=$("#urlRow"), baseUrlIn=$("#baseUrl");
+const provNote=$("#provNote"), keyLink=$("#keyLink");
+function providerFor(url){
+  if(!url || url===PRESETS.cerebras.url) return "cerebras";
+  if(url===PRESETS.ollama.url) return "ollama";
+  return "custom";
+}
+function syncProvider(){
+  const p = PRESETS[provSel.value];
+  urlRow.style.display = provSel.value==="custom" ? "" : "none";
+  provNote.textContent = p.note;
+  keyInput.placeholder = p.ph;
+  keyLink.style.display = p.link ? "" : "none";
+  if(p.link){ keyLink.href = p.link; keyLink.textContent = p.linkText; }
+}
+provSel.onchange = syncProvider;
+function openSetup(){
+  provSel.value = providerFor(CURRENT.baseUrl);
+  if(provSel.value==="custom") baseUrlIn.value = CURRENT.baseUrl||"";
+  $("#setupActions").style.display = CURRENT.configured ? "" : "none";
+  syncProvider();
+  overlay.style.display="flex"; keyInput.focus();
+}
+$("#settings").onclick = openSetup;
+$("#closeSetup").onclick = ()=>{ overlay.style.display="none"; };
+
 $("#saveKey").onclick = async ()=>{
+  const p = provSel.value;
+  const url = p==="custom" ? baseUrlIn.value.trim() : PRESETS[p].url;
   const key = keyInput.value.trim();
   keyErr.textContent="";
-  if(!key){ keyErr.textContent="Paste your key first."; return; }
+  if(p==="custom" && !url){ keyErr.textContent="Enter the endpoint URL first."; return; }
+  if(p==="cerebras" && !key){ keyErr.textContent="Paste your key first."; return; }
   const btn=$("#saveKey"); btn.disabled=true; btn.textContent="Checking…";
   try{
     const r = await api("/api/key",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({apiKey:key})});
+      body:JSON.stringify({apiKey:key, baseUrl:url})});
     const j = await r.json();
     if(!r.ok){ keyErr.textContent = j.error||"That didn't work."; return; }
+    CURRENT = { baseUrl:url, configured:true };
     overlay.style.display="none";
     const cfg = await (await api("/api/config")).json();
-    fillModels(j.models, cfg.model || j.models[0]);
-    if(!cfg.model){ modelSel.value=j.models[0];
+    fillModels(j.models, (cfg.model && j.models.includes(cfg.model)) ? cfg.model : j.models[0]);
+    if(!cfg.model || !j.models.includes(cfg.model)){ modelSel.value=j.models[0];
       api("/api/model",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({model:j.models[0]})}); }
     setFolder(cfg.cwd);
@@ -684,8 +742,9 @@ $("#saveKey").onclick = async ()=>{
 // ---- boot ----
 (async function boot(){
   const cfg = await (await api("/api/config")).json();
+  CURRENT = { baseUrl: cfg.baseUrl || PRESETS.cerebras.url, configured: !!cfg.configured };
   setFolder(cfg.cwd);
-  if(!cfg.configured){ overlay.style.display="flex"; keyInput.focus(); return; }
+  if(!cfg.configured){ openSetup(); return; }
   try{
     const { models } = await (await api("/api/models")).json();
     fillModels(models||[], cfg.model || (models&&models[0]));
@@ -696,7 +755,7 @@ $("#saveKey").onclick = async ()=>{
     setDot("ok"); input.focus();
   }catch{
     setDot("err");
-    errorLine("Couldn't reach Cerebras to load models. Check your connection.");
+    errorLine("Couldn't reach your AI provider to load models. Check your connection, or press \u2699 to switch provider.");
   }
 })();
 </script>
