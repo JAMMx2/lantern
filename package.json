@@ -1,6 +1,6 @@
 {
   "name": "lantern-agent",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A private coding agent with a provider relay: stacks free tiers (Cerebras, Groq, SambaNova, Gemini) with automatic failover, streams live, runs fully local via Ollama if you want. Asks before it acts.",
   "type": "module",
   "bin": {

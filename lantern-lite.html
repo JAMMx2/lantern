@@ -599,7 +599,7 @@ Work in small, clear steps and explain what you're doing in plain, non-technical
 }
 
 // ---------- provider relay (streaming) ----------
-const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil/i;
+const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil|gemma|veo|imagen|aqa|learnlm|live|dialog/i;
 async function listModels(url, key){
   const r=await fetch(url.replace(/\/+$/,"")+"/models",{headers:{Authorization:"Bearer "+(key||"local")}});
   if(!r.ok) throw new Error("Couldn\u2019t connect ("+r.status+")");
@@ -608,8 +608,15 @@ async function listModels(url, key){
   if(!ids.length) throw new Error("No usable models at this endpoint.");
   return ids;
 }
+function sanitizeMessages(msgs){
+  return msgs.map(m=>{
+    if(m.role==="assistant" && m.tool_calls && !m.content){ const {content, ...rest}=m; return rest; }
+    if(m.role==="tool" && !m.content){ return {...m, content:"(no output)"}; }
+    return m;
+  });
+}
 async function chatStream({url, key, model, messages, tools, onDelta}){
-  const body={model, messages, stream:true};
+  const body={model, messages:sanitizeMessages(messages), stream:true};
   if(tools&&tools.length){ body.tools=tools; body.tool_choice="auto"; }
   const r=await fetch(url.replace(/\/+$/,"")+"/chat/completions",{method:"POST",
     headers:{Authorization:"Bearer "+(key||"local"),"Content-Type":"application/json"},
