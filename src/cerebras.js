@@ -9,7 +9,9 @@ export const DEFAULT_BASE_URL = "https://api.cerebras.ai/v1";
 const baseOf = (u) => String(u || DEFAULT_BASE_URL).replace(/\/+$/, "");
 
 // Models that show up on /models but can't hold a tool-calling chat.
-const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil/i;
+// Also excludes Gemini-listed models that can't do function calling
+// (gemma, veo, imagen, aqa, learnlm, live/audio variants) — picking one 400s.
+const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil|gemma|veo|imagen|aqa|learnlm|live|dialog/i;
 
 // Shown only if the live /models call fails (no key yet, offline, etc.).
 export const FALLBACK_MODELS = [
@@ -46,8 +48,24 @@ export async function listModels(apiKey, baseUrl) {
  * { role, content, tool_calls? } exactly like the old non-streaming call,
  * so the agent loop doesn't care that it streamed.
  */
+// Some providers (Gemini's OpenAI-compat layer, notably) reject assistant
+// turns that carry tool_calls with an empty content string: 400
+// "contents.parts must not be empty". Omit empty content on the wire.
+function sanitizeMessages(messages) {
+  return messages.map((m) => {
+    if (m.role === "assistant" && m.tool_calls && !m.content) {
+      const { content, ...rest } = m;
+      return rest;
+    }
+    if (m.role === "tool" && !m.content) {
+      return { ...m, content: "(no output)" };
+    }
+    return m;
+  });
+}
+
 export async function chatCompletionStream({ apiKey, baseUrl, model, messages, tools, onDelta }) {
-  const body = { model, messages, stream: true };
+  const body = { model, messages: sanitizeMessages(messages), stream: true };
   if (tools && tools.length) {
     body.tools = tools;
     body.tool_choice = "auto";
