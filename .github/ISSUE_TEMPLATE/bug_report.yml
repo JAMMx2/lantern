@@ -1,0 +1,59 @@
+name: "🐛 Bug report"
+description: "Something broke — an error, a wrong result, a dead button."
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The four fields below let us reproduce most bugs on the first try.
+  - type: dropdown
+    id: build
+    attributes:
+      label: Which Lantern?
+      options:
+        - The app (node bin/lantern.js)
+        - Hosted Lantern Lite (jammx2.github.io/lantern)
+        - Lantern Lite opened from a local file
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider (the relay link that was active)
+      description: Shown in the top-right of the header, e.g. [ GEMINI ]
+      options:
+        - cerebras
+        - groq
+        - sambanova
+        - gemini
+        - ollama
+        - custom
+        - not sure
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      placeholder: "e.g. llama-3.3-70b, gemini-2.5-flash, qwen2.5-coder:7b"
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Exact error line
+      description: Copy the red ✕ line from the transcript, word for word.
+      placeholder: "Provider error 400: ..."
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: What did you ask Lantern to do?
+      placeholder: "e.g. 'make a countdown page' — it read index.html, then failed on the first write"
+  - type: input
+    id: env
+    attributes:
+      label: OS / browser / Node version
+      placeholder: "e.g. Windows 11, Chrome 130, Node 22"

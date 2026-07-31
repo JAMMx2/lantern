@@ -1,0 +1,17 @@
+name: "✦ Feature request"
+description: "An idea to make Lantern better."
+title: "[idea] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem or wish?
+      placeholder: "e.g. I want the relay to prefer whichever provider was fastest recently"
+    validations:
+      required: true
+  - type: textarea
+    id: sketch
+    attributes:
+      label: How might it work?
+      placeholder: "Optional — UI sketch, flag name, behavior"
