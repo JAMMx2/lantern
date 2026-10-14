@@ -1,7 +1,7 @@
 {
   "name": "lantern-agent",
-  "version": "0.3.1",
-  "description": "A private coding agent with a provider relay: stacks free tiers (Cerebras, Groq, SambaNova, Gemini) with automatic failover, streams live, runs fully local via Ollama if you want. Asks before it acts.",
+  "version": "0.4.0",
+  "description": "A private coding agent that asks before it acts. Relay chain of free tiers (Cerebras, Groq, SambaNova, Gemini) with automatic failover, streaming, diff previews, chat history, /undo, and a fully local mode via Ollama. Zero dependencies.",
   "type": "module",
   "bin": {
     "lantern": "bin/lantern.js"
@@ -10,7 +10,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "start": "node bin/lantern.js"
+    "start": "node bin/lantern.js",
+    "test": "node --test test/*.test.js"
   },
   "files": [
     "bin",

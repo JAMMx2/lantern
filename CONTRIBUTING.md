@@ -1,4 +1,4 @@
-# Contributing to Lantern ✦
+# Contributing to Lantern
 
 Thanks for wanting to help. Lantern is small on purpose — that's the feature.
 
@@ -17,7 +17,7 @@ cd lantern
 node bin/lantern.js     # or: npm start
 ```
 
-No install step. Set `PORT` to change the port (default 4317).
+No install step. Set `PORT` or pass `--port` to change the port (default 4317). `npm test` runs the suite.
 
 For Lantern Lite, just open `lantern-lite.html` in a browser. To test real-folder access you need https or localhost — easiest is `npx serve .` or pushing to your fork's GitHub Pages.
 
@@ -25,14 +25,16 @@ For Lantern Lite, just open `lantern-lite.html` in a browser. To test real-folde
 
 1. Implement it in `src/tools.js`.
 2. Add its JSON schema to `TOOL_DEFS`.
-3. Decide whether it belongs in `NEEDS_APPROVAL` (if it mutates anything or leaves the sandbox: yes).
-4. Mirror it in `lantern-lite.html` if it makes sense in a browser.
+3. Decide whether it belongs in `NEEDS_APPROVAL` (if it mutates anything or leaves the sandbox: yes). If it changes a file, record `{ path, before }` on the undo stack so `/undo` works.
+4. Add a test in `test/tools.test.js`.
+5. Mirror it in `lantern-lite.html` if it makes sense in a browser.
 
 ## Style
 
 - Vanilla JS, no transpiling, no frameworks.
 - Match the existing code: small functions, comments explain *why*, not *what*.
 - UI changes should respect the CRT theme (CSS variables at the top of each HTML file) and `prefers-reduced-motion`.
+- No emoji in UI labels: use an inline SVG icon or plain text.
 
 ## Sending a PR
 

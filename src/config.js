@@ -2,7 +2,8 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
-const DIR = join(homedir(), ".lantern");
+// LANTERN_HOME overrides where config + session history live (tests, portable installs).
+const DIR = process.env.LANTERN_HOME || join(homedir(), ".lantern");
 const FILE = join(DIR, "config.json");
 
 // v0.3: an ordered relay chain instead of a single provider.
@@ -49,4 +50,4 @@ export function saveConfig(patch) {
   return next;
 }
 
-export { FILE as CONFIG_PATH };
+export { FILE as CONFIG_PATH, DIR as CONFIG_DIR };

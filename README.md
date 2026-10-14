@@ -17,7 +17,7 @@ It reads files, writes files, and runs commands in a folder you choose — but i
 exactly what it's about to do and waits for your OK** before it changes anything.
 Nothing goes anywhere except to the provider you chose — and with Ollama, nothing leaves your machine at all.
 
-**[⚡ Try Lantern Lite in your browser →](https://jammx2.github.io/lantern/)** — no install, no server, just your key
+**[Try Lantern Lite in your browser →](https://jammx2.github.io/lantern/)** — no install, no server, just your key
 
 Works on **macOS** · **Linux** · **Windows**
 
@@ -52,9 +52,14 @@ The approval card is the whole idea — nothing writes or runs until you say so:
 
 | | The app | Lantern Lite |
 |---|---|---|
-| Read & write your files | ✅ everywhere | ✅ on Chrome/Edge; upload+download elsewhere |
-| Run commands / install packages | ✅ | ❌ not possible in a browser |
-| Install required | Node.js | none — just a browser |
+| Read, search & write your files | Yes, everywhere | Yes on Chrome/Edge; upload+download elsewhere |
+| Edit files with a diff preview | Yes | Yes |
+| Run commands / install packages | Yes | No, not possible in a browser |
+| Chat history & resume | `~/.lantern/sessions` | this browser's localStorage |
+| `/undo` the last file change | Yes | Yes |
+| Token usage counter | Yes | Yes |
+| Project notes (`LANTERN.md`) | Yes | Yes |
+| Install required | Node.js | none, just a browser |
 
 Both run the same relay chain, both stream, and both ask before writing anything.
 
@@ -72,7 +77,7 @@ Lantern doesn't use *a* provider. It holds a **relay chain** of OpenAI-compatibl
 | **Gemini** | fast | generous free tier | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | **Ollama — local** | your hardware | **free forever, offline, fully private** | none — [install](https://ollama.com) + `ollama pull qwen2.5-coder:7b` |
 
-Build the chain at first run (or press **⚙** any time): add a row per provider, **Test**, pick a model, **Save chain**. One provider is fine too — the chain can be a single link.
+Build the chain at first run (or open **Settings** any time): add a row per provider, **Test**, pick a model, **Save chain**. One provider is fine too — the chain can be a single link.
 
 Responses **stream in live**, token by token, and the header shows which link answered. Lantern also keeps its prompts byte-stable between requests, so providers with prompt caching (Cerebras's cache-aware limits, for one) give you more free tokens and faster starts.
 
@@ -114,9 +119,27 @@ Just tell it what you want, in plain language:
 - *"Look at the files in this folder and tell me what they do."*
 - *"Fix the typo in notes.txt where it says 'teh'."*
 
-When Lantern wants to **create/change a file** or **run a command**, it stops and shows you the exact thing in a glowing amber card. Click **Allow** or **Deny**. Reading files inside your chosen folder happens automatically (it can't read anything outside that folder).
+When Lantern wants to **create/change a file** or **run a command**, it stops and shows you the exact thing in a glowing amber card. Changes to an existing file are shown as a **diff** (red lines go away, green lines come in) so you can see precisely what moves. Click **Allow** or **Deny**. Reading and searching files inside your chosen folder happens automatically (it can't read anything outside that folder).
 
-Lantern remembers the conversation, so you can say *"now change line 3 of that file"* and it knows which file. Click **New chat** (top right) to start fresh.
+Lantern remembers the conversation, so you can say *"now change line 3 of that file"* and it knows which file. Click **New chat** to start fresh, or **History** to pick up an earlier chat where you left off.
+
+### Slash commands
+
+| Command | What it does |
+|---|---|
+| `/undo` | Revert the last file Lantern wrote or edited in this chat (new files are removed, edited files are restored). Press it again to go back further. |
+| `/history` | Open the list of saved chats. |
+| `/new` | Start a fresh chat. |
+| `/export` | *(Lite)* Download the chat as a Markdown file. |
+| `/help` | List the commands. |
+
+### Project notes: `LANTERN.md`
+
+Put a `LANTERN.md` file in the folder you open and Lantern reads it at the start of every turn: coding conventions, what the project is, things to never touch. Keep it short (it is capped at 8,000 characters).
+
+### Tokens
+
+The header shows how many tokens this chat has used (in / out) whenever your provider reports usage, so you can watch your free tier.
 
 ---
 
@@ -142,6 +165,7 @@ Open [`lantern-lite.html`](lantern-lite.html) — double-click it, or use the **
 
 - **On Chrome or Edge:** click **Workspace → pick a folder** to let Lantern read and write real files in that folder (it asks before each write, and can't touch anything outside it).
 - **On Safari, Firefox, or when opened directly from disk:** Lantern uses an in-browser workspace instead — files it creates appear on the right to **download** (individually or as a `.zip`), and you can **upload** files to let it read them.
+- **What Lite can do (v0.4):** read, search and write files; **edit files with a diff preview** before you approve; **chat history** saved in your browser with resume; **/undo** the last file change; **token usage** in the header; **Export** any chat as Markdown; reads `LANTERN.md` project notes from the workspace. Still single-file, zero dependencies, and the only network calls are to the provider you chose.
 - **Hosting over https is what unlocks real-folder access** on Chrome/Edge — which is why this repo ships with a GitHub Actions workflow that publishes Lite to GitHub Pages automatically (see below).
 
 Your key is stored only in your browser on your device (or not at all, if you chose session-only), and is sent only to your chosen provider. Using Ollama from the hosted page? Start it with `OLLAMA_ORIGINS="*"` so the browser may connect.
@@ -162,11 +186,15 @@ lantern/
   lantern-lite.html   # serverless browser version (open or host; no Node needed)
   bin/lantern.js      # CLI: starts the local server, opens the browser
   src/
-    server.js         # native http server, NDJSON streaming, approval bridge
-    agent.js          # the tool-calling loop
-    cerebras.js       # OpenAI-compatible Cerebras client (chat + /models)
-    tools.js          # list_dir / read_file / write_file / run_command + confinement
+    server.js         # native http server, NDJSON streaming, approval bridge, history routes
+    agent.js          # the tool-calling loop, LANTERN.md context, usage accounting
+    cerebras.js       # OpenAI-compatible relay client (streaming, usage, friendly errors)
+    tools.js          # list/read/search/write/edit/run/git + path confinement + undo
+    diff.js           # unified diff for approval cards
+    sessions.js       # ~/.lantern/sessions/*.json
+    cli.js            # --port / --dir / --model parsing
     config.js         # ~/.lantern/config.json
+  test/               # node:test suite (npm test)
   public/index.html   # the whole UI (single file, vanilla JS, zero deps, CRT included)
   install/            # per-OS launchers
   docs/assets/        # banner + screenshots
@@ -174,10 +202,13 @@ lantern/
 ```
 
 - **Requirements:** Node 18+ (uses native `fetch`, `http`, `fs`, `child_process`). No `npm install` needed.
-- **Run directly:** `node bin/lantern.js` (or `npm start`). Set `PORT` to change the port (default 4317; it auto-increments if busy).
+- **Run directly:** `node bin/lantern.js` (or `npm start`). Flags: `--port <n>` (default 4317 or `$PORT`; auto-increments if busy), `--dir <path>` (working folder), `--model <id>` (model for the first provider), `--no-open`, `--version`, `--help`. Set `LANTERN_HOME` to move config and history away from `~/.lantern`.
+- **Tests:** `npm test` runs the `node:test` suite (tool confinement, edit/undo, diff, CLI parsing, server auth). No test framework to install.
 - **API:** any OpenAI-compatible endpoint works — Cerebras, Groq, SambaNova, Gemini (OpenAI mode), Ollama, LM Studio… The relay lives in `src/cerebras.js`: streaming SSE client with incremental tool-call assembly, plus per-provider cooldown benching (60s after a 429). Model lists are fetched live and filtered to chat-capable models.
-- **Events:** the server streams NDJSON — `provider`, `assistant_delta`, `assistant_done`, `tool_request`, `tool_result`, `error`, `done`.
-- **Extending:** add a tool by (1) implementing it in `tools.js`, (2) adding its JSON schema to `TOOL_DEFS`, (3) deciding whether it belongs in `NEEDS_APPROVAL`.
+- **Events:** the server streams NDJSON — `provider`, `context`, `assistant_delta`, `assistant_done`, `usage`, `tool_activity`, `tool_request` (with `diff`/`preview`), `tool_result`, `error`, `done`.
+- **Tools:** `list_dir`, `read_file`, `search_files`, `git` (status/diff/log, read-only) run automatically; `write_file`, `edit_file`, `run_command` stop for approval. The approval card for file changes carries a unified diff built by `src/diff.js`.
+- **History:** one JSON file per chat in `~/.lantern/sessions/` (owner-only permissions), written after every step. The `/undo` stack lives in the same file.
+- **Extending:** add a tool by (1) implementing it in `tools.js`, (2) adding its JSON schema to `TOOL_DEFS`, (3) deciding whether it belongs in `NEEDS_APPROVAL`, (4) adding a test in `test/`.
 - **The UI** is a deliberate retro phosphor terminal — scanlines, glow, and approval cards are pure CSS. No images, fonts, or scripts are loaded from anywhere. If you rename the product, change the name in `package.json`, the wordmarks in `public/index.html` + `lantern-lite.html`, and the config folder in `src/config.js`.
 
 Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).

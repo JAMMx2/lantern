@@ -22,11 +22,16 @@ export const FALLBACK_MODELS = [
 ];
 
 export async function listModels(apiKey, baseUrl) {
-  const res = await fetch(`${baseOf(baseUrl)}/models`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
+  let res;
+  try {
+    res = await fetch(`${baseOf(baseUrl)}/models`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+  } catch (e) {
+    throw new Error(describeNetworkError(e, baseOf(baseUrl)));
+  }
   if (!res.ok) {
-    throw new Error(`${baseOf(baseUrl)}/models returned ${res.status}`);
+    throw await errorFrom(res, baseOf(baseUrl));
   }
   const data = await res.json();
   const ids = (data?.data || [])
@@ -64,14 +69,44 @@ function sanitizeMessages(messages) {
   });
 }
 
-export async function chatCompletionStream({ apiKey, baseUrl, model, messages, tools, onDelta }) {
-  const body = { model, messages: sanitizeMessages(messages), stream: true };
-  if (tools && tools.length) {
-    body.tools = tools;
-    body.tool_choice = "auto";
+/**
+ * Turn an HTTP status + provider detail into something a non-programmer can act on.
+ */
+export function describeError(status, detail = "", providerName = "the provider") {
+  const d = String(detail || "").trim();
+  switch (status) {
+    case 401:
+    case 403:
+      return `${providerName} rejected your API key (HTTP ${status}). Open settings and check the key is pasted correctly and still active.`;
+    case 404:
+      return `${providerName} says that model or endpoint doesn't exist (HTTP 404). Pick another model in the dropdown.${d ? " Detail: " + d : ""}`;
+    case 429:
+      return `${providerName} is rate-limiting you (HTTP 429). Lantern will hop to the next provider in your chain if you have one, or you can wait a minute and retry.`;
+    case 400:
+      return `${providerName} refused the request (HTTP 400).${d ? " " + d : ""}`;
+    case 413:
+      return `The conversation is too long for ${providerName} (HTTP 413). Start a new chat.`;
+    case 500:
+    case 502:
+    case 503:
+    case 504:
+      return `${providerName} is having trouble right now (HTTP ${status}). Lantern will try the next provider, or retry in a moment.`;
+    default:
+      return `${providerName} error ${status || ""}${d ? ": " + d : ""}`.trim();
   }
+}
 
-  const res = await fetch(`${baseOf(baseUrl)}/chat/completions`, {
+export function describeNetworkError(e, providerName = "the provider") {
+  const code = e?.cause?.code || e?.code || "";
+  if (/ENOTFOUND|EAI_AGAIN/.test(code)) return `Couldn't look up ${providerName}'s address. Check your internet connection.`;
+  if (/ECONNREFUSED/.test(code)) return `Nothing is listening at ${providerName}'s address (connection refused). If this is Ollama, make sure it is running.`;
+  if (/ETIMEDOUT|UND_ERR_CONNECT_TIMEOUT/.test(code)) return `Timed out connecting to ${providerName}.`;
+  if (/CERT|SSL|TLS/i.test(code)) return `TLS certificate problem talking to ${providerName} (${code}).`;
+  return `Couldn't reach ${providerName}: ${e?.message || "network error"}`;
+}
+
+async function postChat(baseUrl, apiKey, body) {
+  return fetch(`${baseOf(baseUrl)}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -79,23 +114,59 @@ export async function chatCompletionStream({ apiKey, baseUrl, model, messages, t
     },
     body: JSON.stringify(body),
   });
+}
 
-  if (!res.ok) {
-    let detail = "";
-    try {
-      const err = await res.json();
-      detail = err?.error?.message || JSON.stringify(err);
-    } catch {
-      try { detail = await res.text(); } catch { detail = ""; }
-    }
-    const e = new Error(`Provider error ${res.status}: ${detail}`.trim());
-    e.status = res.status;
-    throw e;
+async function errorFrom(res, providerName) {
+  let detail = "";
+  try {
+    const err = await res.json();
+    detail = err?.error?.message || (typeof err === "string" ? err : JSON.stringify(err));
+  } catch {
+    try { detail = await res.text(); } catch { detail = ""; }
   }
+  const e = new Error(describeError(res.status, detail.slice(0, 300), providerName));
+  e.status = res.status;
+  e.detail = detail;
+  return e;
+}
+
+/**
+ * One streaming chat completion. Resolves to { role, content, tool_calls?, usage? }.
+ * usage = { prompt_tokens, completion_tokens, total_tokens } when the provider reports it.
+ */
+export async function chatCompletionStream({ apiKey, baseUrl, model, messages, tools, onDelta, providerName }) {
+  const name = providerName || baseOf(baseUrl);
+  const body = { model, messages: sanitizeMessages(messages), stream: true };
+  if (tools && tools.length) {
+    body.tools = tools;
+    body.tool_choice = "auto";
+  }
+  // Ask for a usage block on the final chunk (OpenAI, Cerebras, Groq honour it).
+  body.stream_options = { include_usage: true };
+
+  let res;
+  try {
+    res = await postChat(baseUrl, apiKey, body);
+    // A few compat layers 400 on stream_options; retry once without it.
+    if (res.status === 400) {
+      const peek = await res.clone().text().catch(() => "");
+      if (/stream_options/i.test(peek)) {
+        delete body.stream_options;
+        res = await postChat(baseUrl, apiKey, body);
+      }
+    }
+  } catch (e) {
+    const err = new Error(describeNetworkError(e, name));
+    err.status = 0;
+    throw err;
+  }
+
+  if (!res.ok) throw await errorFrom(res, name);
 
   let content = "";
   const toolCalls = []; // assembled by stream index
   let streamedSome = false;
+  let usage = null;
 
   const reader = res.body.getReader();
   const dec = new TextDecoder();
@@ -107,6 +178,7 @@ export async function chatCompletionStream({ apiKey, baseUrl, model, messages, t
     if (!payload || payload === "[DONE]") return;
     let evt;
     try { evt = JSON.parse(payload); } catch { return; }
+    if (evt.usage && typeof evt.usage === "object") usage = evt.usage;
     const delta = evt.choices?.[0]?.delta;
     if (!delta) return;
     if (delta.content) {
@@ -147,6 +219,7 @@ export async function chatCompletionStream({ apiKey, baseUrl, model, messages, t
     role: "assistant",
     content,
     tool_calls: assembled.length ? assembled : undefined,
+    usage: usage || undefined,
   };
 }
 
@@ -185,6 +258,7 @@ export async function relayChat({ providers, messages, tools, onDelta, onProvide
         messages,
         tools,
         onDelta,
+        providerName: p.name,
       });
       cooldowns.delete(baseOf(p.baseUrl));
       return { ...reply, provider: p };

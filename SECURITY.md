@@ -1,4 +1,4 @@
-# Security Policy ✦
+# Security Policy
 
 Lantern is a local agent that can write files and run shell commands with the
 user's approval. That makes its security model worth stating plainly.
@@ -10,12 +10,13 @@ user's approval. That makes its security model worth stating plainly.
 - **Path escape.** File tools are confined to the folder you picked. Paths are resolved to their real location (symlinks included) and rejected if they land outside it.
 - **Drive-by control (CSRF / DNS rebinding).** The local server binds to localhost, checks the `Host` header, and requires a per-run session token that is injected into the served page. A malicious website in your browser can send requests to localhost, but it can't read the token, so it can't forge an approved action.
 - **Silent mutation.** Every file write and every shell command is shown to you — full content, exact command — and waits for explicit approval. A denial is reported to the model as a denial; there is no retry-around-it path.
-- **Supply chain.** There are zero npm dependencies. The only network destination is `api.cerebras.ai`, authenticated with your key.
+- **Supply chain.** There are zero npm dependencies. The only network destinations are the providers you put in your relay chain (Cerebras by default), each authenticated with your key.
+- **Blind edits.** Changes to an existing file are shown as a diff, and `/undo` reverts the last write, so an approved-but-wrong change is cheap to take back.
 
 **What Lantern does not defend against**
 
 - **Approved commands.** If you click Allow on a command, it runs with your user's permissions. The approval card is the defense; read it.
-- **A hostile local machine.** If something else on your computer can already read your files, it can read `~/.lantern/config.json` (your API key). The file is written with owner-only permissions, but local malware is out of scope.
+- **A hostile local machine.** If something else on your computer can already read your files, it can read `~/.lantern/config.json` (your API key) and `~/.lantern/sessions/` (your chat transcripts, which may quote your files). Both are written with owner-only permissions, but local malware is out of scope.
 - **Prompt injection in the folder you open.** Files in your working folder are fed to the model as context. A malicious file could try to talk the model into proposing something harmful — which is exactly why writes and commands always stop for your approval, even mid-task.
 
 ## Reporting a vulnerability

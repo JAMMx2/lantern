@@ -8,9 +8,12 @@ import { randomUUID } from "node:crypto";
 import { loadConfig, saveConfig, nameFor } from "./config.js";
 import { listModels } from "./cerebras.js";
 import { runAgent } from "./agent.js";
+import { undoLast } from "./tools.js";
+import { newSession, loadSession, saveSession, listSessions, deleteSession, validId } from "./sessions.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(__dirname, "..", "public");
+export const VERSION = JSON.parse(await fs.readFile(join(__dirname, "..", "package.json"), "utf8")).version;
 
 const MAX_BODY = 5 * 1024 * 1024; // 5 MB request cap
 
@@ -24,16 +27,26 @@ const SESSION_TOKEN = randomUUID();
 // Bridges the streaming /api/chat request and the separate /api/approve request.
 const pendingApprovals = new Map(); // id -> resolve(boolean)
 
-// Per-browser-session conversation transcripts (sessionId -> messages[]).
+// Live sessions (sessionId -> session object). Each is also written to
+// ~/.lantern/sessions/<id>.json after every step so history survives restarts.
 const sessions = new Map();
-const MAX_SESSIONS = 50;
-function getConversation(sessionId) {
-  const id = sessionId || "default";
+const MAX_LIVE = 50;
+async function getSession(sessionId, cwd) {
+  const id = validId(sessionId) ? sessionId : "default";
   if (!sessions.has(id)) {
-    if (sessions.size >= MAX_SESSIONS) sessions.delete(sessions.keys().next().value);
-    sessions.set(id, []);
+    if (sessions.size >= MAX_LIVE) sessions.delete(sessions.keys().next().value);
+    sessions.set(id, (await loadSession(id)) || newSession(id, cwd));
   }
-  return sessions.get(id);
+  const s = sessions.get(id);
+  if (cwd) s.cwd = cwd;
+  return s;
+}
+
+// Shown as a one-line transcript entry when a chat is resumed.
+function publicMessages(session) {
+  return session.messages
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({ role: m.role, content: m.content || "", tools: (m.tool_calls || []).map((t) => t.function?.name).filter(Boolean) }));
 }
 
 function send(res, code, data, type = "application/json") {
@@ -142,14 +155,16 @@ async function handleChat(req, res) {
     }
   });
 
+  const session = await getSession(payload.sessionId, root);
   try {
     await runAgent({
       providers,
       root,
-      conversation: getConversation(payload.sessionId),
+      session,
       message: String(payload.message || ""),
       emit,
       requestApproval,
+      persist: () => saveSession(session),
     });
   } catch (e) {
     emit({ type: "error", message: e.message });
@@ -177,6 +192,7 @@ async function router(req, res) {
   if (req.method === "GET" && url === "/api/config") {
     const cfg = loadConfig();
     return send(res, 200, {
+      version: VERSION,
       configured: Boolean(cfg.providers && cfg.providers.length),
       // Never echo API keys back to the page.
       providers: (cfg.providers || []).map((p) => ({
@@ -254,6 +270,45 @@ async function router(req, res) {
     return send(res, 200, { ok: true, cwd: target });
   }
 
+  // ---- history ----
+  if (req.method === "GET" && url === "/api/sessions") {
+    return send(res, 200, { sessions: await listSessions() });
+  }
+  if (req.method === "POST" && url === "/api/session/load") {
+    const { id } = await readBody(req);
+    if (!validId(id)) return send(res, 400, { error: "Bad session id." });
+    const session = await getSession(id);
+    if (!session.messages.length) return send(res, 404, { error: "No such chat." });
+    return send(res, 200, {
+      id: session.id, title: session.title, cwd: session.cwd, usage: session.usage,
+      undoable: session.undo.length, messages: publicMessages(session),
+    });
+  }
+  if (req.method === "POST" && url === "/api/session/delete") {
+    const { id } = await readBody(req);
+    if (!validId(id)) return send(res, 400, { error: "Bad session id." });
+    sessions.delete(id);
+    await deleteSession(id);
+    return send(res, 200, { ok: true });
+  }
+  // /undo — revert the last file change Lantern made in this chat.
+  if (req.method === "POST" && url === "/api/undo") {
+    const { sessionId } = await readBody(req);
+    const session = await getSession(sessionId);
+    const cfg = loadConfig();
+    const root = session.cwd || (cfg.lastCwd && existsSync(cfg.lastCwd) ? cfg.lastCwd : process.cwd());
+    try {
+      const msg = await undoLast(root, session.undo);
+      if (!msg) return send(res, 200, { ok: false, message: "Nothing to undo in this chat." });
+      session.messages.push({ role: "user", content: `(I used /undo: ${msg}.)` });
+      session.messages.push({ role: "assistant", content: "Understood, that change was reverted." });
+      await saveSession(session);
+      return send(res, 200, { ok: true, message: msg, undoable: session.undo.length });
+    } catch (e) {
+      return send(res, 400, { ok: false, message: e.message });
+    }
+  }
+
   if (req.method === "POST" && url === "/api/approve") {
     const { id, allowed } = await readBody(req);
     const fn = pendingApprovals.get(id);
@@ -273,7 +328,25 @@ async function router(req, res) {
   return send(res, 404, { error: "Not found" });
 }
 
-export function startServer(port = 4317) {
+/**
+ * @param {number} port
+ * @param {{dir?:string, model?:string}} [opts] CLI overrides, persisted to config.
+ */
+export function startServer(port = 4317, opts = {}) {
+  if (opts.dir) {
+    const target = resolve(opts.dir);
+    if (!existsSync(target) || !statSync(target).isDirectory()) {
+      throw new Error(`--dir: folder does not exist: ${target}`);
+    }
+    saveConfig({ lastCwd: target });
+  }
+  if (opts.model) {
+    const cfg = loadConfig();
+    if (cfg.providers && cfg.providers.length) {
+      cfg.providers[0] = { ...cfg.providers[0], model: opts.model };
+      saveConfig({ providers: cfg.providers });
+    }
+  }
   return new Promise((res) => {
     const server = http.createServer((req, rq) =>
       router(req, rq).catch((e) => {
@@ -285,7 +358,7 @@ export function startServer(port = 4317) {
     server.listen(port, "127.0.0.1", () => res({ server, port }));
     server.on("error", (e) => {
       if (e.code === "EADDRINUSE") {
-        startServer(port + 1).then(res);
+        startServer(port + 1).then(res);  // opts already applied
       } else {
         throw e;
       }
