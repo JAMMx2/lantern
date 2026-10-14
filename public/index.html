@@ -97,6 +97,7 @@
   .micro{font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint)}
   .micro::before{content:"[ "; color:var(--line-br)}
   .micro::after{content:" ]"; color:var(--line-br)}
+  .micro:empty{display:none}
   select, .folder-btn{
     background:var(--well); color:var(--green-hi); border:1px solid var(--line-br);
     border-radius:2px; padding:6px 10px; font-family:var(--mono); font-size:12px;
@@ -356,6 +357,40 @@
   .minibtn{background:transparent; border:1px solid var(--line-br); color:var(--muted);
     border-radius:2px; padding:5px 10px; font-size:11px; text-transform:uppercase; letter-spacing:.1em}
   .minibtn:hover{border-color:var(--green); color:var(--green-hi)}
+  /* ---- diff preview inside approval cards ---- */
+  .diff{font-size:12px; line-height:1.5; white-space:pre; overflow:auto; max-height:300px;
+    background:var(--well); border:1px solid rgba(255,180,84,.25); border-radius:2px; padding:8px 0; margin:0 0 11px}
+  .diff div{padding:0 12px}
+  .diff .h{color:var(--faint)}
+  .diff .k{color:var(--amber); background:rgba(255,180,84,.06)}
+  .diff .a{color:var(--green-hi); background:rgba(59,240,126,.08)}
+  .diff .d{color:var(--red); background:rgba(255,109,94,.08)}
+  .stat{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin:0 0 8px}
+  .stat .plus{color:var(--green)} .stat .minus{color:var(--red)}
+  .authorize.errored{border-color:rgba(255,109,94,.5)}
+  .authorize .errtxt{color:var(--red); font-size:12.5px}
+
+  /* ---- icon buttons ---- */
+  .ibtn{display:inline-flex; align-items:center; gap:6px}
+  .ibtn svg{width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+  .usage{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); white-space:nowrap}
+  .usage b{color:var(--muted); font-weight:400}
+
+  /* ---- history panel ---- */
+  .hist{width:100%; max-width:620px}
+  .hist::before{content:"■ CHAT HISTORY"}
+  .hlist{max-height:52vh; overflow:auto; margin:0 -4px}
+  .hrow{display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--line);
+    border-left:2px solid var(--line-br); border-radius:2px; margin:0 4px 7px; background:var(--well); cursor:pointer}
+  .hrow:hover{border-color:var(--green); border-left-color:var(--green)}
+  .hrow .t{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--green-hi)}
+  .hrow .m{font-size:10px; letter-spacing:.12em; color:var(--faint); white-space:nowrap}
+  .hrow .x{background:transparent; border:1px solid var(--line-br); color:var(--muted); border-radius:2px; padding:3px 8px; font-size:10px; text-transform:uppercase; letter-spacing:.1em}
+  .hrow .x:hover{border-color:var(--red); color:var(--red)}
+  .hempty{color:var(--faint); text-align:center; padding:24px 0; font-size:12.5px}
+  .resumed{font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); text-align:center; margin:0 0 18px}
+  .resumed::before{content:"── "} .resumed::after{content:" ──"}
+  .toolnote{font-size:10.5px; color:var(--faint); letter-spacing:.08em; margin-top:4px}
   @media (max-width:900px){ .sysline{display:none} }
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important; transition:none !important}
@@ -368,7 +403,7 @@
 <div class="crt-sweep" aria-hidden="true"></div>
 
 <header>
-  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver">v0.3</span></div>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver" id="ver">v0.4</span></div>
   <span class="sysline">localhost · your model · your files</span>
   <div class="strip-spacer"></div>
   <div class="field">
@@ -379,8 +414,10 @@
     <span class="micro">Folder</span>
     <button class="folder-btn" id="folder" title="Click to change the working folder">…</button>
   </div>
+  <span class="usage" id="usage" title="Tokens used in this chat (prompt / completion)"></span>
   <button class="newchat" id="newchat" title="Start a fresh conversation">New chat</button>
-  <button class="newchat" id="settings" title="Provider &amp; key">⚙</button>
+  <button class="newchat ibtn" id="history" title="Resume an earlier chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</button>
+  <button class="newchat ibtn" id="settings" title="Providers &amp; keys" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   <div class="field">
     <span class="micro" id="prov" title="Active provider"></span>
     <span class="dot" id="dot"></span>
@@ -403,7 +440,7 @@
     <button class="stop" id="stop" style="display:none">Stop</button>
     <button class="send" id="send">Send</button>
   </div>
-  <div class="hint" id="hint">writes and commands always ask before running</div>
+  <div class="hint" id="hint">writes and commands always ask before running · type /undo to revert the last file change</div>
 </footer>
 
 <!-- onboarding -->
@@ -427,6 +464,16 @@
       </div>
       <div class="err-msg" id="keyErr"></div>
     </div>
+  </div>
+</div>
+
+<!-- history -->
+<div class="overlay" id="histOverlay" style="display:none">
+  <div class="card hist">
+    <h1><span class="mark">✦</span> Chat history</h1>
+    <p class="sub">Chats are saved on this computer in ~/.lantern/sessions. Pick one to continue it.</p>
+    <div class="hlist" id="hlist"></div>
+    <div class="row" style="margin-top:14px"><button class="newchat" id="closeHist">Close</button></div>
   </div>
 </div>
 
@@ -518,20 +565,46 @@ function toolResult(evt){
   }
   logEl.appendChild(d); scroll();
 }
+function renderDiff(text){
+  const lines = String(text||"").split("\n");
+  return '<div class="diff">'+lines.map((l)=>{
+    let c="";
+    if(l.startsWith("+++")||l.startsWith("---")) c="h";
+    else if(l.startsWith("@@")) c="k";
+    else if(l.startsWith("+")) c="a";
+    else if(l.startsWith("-")) c="d";
+    return '<div class="'+c+'">'+esc(l)+'</div>';
+  }).join("")+'</div>';
+}
+const BADGES = { run_command:"Run command", write_file:"Write file", edit_file:"Edit file" };
 function authorizeCard(evt){
   const card = document.createElement("div");
   card.className = "authorize pending";
   card.dataset.id = evt.id;
   const isCmd = evt.name==="run_command";
-  let inner = '<div class="head"><span class="badge">'+(isCmd?"Run command":"Write file")+
+  let inner = '<div class="head"><span class="badge">'+(BADGES[evt.name]||evt.name)+
               '</span><span class="what">'+esc(evt.summary)+'</span></div>';
   if(isCmd){
     inner += '<pre>'+esc(evt.command||"")+'</pre>';
   } else {
-    inner += '<div class="path">'+esc(evt.path||"")+'</div>';
-    if(evt.preview){
+    inner += '<div class="path">'+esc(evt.path||"")+(evt.isNew?" <span class=\"stat\">(new file)</span>":"")+'</div>';
+    if(evt.error){
+      inner += '<div class="errtxt">'+esc(evt.error)+'</div>';
+    } else if(evt.diff){
+      const st = evt.stats||{};
+      if(st.added!=null) inner += '<div class="stat"><span class="plus">+'+st.added+'</span> / <span class="minus">-'+st.removed+'</span> lines</div>';
+      inner += renderDiff(evt.diff);
+    } else if(evt.preview!==undefined){
       inner += '<pre>'+esc(evt.preview)+(evt.preview.length>=4000?"\n…":"")+'</pre>';
+    } else if(!evt.isNew && !evt.diff){
+      inner += '<div class="stat">no changes — file already has this content</div>';
     }
+  }
+  if(evt.error){
+    card.classList.remove("pending"); card.classList.add("errored");
+    inner += '<div class="acts"><span class="resolved no">● could not prepare this change</span></div>';
+    card.innerHTML = inner; logEl.appendChild(card); scroll();
+    return;
   }
   inner += '<div class="acts"><button class="btn-allow">Allow</button>'+
            '<button class="btn-deny">Deny</button></div>';
@@ -568,10 +641,28 @@ function errorLine(msg){
 }
 
 // ---- run a turn ----
+let UNDOABLE = false;
+async function undoLast(){
+  const r = await api("/api/undo",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({sessionId:SESSION})});
+  const j = await r.json().catch(()=>({}));
+  hideEmpty();
+  if(j.ok){ UNDOABLE = j.undoable>0; const d=document.createElement("div"); d.className="log"; d.innerHTML='<span class="ic">↶</span><span></span>'; d.querySelector("span:last-child").textContent="undo: "+j.message; logEl.appendChild(d); scroll(); }
+  else errorLine(j.message || j.error || "Nothing to undo.");
+}
+function slashCommand(text){
+  const cmd = text.split(/\s+/)[0].toLowerCase();
+  if(cmd==="/undo"){ undoLast(); return true; }
+  if(cmd==="/new"){ $("#newchat").onclick(); return true; }
+  if(cmd==="/history"){ openHistory(); return true; }
+  if(cmd==="/help"){ hideEmpty(); noteLine("commands: /undo (revert last file change) · /new (fresh chat) · /history (resume a chat)"); return true; }
+  return false;
+}
 async function send(){
   const text = input.value.trim();
   if(!text || running) return;
   input.value=""; input.style.height="auto";
+  if(text.startsWith("/") && slashCommand(text)) return;
   userTurn(text);
   running = true; sendBtn.disabled=true; stopBtn.style.display="";
   setDot("run");
@@ -632,6 +723,18 @@ function streamDone(text){
   scroll();
 }
 function setProv(name){ $("#prov").textContent = name || ""; }
+let USAGE = { prompt:0, completion:0 };
+function fmtTok(n){ return n>=1000 ? (n/1000).toFixed(n>=10000?0:1)+"k" : String(n); }
+function setUsage(u){
+  USAGE = u || { prompt:0, completion:0 };
+  const total = USAGE.prompt + USAGE.completion;
+  $("#usage").innerHTML = total ? 'tokens <b>'+fmtTok(USAGE.prompt)+'</b> in · <b>'+fmtTok(USAGE.completion)+'</b> out' : "";
+}
+function noteLine(text){
+  const d = document.createElement("div");
+  d.className = "toolnote"; d.textContent = text;
+  logEl.appendChild(d); scroll();
+}
 
 function handleEvent(evt){
   // First real output arrives -> drop the thinking placeholder. Reads and
@@ -639,12 +742,14 @@ function handleEvent(evt){
   if(evt.type!=="done") clearThinking();
   switch(evt.type){
     case "provider": setProv(evt.name); break;
+    case "usage": setUsage(evt.total); break;
+    case "context": noteLine("loaded project notes from "+evt.file+" ("+evt.chars+" chars)"); break;
     case "assistant_delta": streamDelta(evt.text); break;
     case "assistant_done": streamDone(evt.text); if(running) showThinking(); break;
     case "assistant_text": assistantText(evt.text); break;
     case "tool_activity": activity(evt.name, evt.summary); if(running) showThinking(); break;
     case "tool_request": authorizeCard(evt); break;        // waiting on the user, not the model
-    case "tool_result": toolResult(evt); if(running) showThinking(); break; // model works next
+    case "tool_result": toolResult(evt); UNDOABLE = !!evt.undoable; if(running) showThinking(); break; // model works next
     case "error": errorLine(evt.message); break;
     case "done": break;
   }
@@ -664,9 +769,63 @@ $("#newchat").onclick = ()=>{
   if(controller) controller.abort();
   SESSION = (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
   logEl.innerHTML = '<div class="empty" id="empty"><span class="mark">✦</span>Ready. Ask Lantern to build, read, or change something in your folder.</div>';
+  setUsage(null); UNDOABLE=false;
   if(dot.className.indexOf("err")<0) setDot("ok");
   input.focus();
 };
+
+// ---- history ----
+function fmtWhen(ms){
+  const d = new Date(ms), now = new Date();
+  const sameDay = d.toDateString()===now.toDateString();
+  return sameDay ? d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : d.toLocaleDateString([], {month:"short", day:"numeric"});
+}
+async function openHistory(){
+  const box = $("#hlist"); box.innerHTML = '<div class="hempty">loading…</div>';
+  $("#histOverlay").style.display="flex";
+  let list = [];
+  try{ list = (await (await api("/api/sessions")).json()).sessions || []; }catch{}
+  if(!list.length){ box.innerHTML = '<div class="hempty">No saved chats yet. Chats are saved automatically once you send a message.</div>'; return; }
+  box.innerHTML = "";
+  for(const s of list){
+    const row = document.createElement("div"); row.className="hrow";
+    row.innerHTML = '<span class="t"></span><span class="m"></span><button class="x" title="Delete this chat">del</button>';
+    row.querySelector(".t").textContent = s.title || "(empty chat)";
+    row.querySelector(".t").title = s.cwd || "";
+    row.querySelector(".m").textContent = s.messages+" msg · "+fmtWhen(s.updatedAt);
+    row.onclick = ()=>resumeSession(s.id);
+    row.querySelector(".x").onclick = async (e)=>{
+      e.stopPropagation();
+      await api("/api/session/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:s.id})});
+      row.remove();
+      if(!box.children.length) box.innerHTML = '<div class="hempty">No saved chats.</div>';
+    };
+    box.appendChild(row);
+  }
+}
+async function resumeSession(id){
+  const r = await api("/api/session/load",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok){ errorLine(j.error||"Couldn't load that chat."); return; }
+  if(controller) controller.abort();
+  SESSION = j.id;
+  logEl.innerHTML = "";
+  const head = document.createElement("div"); head.className="resumed"; head.textContent="resumed chat · "+(j.messages.length)+" messages"; logEl.appendChild(head);
+  for(const m of j.messages){
+    if(m.role==="user"){ userTurn(m.content); }
+    else {
+      if(m.content) assistantText(m.content);
+      if(m.tools && m.tools.length) activity("", "used "+m.tools.join(", "));
+    }
+  }
+  setUsage(j.usage); UNDOABLE = j.undoable>0;
+  if(j.cwd) setFolder(j.cwd);
+  $("#histOverlay").style.display="none";
+  if(dot.className.indexOf("err")<0) setDot("ok");
+  input.focus(); scroll();
+}
+$("#history").onclick = openHistory;
+$("#closeHist").onclick = ()=>{ $("#histOverlay").style.display="none"; };
 
 // ---- model + folder controls ----
 modelSel.onchange = ()=>{
@@ -827,21 +986,29 @@ $("#saveChain").onclick = async ()=>{
 (async function boot(){
   const cfg = await (await api("/api/config")).json();
   CURRENT = { providers: cfg.providers||[], configured: !!cfg.configured };
+  if(cfg.version) $("#ver").textContent = "v"+cfg.version;
   setProv(CURRENT.providers[0] ? CURRENT.providers[0].name : "");
   setFolder(cfg.cwd);
   if(!cfg.configured){ openSetup(); return; }
   try{
-    const { models } = await (await api("/api/models")).json();
+    const mr = await api("/api/models");
+    const j = await mr.json();
+    if(!mr.ok) throw new Error(j.error || ("HTTP "+mr.status));
+    const models = j.models || [];
     const want = CURRENT.providers[0] && CURRENT.providers[0].model;
-    fillModels(models||[], (want && models.includes(want)) ? want : (models&&models[0]));
-    if((!want || !models.includes(want)) && models && models[0]){
+    fillModels(models, (want && models.includes(want)) ? want : models[0]);
+    if((!want || !models.includes(want)) && models[0]){
       api("/api/model",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({model:models[0]})});
     }
     setDot("ok"); input.focus();
-  }catch{
+  }catch(e){
     setDot("err");
-    errorLine("Couldn't reach your AI provider to load models. Check your connection, or press \u2699 to switch provider.");
+    // Keep the saved model usable so a flaky network doesn't block typing.
+    const want = CURRENT.providers[0] && CURRENT.providers[0].model;
+    if(want) fillModels([want], want);
+    errorLine("Couldn't load models: "+(e.message||"unknown error"));
+    input.focus();
   }
 })();
 </script>

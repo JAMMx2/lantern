@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="dark" />
 <meta name="theme-color" content="#040604" />
-<meta name="description" content="Lantern Lite — a private coding agent that runs entirely in your browser. No install, no server. Bring your own model: Cerebras cloud or local Ollama." />
-<meta property="og:title" content="Lantern Lite ✦ in-browser coding agent" />
+<meta name="description" content="Lantern Lite v0.4 — a private coding agent that runs entirely in your browser. No install, no server. Bring your own model: Cerebras cloud, Groq, Gemini, or local Ollama." />
+<meta name="version" content="0.4.0" />
+<meta property="og:title" content="Lantern Lite — in-browser coding agent" />
 <meta property="og:description" content="A private coding agent in a single HTML file. No install, no server, no telemetry. Bring your own model — free Cerebras cloud tier or local Ollama." />
 <title>Lantern Lite</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2212%22%20fill%3D%22%23040604%22%2F%3E%3Crect%20x%3D%2226%22%20y%3D%225%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2232%22%20y%3D%225%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2220%22%20y%3D%2211%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2238%22%20y%3D%2211%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2217%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2220%22%20y%3D%2217%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2226%22%20y%3D%2217%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2232%22%20y%3D%2217%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2238%22%20y%3D%2217%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2244%22%20y%3D%2217%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2223%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2244%22%20y%3D%2223%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2229%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2226%22%20y%3D%2229%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%23ffb454%22%2F%3E%3Crect%20x%3D%2232%22%20y%3D%2229%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%23ffb454%22%2F%3E%3Crect%20x%3D%2244%22%20y%3D%2229%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2235%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2226%22%20y%3D%2235%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%23ffe9c4%22%2F%3E%3Crect%20x%3D%2232%22%20y%3D%2235%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%23ffb454%22%2F%3E%3Crect%20x%3D%2244%22%20y%3D%2235%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2241%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2244%22%20y%3D%2241%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2247%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2220%22%20y%3D%2247%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2226%22%20y%3D%2247%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2232%22%20y%3D%2247%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2238%22%20y%3D%2247%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2244%22%20y%3D%2247%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2220%22%20y%3D%2253%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2226%22%20y%3D%2253%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2232%22%20y%3D%2253%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3Crect%20x%3D%2238%22%20y%3D%2253%22%20width%3D%226%22%20height%3D%226%22%20fill%3D%22%233bf07e%22%2F%3E%3C%2Fsvg%3E" />
@@ -101,6 +102,7 @@
   .micro{font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint)}
   .micro::before{content:"[ "; color:var(--line-br)}
   .micro::after{content:" ]"; color:var(--line-br)}
+  .micro:empty{display:none}
   .field{display:flex; align-items:center; gap:8px}
   select,.chip{
     background:var(--well); color:var(--green-hi); border:1px solid var(--line-br);
@@ -379,6 +381,41 @@
   }
   @keyframes blink{to{visibility:hidden}}
 
+  .brand .ver{font-size:10px; letter-spacing:.18em; color:var(--faint)}
+  .ibtn{display:inline-flex; align-items:center; gap:6px}
+  .ibtn svg{width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+  .usage{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); white-space:nowrap}
+  .usage b{color:var(--muted); font-weight:400}
+
+  /* ---- diff preview ---- */
+  .diff{font-size:12px; line-height:1.5; white-space:pre; overflow:auto; max-height:300px;
+    background:var(--well); border:1px solid rgba(255,180,84,.25); border-radius:2px; padding:8px 0; margin:0 0 11px}
+  .diff div{padding:0 12px}
+  .diff .h{color:var(--faint)}
+  .diff .k{color:var(--amber); background:rgba(255,180,84,.06)}
+  .diff .a{color:var(--green-hi); background:rgba(59,240,126,.08)}
+  .diff .d{color:var(--red); background:rgba(255,109,94,.08)}
+  .stat{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin:0 0 8px}
+  .stat .plus{color:var(--green)} .stat .minus{color:var(--red)}
+  .authorize.errored{border-color:rgba(255,109,94,.5)}
+  .authorize .errtxt{color:var(--red); font-size:12.5px}
+  .toolnote{font-size:10.5px; color:var(--faint); letter-spacing:.08em; margin-top:4px}
+
+  /* ---- history ---- */
+  .hist{max-width:620px}
+  .hist::before{content:"■ CHAT HISTORY"}
+  .hlist{max-height:52vh; overflow:auto; margin:0 -4px}
+  .hrow{display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--line);
+    border-left:2px solid var(--line-br); border-radius:2px; margin:0 4px 7px; background:var(--well); cursor:pointer}
+  .hrow:hover{border-color:var(--green); border-left-color:var(--green)}
+  .hrow .t{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--green-hi)}
+  .hrow .m{font-size:10px; letter-spacing:.12em; color:var(--faint); white-space:nowrap}
+  .hrow .x{background:transparent; border:1px solid var(--line-br); color:var(--muted); border-radius:2px; padding:3px 8px; font-size:10px; text-transform:uppercase; letter-spacing:.1em; cursor:pointer}
+  .hrow .x:hover{border-color:var(--red); color:var(--red)}
+  .hempty{color:var(--faint); text-align:center; padding:24px 0; font-size:12.5px}
+  .resumed{font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); text-align:center; margin:0 0 18px}
+  .resumed::before{content:"── "} .resumed::after{content:" ──"}
+
   @media (max-width:720px){ aside{position:fixed; right:0; top:52px; bottom:0; z-index:15} }
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important; transition:none !important}
@@ -391,12 +428,15 @@
 <div class="crt-sweep" aria-hidden="true"></div>
 
 <header>
-  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="lite">Lite</span></div>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="lite">Lite</span><span class="ver" id="ver">v0.4</span></div>
   <div class="spacer"></div>
+  <span class="usage" id="usage" title="Tokens used in this chat (prompt / completion)"></span>
   <div class="field"><span class="micro">Model</span><select id="model" title="Model"></select></div>
   <button class="chip" id="folder" title="Where Lantern reads and writes">Workspace</button>
   <button class="newchat" id="newchat" title="Start a fresh conversation">New chat</button>
-  <button class="chip" id="settings" title="Providers &amp; settings">⚙</button>
+  <button class="newchat ibtn" id="history" title="Resume an earlier chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</button>
+  <button class="newchat ibtn" id="export" title="Download this chat as Markdown"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>Export</button>
+  <button class="chip ibtn" id="settings" title="Providers &amp; settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   <span class="micro" id="prov" title="Active provider"></span>
   <span class="dot" id="dot"></span>
 </header>
@@ -424,10 +464,20 @@
     <button class="stop" id="stop" style="display:none">Stop</button>
     <button class="send" id="send">Send</button>
   </div>
-  <div class="hint" id="hint">writes always ask first · running commands isn't possible in a browser — use the app version for that</div>
+  <div class="hint" id="hint">writes always ask first · /undo reverts the last file change · running commands isn't possible in a browser — use the app version for that</div>
 </footer>
 
 <input type="file" id="filepick" multiple style="display:none" />
+
+<!-- history -->
+<div class="overlay" id="histOverlay" style="display:none">
+  <div class="card hist">
+    <h1><span class="mark">✦</span> Chat history</h1>
+    <p class="sub">Chats are saved in this browser only (localStorage) and never leave your device. Pick one to continue it.</p>
+    <div class="hlist" id="hlist"></div>
+    <div class="row" style="margin-top:14px"><button class="newchat" id="closeHist">Close</button></div>
+  </div>
+</div>
 
 <!-- onboarding -->
 <div class="overlay" id="overlay">
@@ -462,6 +512,7 @@
 
 <script>
 "use strict";
+const LITE_VERSION = "0.4.0";
 const $ = (s)=>document.querySelector(s);
 const PRESETS = {
   cerebras:  { url:"https://api.cerebras.ai/v1", link:"https://cloud.cerebras.ai/", note:"~1M tokens/day free · fastest" },
@@ -471,7 +522,7 @@ const PRESETS = {
   ollama:    { url:"http://localhost:11434/v1", link:"https://ollama.com/download", note:"local · free · needs OLLAMA_ORIGINS" },
   custom:    { url:"", link:"", note:"any OpenAI-compatible endpoint" },
 };
-const LS_CHAIN="lantern_lite_chain", LS_KEY="lantern_lite_key", LS_MODEL="lantern_lite_model", LS_URL="lantern_lite_url";
+const LS_CHAIN="lantern_lite_chain", LS_KEY="lantern_lite_key", LS_MODEL="lantern_lite_model", LS_URL="lantern_lite_url", LS_SESSIONS="lantern_lite_sessions";
 
 // ---------- relay chain storage ----------
 let chain = [];
@@ -537,8 +588,13 @@ const store = {
       return this.files.get(p);
     }
   },
-  async write(path, content){
+  async readIfExists(path){
+    try{ return await this.read(path); }catch{ return null; }
+  },
+  undo: [],   // [{path, before}] — before===null means the file was new
+  async write(path, content, record=true){
     const p=this.safe(path);
+    const before = record ? await this.readIfExists(p) : null;
     if(this.mode==="real"){
       const {dir,base}=await this._fileParent(p,true);
       const fh=await dir.getFileHandle(base,{create:true});
@@ -546,8 +602,41 @@ const store = {
     } else {
       this.files.set(p, content??"");
     }
+    if(record) this.undo.push({path:p, before});
     renderWorkspace();
-    return "Wrote "+((content??"").length)+" characters to "+path;
+    const text=String(content??"");
+    return (before===null?"Created ":"Updated ")+path+" ("+text.length+" characters, "+text.split("\n").length+" lines)";
+  },
+  async remove(path){
+    const p=this.safe(path);
+    if(this.mode==="real"){ const {dir,base}=await this._fileParent(p,false); await dir.removeEntry(base); }
+    else this.files.delete(p);
+    renderWorkspace();
+  },
+  async undoLast(){
+    const last=this.undo.pop(); if(!last) return null;
+    if(last.before===null){ await this.remove(last.path); return "Removed "+last.path+" (it was created by Lantern)"; }
+    await this.write(last.path, last.before, false);
+    return "Restored "+last.path+" to its previous contents";
+  },
+  // Walk every text file (skipping .git/node_modules) — used by search_files.
+  async walk(path, fn, limit=4000){
+    const SKIP=new Set([".git","node_modules","dist","build",".next","__pycache__",".venv","venv"]);
+    let n=0;
+    if(this.mode==="real"){
+      const rec=async (dir, prefix)=>{
+        for await (const [name,h] of dir.entries()){
+          if(n>=limit) return;
+          if(h.kind==="directory"){ if(!SKIP.has(name)) await rec(h, prefix+name+"/"); }
+          else { n++; const f=await h.getFile(); if(f.size>1500000) continue; const t=await f.text(); if(t.includes("\0")) continue; if(await fn(prefix+name,t)===false) return; }
+        }
+      };
+      await rec(await this._dirOf(path,false), path==="."||path===""?"":this.safe(path)+"/");
+    } else {
+      const pre = path==="."||path===""?"":this.safe(path)+"/";
+      for(const [k,v] of this.files){ if(!k.startsWith(pre)) continue; n++; if(n>limit) break; if(await fn(k,v)===false) return; }
+    }
+    return n;
   },
   async _dirOf(path, create){
     let dir=this.dir; const parts=(path==="."||path==="")?[]:this.safe(path).split("/").filter(Boolean);
@@ -563,46 +652,161 @@ const store = {
 
 // ---------- tool definitions ----------
 const TOOL_DEFS=[
-  {type:"function",function:{name:"list_dir",description:"List files and folders in the working folder/workspace.",
+  {type:"function",function:{name:"list_dir",description:"List files and folders in the working folder/workspace. Folders end with '/'.",
     parameters:{type:"object",properties:{path:{type:"string",description:"Relative path; defaults to the root."}}}}},
   {type:"function",function:{name:"read_file",description:"Read the text contents of a file.",
     parameters:{type:"object",properties:{path:{type:"string"}},required:["path"]}}},
-  {type:"function",function:{name:"write_file",description:"Create or overwrite a file. Always requires user approval.",
-    parameters:{type:"object",properties:{path:{type:"string"},content:{type:"string"}},required:["path","content"]}}}
+  {type:"function",function:{name:"search_files",description:"Search for text (or a regex) across files. Returns 'path:line: text' matches.",
+    parameters:{type:"object",properties:{query:{type:"string"},path:{type:"string",description:"Folder to search; defaults to root."},regex:{type:"boolean"},case_sensitive:{type:"boolean"}},required:["query"]}}},
+  {type:"function",function:{name:"write_file",description:"Create a new file or completely overwrite one. Requires user approval. For small changes prefer edit_file.",
+    parameters:{type:"object",properties:{path:{type:"string"},content:{type:"string",description:"Full new contents."}},required:["path","content"]}}},
+  {type:"function",function:{name:"edit_file",description:"Replace an exact snippet inside an existing file. old_text must appear exactly once (or set replace_all). Requires user approval; they see a diff.",
+    parameters:{type:"object",properties:{path:{type:"string"},old_text:{type:"string"},new_text:{type:"string"},replace_all:{type:"boolean"}},required:["path","old_text","new_text"]}}}
 ];
-const NEEDS_APPROVAL=new Set(["write_file"]);
+const NEEDS_APPROVAL=new Set(["write_file","edit_file"]);
 function summarize(name,args){
   if(name==="read_file") return "Read the file "+args.path;
-  if(name==="list_dir") return "List "+(args.path||"the workspace");
+  if(name==="list_dir") return "List "+(args.path&&args.path!=="."?args.path:"the workspace");
+  if(name==="search_files") return "Search for \""+String(args.query??"").slice(0,60)+"\""+(args.path?" in "+args.path:"");
   if(name==="write_file") return "Create or overwrite the file "+args.path;
+  if(name==="edit_file") return "Edit the file "+args.path;
   return name;
 }
+function applyEdit(before,{old_text,new_text,replace_all}){
+  const o=String(old_text??""), n=String(new_text??"");
+  if(!o) throw new Error("old_text must not be empty.");
+  const first=before.indexOf(o);
+  if(first<0) throw new Error("old_text was not found in the file. Read the file again and copy the exact text.");
+  if(replace_all) return before.split(o).join(n);
+  if(before.indexOf(o,first+o.length)>=0) throw new Error("old_text appears more than once. Include more surrounding lines, or set replace_all.");
+  return before.slice(0,first)+n+before.slice(first+o.length);
+}
+async function searchFiles({query,path=".",regex=false,case_sensitive=false}){
+  if(!query) throw new Error("query is required.");
+  let re; try{ re=new RegExp(regex?query:query.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), case_sensitive?"":"i"); }catch(e){ throw new Error("Bad regular expression: "+e.message); }
+  const hits=[]; const MAX=200;
+  const n=await store.walk(path,(name,text)=>{
+    const lines=text.split("\n");
+    for(let i=0;i<lines.length;i++){ if(re.test(lines[i])){ hits.push(name+":"+(i+1)+": "+lines[i].trim().slice(0,200)); if(hits.length>=MAX) return false; } }
+  });
+  if(!hits.length) return "No matches for \""+query+"\" ("+(n||0)+" files searched).";
+  return hits.join("\n")+(hits.length>=MAX?"\n…(stopped at "+MAX+" matches)":"");
+}
+// What the approval card shows: a diff for existing files, the content for new ones.
+async function previewFor(name,args){
+  if(name==="write_file"){
+    let before=null; try{ before=await store.readIfExists(store.safe(args.path)); }catch(e){ return {path:args.path,error:e.message}; }
+    const after=String(args.content??"");
+    if(before===null) return {path:args.path,isNew:true,preview:after.slice(0,4000),stats:{added:after.split("\n").length,removed:0}};
+    return {path:args.path,isNew:false,diff:unifiedDiff(before,after,args.path).slice(0,6000),stats:diffStats(before,after)};
+  }
+  if(name==="edit_file"){
+    let before=null; try{ before=await store.readIfExists(store.safe(args.path)); }catch(e){ return {path:args.path,error:e.message}; }
+    if(before===null) return {path:args.path,error:"No such file: "+args.path};
+    try{ const after=applyEdit(before,args); return {path:args.path,isNew:false,diff:unifiedDiff(before,after,args.path).slice(0,6000),stats:diffStats(before,after)}; }
+    catch(e){ return {path:args.path,error:e.message}; }
+  }
+  return {};
+}
 async function runTool(name,args){
-  if(name==="list_dir") return {ok:true,content:await store.list(args.path)};
-  if(name==="read_file"){ let c=await store.read(args.path); if(c.length>100000) c=c.slice(0,100000)+"\n…(truncated)"; return {ok:true,content:c}; }
-  if(name==="write_file") return {ok:true,content:await store.write(args.path,args.content)};
-  return {ok:false,content:"Unknown tool "+name};
+  try{
+    if(name==="list_dir") return {ok:true,content:await store.list(args.path)};
+    if(name==="read_file"){ let c=await store.read(args.path); if(c.length>100000) c=c.slice(0,100000)+"\n…(truncated)"; return {ok:true,content:c}; }
+    if(name==="search_files") return {ok:true,content:await searchFiles(args)};
+    if(name==="write_file") return {ok:true,content:await store.write(args.path,args.content)};
+    if(name==="edit_file"){
+      const p=store.safe(args.path); const before=await store.readIfExists(p);
+      if(before===null) throw new Error("No such file: "+args.path);
+      const after=applyEdit(before,args); await store.write(p,after);
+      const st=diffStats(before,after); return {ok:true,content:"Edited "+args.path+" (+"+(st.added??"?")+" / -"+(st.removed??"?")+" lines)"};
+    }
+    return {ok:false,content:"Unknown tool "+name};
+  }catch(e){ return {ok:false,content:e.message}; }
 }
 
+// ---------- line diff (for the approval card) ----------
+const DIFF_LINE_CAP=3000;
+function splitLines(s){ const l=String(s??"").split("\n"); if(l.length&&l[l.length-1]==="") l.pop(); return l; }
+function diffLines(a,b){
+  const A=splitLines(a), B=splitLines(b);
+  let start=0; while(start<A.length&&start<B.length&&A[start]===B[start]) start++;
+  let endA=A.length, endB=B.length; while(endA>start&&endB>start&&A[endA-1]===B[endB-1]){ endA--; endB--; }
+  const n=endA-start, m=endB-start; if(n>DIFF_LINE_CAP||m>DIFF_LINE_CAP) return null;
+  const W=m+1, L=new Uint16Array((n+1)*W);
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) L[i*W+j]=A[start+i]===B[start+j]?L[(i+1)*W+j+1]+1:Math.max(L[(i+1)*W+j],L[i*W+j+1]);
+  const ops=[]; for(let k=0;k<start;k++) ops.push({t:" ",s:A[k]});
+  let i=0,j=0;
+  while(i<n&&j<m){ if(A[start+i]===B[start+j]){ ops.push({t:" ",s:A[start+i]}); i++; j++; } else if(L[(i+1)*W+j]>=L[i*W+j+1]){ ops.push({t:"-",s:A[start+i]}); i++; } else { ops.push({t:"+",s:B[start+j]}); j++; } }
+  while(i<n) ops.push({t:"-",s:A[start+i++]}); while(j<m) ops.push({t:"+",s:B[start+j++]});
+  for(let k=endA;k<A.length;k++) ops.push({t:" ",s:A[k]});
+  return ops;
+}
+function unifiedDiff(a,b,path="file",context=3){
+  if(a===b) return "";
+  const ops=diffLines(a,b); if(!ops) return "(file too large to diff: "+splitLines(a).length+" -> "+splitLines(b).length+" lines)";
+  if(!ops.some(o=>o.t!==" ")) return "";
+  const keep=new Array(ops.length).fill(false);
+  for(let k=0;k<ops.length;k++){ if(ops[k].t===" ") continue; for(let c=Math.max(0,k-context);c<=Math.min(ops.length-1,k+context);c++) keep[c]=true; }
+  const out=["--- a/"+path,"+++ b/"+path]; let k=0,ol=1,nl=1;
+  while(k<ops.length){
+    if(!keep[k]){ if(ops[k].t!=="+") ol++; if(ops[k].t!=="-") nl++; k++; continue; }
+    const os=ol, ns=nl; let oc=0,nc=0; const body=[];
+    while(k<ops.length&&keep[k]){ const o=ops[k]; body.push(o.t+o.s); if(o.t!=="+"){oc++;ol++;} if(o.t!=="-"){nc++;nl++;} k++; }
+    out.push("@@ -"+os+","+oc+" +"+ns+","+nc+" @@", ...body);
+  }
+  return out.join("\n");
+}
+function diffStats(a,b){ const ops=diffLines(a,b); if(!ops) return {added:null,removed:null}; let added=0,removed=0; for(const o of ops){ if(o.t==="+") added++; else if(o.t==="-") removed++; } return {added,removed}; }
+
+let projectContext="";
+async function loadProjectContext(){
+  for(const n of ["LANTERN.md","lantern.md",".lantern.md"]){
+    const t=await store.readIfExists(n); if(t&&t.trim()){ projectContext=t.trim().slice(0,8000); return n; }
+  }
+  projectContext=""; return "";
+}
 function systemPrompt(){
   const where = store.mode==="real"
     ? "a real folder on the user's computer that they connected"
     : "an in-browser workspace (files the user can download; they can also upload files for you to read)";
   return `You are Lantern Lite, a coding assistant running entirely in the user's web browser, powered by their own AI provider.
 
-You are working in ${where}. You have three tools: list_dir, read_file, write_file.
-- Explore with list_dir and read_file before changing things.
-- Use write_file to create or change files. It requires the user's approval each time — they see the exact file before it's written. If denied, adapt; never work around a denial.
+You are working in ${where}.
+Tools:
+- list_dir, read_file, search_files — explore. These run automatically.
+- edit_file — change a specific snippet in an existing file (preferred for small changes; the user sees a diff).
+- write_file — create a new file or rewrite one completely.
+edit_file and write_file require the user's approval each time — they see the exact change before it's written. If denied, adapt; never work around a denial.
 - You CANNOT run shell commands or install anything — that's not possible in a browser. If a task needs that, say so and explain what the user would run themselves (or point them to the installable app version).
 
-Work in small, clear steps and explain what you're doing in plain, non-technical language. Assume the user may not be a programmer.`;
+Explore before changing things. Work in small, clear steps and explain what you're doing in plain, non-technical language. Assume the user may not be a programmer.`
+  + (projectContext ? `\n\nThe user keeps project notes for you in LANTERN.md. Follow them:\n<project-notes>\n${projectContext}\n</project-notes>` : "");
 }
 
 // ---------- provider relay (streaming) ----------
 const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil|gemma|veo|imagen|aqa|learnlm|live|dialog/i;
-async function listModels(url, key){
-  const r=await fetch(url.replace(/\/+$/,"")+"/models",{headers:{Authorization:"Bearer "+(key||"local")}});
-  if(!r.ok) throw new Error("Couldn\u2019t connect ("+r.status+")");
+function describeError(status, detail, who){
+  who=who||"the provider"; const d=String(detail||"").trim();
+  switch(status){
+    case 401: case 403: return who+" rejected your API key (HTTP "+status+"). Open settings and check the key is pasted correctly and still active.";
+    case 404: return who+" says that model or endpoint doesn't exist (HTTP 404). Pick another model."+(d?" Detail: "+d:"");
+    case 429: return who+" is rate-limiting you (HTTP 429). Lantern hops to the next provider in your chain if you have one; otherwise wait a minute and retry.";
+    case 400: return who+" refused the request (HTTP 400)."+(d?" "+d:"");
+    case 413: return "The conversation is too long for "+who+" (HTTP 413). Start a new chat.";
+    case 500: case 502: case 503: case 504: return who+" is having trouble right now (HTTP "+status+"). Lantern will try the next provider, or retry in a moment.";
+    default: return (who+" error "+(status||"")+(d?": "+d:"")).trim();
+  }
+}
+function describeNetworkError(e, who, url){
+  who=who||"the provider";
+  if(/localhost|127\.0\.0\.1/.test(url||"")) return "Couldn't reach "+who+" at "+url+". Is it running? On a hosted page, Ollama also needs OLLAMA_ORIGINS=\"*\".";
+  if(location.protocol==="https:" && /^http:/.test(url||"")) return "This page is https but "+who+" is plain http — browsers block that. Open Lantern Lite from disk, or use an https endpoint.";
+  return "Couldn't reach "+who+". Check your internet connection (or the browser blocked the request — see the console).";
+}
+async function listModels(url, key, who){
+  let r; try{ r=await fetch(url.replace(/\/+$/,"")+"/models",{headers:{Authorization:"Bearer "+(key||"local")}}); }
+  catch(e){ throw new Error(describeNetworkError(e, who, url)); }
+  if(!r.ok){ let d=""; try{ d=(await r.json())?.error?.message||""; }catch{} throw new Error(describeError(r.status, d, who)); }
   const j=await r.json();
   const ids=(j.data||[]).map(m=>m.id).filter(Boolean).filter(id=>!NON_CHAT.test(id)).sort();
   if(!ids.length) throw new Error("No usable models at this endpoint.");
@@ -615,20 +819,27 @@ function sanitizeMessages(msgs){
     return m;
   });
 }
-async function chatStream({url, key, model, messages, tools, onDelta}){
-  const body={model, messages:sanitizeMessages(messages), stream:true};
+async function chatStream({url, key, model, messages, tools, onDelta, who}){
+  const body={model, messages:sanitizeMessages(messages), stream:true, stream_options:{include_usage:true}};
   if(tools&&tools.length){ body.tools=tools; body.tool_choice="auto"; }
-  const r=await fetch(url.replace(/\/+$/,"")+"/chat/completions",{method:"POST",
+  const post=()=>fetch(url.replace(/\/+$/,"")+"/chat/completions",{method:"POST",
     headers:{Authorization:"Bearer "+(key||"local"),"Content-Type":"application/json"},
     body:JSON.stringify(body)});
+  let r;
+  try{
+    r=await post();
+    // Some compat layers 400 on stream_options; retry once without it.
+    if(r.status===400){ const peek=await r.clone().text().catch(()=>""); if(/stream_options/i.test(peek)){ delete body.stream_options; r=await post(); } }
+  }catch(e){ const err=new Error(describeNetworkError(e, who, url)); err.status=0; throw err; }
   if(!r.ok){ let d=""; try{d=(await r.json())?.error?.message}catch{ try{d=await r.text()}catch{} }
-    const e=new Error("Provider "+r.status+": "+(d||"")); e.status=r.status; throw e; }
-  let content=""; const calls=[]; let streamedSome=false;
+    const e=new Error(describeError(r.status, String(d||"").slice(0,300), who)); e.status=r.status; throw e; }
+  let content=""; const calls=[]; let streamedSome=false; let usage=null;
   const reader=r.body.getReader(); const dec=new TextDecoder(); let buf="";
   const line=(l)=>{
     if(!l.startsWith("data:")) return;
     const p=l.slice(5).trim(); if(!p||p==="[DONE]") return;
     let evt; try{ evt=JSON.parse(p);}catch{ return; }
+    if(evt.usage&&typeof evt.usage==="object") usage=evt.usage;
     const delta=evt.choices?.[0]?.delta; if(!delta) return;
     if(delta.content){ content+=delta.content; streamedSome=true; if(onDelta) onDelta(delta.content); }
     for(const tc of delta.tool_calls||[]){
@@ -646,7 +857,7 @@ async function chatStream({url, key, model, messages, tools, onDelta}){
     if(buf.trim()) line(buf.trim());
   }catch(e){ e.streamedSome=streamedSome; throw e; }
   const tc=calls.filter(Boolean);
-  return {role:"assistant", content, tool_calls: tc.length?tc:undefined};
+  return {role:"assistant", content, tool_calls: tc.length?tc:undefined, usage: usage||undefined};
 }
 const benchUntil=new Map();
 async function relayChat({messages, tools, onDelta, onProvider}){
@@ -657,7 +868,7 @@ async function relayChat({messages, tools, onDelta, onProvider}){
   for(const p of order){
     try{
       if(onProvider) onProvider(p);
-      const reply=await chatStream({url:p.baseUrl, key:p.apiKey, model:p.model, messages, tools, onDelta});
+      const reply=await chatStream({url:p.baseUrl, key:p.apiKey, model:p.model, messages, tools, onDelta, who:p.name});
       benchUntil.delete(p.baseUrl);
       return reply;
     }catch(e){
@@ -667,13 +878,16 @@ async function relayChat({messages, tools, onDelta, onProvider}){
       benchUntil.set(p.baseUrl, Date.now()+(st===429?60000:(st===401||st===403)?300000:20000));
     }
   }
-  throw new Error("All providers failed. Last: "+(lastErr?lastErr.message:"unknown"));
+  throw new Error((order.length>1?"All "+order.length+" providers failed. Last: ":"")+(lastErr?lastErr.message:"unknown error"));
 }
 
 // ---------- agent loop (client-side) ----------
 const MAX_STEPS=30, CHAR_BUDGET=24000;
 let conversation=[];   // persisted transcript
 let running=false, runId=0, cancelApproval=null;
+let USAGE={prompt:0,completion:0};
+let SESSION_ID=newId();
+function newId(){ return (self.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2); }
 function trimConversation(){
   const size=()=>conversation.reduce((n,m)=>n+(m.content?m.content.length:0),0);
   if(size()<=CHAR_BUDGET) return;
@@ -685,9 +899,16 @@ function trimConversation(){
   }
 }
 
+function parseToolArgs(raw){
+  const t=String(raw??"").trim(); if(!t) return {};
+  try{ const v=JSON.parse(t); if(typeof v==="string"){ try{ const i=JSON.parse(v); return i&&typeof i==="object"?i:{}; }catch{ return {}; } } return v&&typeof v==="object"?v:{}; }
+  catch{ const a=t.indexOf("{"), b=t.lastIndexOf("}"); if(a>=0&&b>a){ try{ return JSON.parse(t.slice(a,b+1)); }catch{} } return {}; }
+}
 async function runAgent(userText, myRun){
   conversation.push({role:"user",content:userText});
   trimConversation();
+  const ctxFile=await loadProjectContext();
+  if(ctxFile) noteLine("loaded project notes from "+ctxFile+" ("+projectContext.length+" chars)");
   for(let step=0; step<MAX_STEPS; step++){
     if(runId!==myRun) return;
     const messages=[{role:"system",content:systemPrompt()},...conversation];
@@ -696,29 +917,106 @@ async function runAgent(userText, myRun){
       reply=await relayChat({messages, tools:TOOL_DEFS,
         onDelta:(t)=>{ if(runId===myRun) streamDelta(t); },
         onProvider:(p)=>{ if(runId===myRun) setProv(p.name||p.baseUrl); }});
-    }catch(e){ if(runId===myRun){ streamDone(); errorLine(e.message); } return; }
+    }catch(e){ if(runId===myRun){ streamDone(); errorLine(e.message); saveSession(); } return; }
     if(runId!==myRun) return;
+    if(reply.usage){ USAGE.prompt+=reply.usage.prompt_tokens|0; USAGE.completion+=reply.usage.completion_tokens|0; setUsage(USAGE); }
     const calls=reply.tool_calls||[];
     if(reply.content) streamDone(reply.content); else streamDone();
-    if(!calls.length){ conversation.push({role:"assistant",content:reply.content||""}); return; }
+    if(!calls.length){ conversation.push({role:"assistant",content:reply.content||""}); saveSession(); return; }
     conversation.push({role:"assistant",content:reply.content||"",tool_calls:calls});
     for(const c of calls){
       if(runId!==myRun) return;
-      const name=c.function?.name; let args={};
-      try{ args=JSON.parse(c.function?.arguments||"{}"); }catch{}
+      const name=c.function?.name; const args=parseToolArgs(c.function?.arguments);
       const sum=summarize(name,args);
-      let allowed=true;
-      if(NEEDS_APPROVAL.has(name)){ allowed=await approve({name,summary:sum,path:args.path,preview:String(args.content??"").slice(0,4000)}); }
+      let allowed=true, pv={};
+      if(NEEDS_APPROVAL.has(name)){
+        pv=await previewFor(name,args);
+        allowed = pv.error ? false : await approve({name,summary:sum,...pv});
+      }
       else { activity(sum); if(running) showThinking(); }
       if(runId!==myRun) return;
       let res;
-      if(!allowed) res={ok:false,content:"The user denied this action."};
+      if(pv.error) res={ok:false,content:pv.error};
+      else if(!allowed) res={ok:false,content:"The user denied this action."};
       else { try{ res=await runTool(name,args);}catch(e){ res={ok:false,content:e.message}; } }
       toolResult(name,res); if(runId===myRun) showThinking();
       conversation.push({role:"tool",tool_call_id:c.id,content:res.content});
     }
+    saveSession();
   }
   if(runId===myRun) errorLine("Stopped after "+MAX_STEPS+" steps. Try smaller pieces.");
+}
+
+// ---------- session history (localStorage, this browser only) ----------
+const MAX_SESSIONS=30, MAX_HISTORY_BYTES=2500000;
+function readSessions(){ try{ return JSON.parse(localStorage.getItem(LS_SESSIONS)||"[]")||[]; }catch{ return []; } }
+function writeSessions(list){
+  list.sort((a,b)=>b.updatedAt-a.updatedAt); list=list.slice(0,MAX_SESSIONS);
+  let raw=JSON.stringify(list);
+  while(raw.length>MAX_HISTORY_BYTES && list.length>1){ list.pop(); raw=JSON.stringify(list); }
+  try{ localStorage.setItem(LS_SESSIONS, raw); }catch{ /* quota: history is best-effort */ }
+}
+function titleOf(msgs){ const f=msgs.find(m=>m.role==="user"&&m.content); return f?String(f.content).replace(/\s+/g," ").slice(0,70):"(empty chat)"; }
+function saveSession(){
+  if(!conversation.length) return;
+  const list=readSessions().filter(s=>s.id!==SESSION_ID);
+  list.push({id:SESSION_ID, title:titleOf(conversation), updatedAt:Date.now(), messages:conversation, usage:USAGE, mode:store.mode});
+  writeSessions(list);
+}
+function deleteSession(id){ writeSessions(readSessions().filter(s=>s.id!==id)); }
+function fmtWhen(ms){ const d=new Date(ms), now=new Date(); return d.toDateString()===now.toDateString()?d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString([],{month:"short",day:"numeric"}); }
+function openHistory(){
+  const box=$("#hlist"); const list=readSessions().sort((a,b)=>b.updatedAt-a.updatedAt);
+  $("#histOverlay").style.display="flex";
+  if(!list.length){ box.innerHTML='<div class="hempty">No saved chats yet. Chats are saved automatically once you send a message.</div>'; return; }
+  box.innerHTML="";
+  for(const s of list){
+    const row=document.createElement("div"); row.className="hrow";
+    row.innerHTML='<span class="t"></span><span class="m"></span><button class="x" title="Delete this chat">del</button>';
+    row.querySelector(".t").textContent=s.title||"(empty chat)";
+    row.querySelector(".m").textContent=s.messages.filter(m=>m.role==="user"||m.role==="assistant").length+" msg · "+fmtWhen(s.updatedAt);
+    row.onclick=()=>resumeSession(s);
+    row.querySelector(".x").onclick=(e)=>{ e.stopPropagation(); deleteSession(s.id); row.remove(); if(!box.children.length) box.innerHTML='<div class="hempty">No saved chats.</div>'; };
+    box.appendChild(row);
+  }
+}
+function resumeSession(s){
+  runId++; if(cancelApproval) cancelApproval();
+  SESSION_ID=s.id; conversation=Array.isArray(s.messages)?s.messages.slice():[]; USAGE=s.usage||{prompt:0,completion:0}; store.undo=[];
+  logEl.innerHTML="";
+  const head=document.createElement("div"); head.className="resumed"; head.textContent="resumed chat"; logEl.appendChild(head);
+  for(const m of conversation){
+    if(m.role==="user") userTurn(m.content);
+    else if(m.role==="assistant"){ if(m.content) assistantText(m.content); const t=(m.tool_calls||[]).map(c=>c.function?.name).filter(Boolean); if(t.length) activity("used "+t.join(", ")); }
+  }
+  setUsage(USAGE); $("#histOverlay").style.display="none";
+  if($("#dot").className.indexOf("err")<0) setDot("ok"); input.focus(); scroll();
+}
+function exportChat(){
+  if(!conversation.length){ noteLine("nothing to export yet"); return; }
+  const lines=["# Lantern Lite chat", "", "_"+new Date().toLocaleString()+" · "+(chain[0]?chain[0].name+" / "+chain[0].model:"")+"_", ""];
+  for(const m of conversation){
+    if(m.role==="user") lines.push("## You", "", m.content, "");
+    else if(m.role==="assistant"){ if(m.content) lines.push("## Lantern", "", m.content, ""); for(const c of m.tool_calls||[]) lines.push("> tool: `"+c.function?.name+"` "+String(c.function?.arguments||"").slice(0,200), ""); }
+    else if(m.role==="tool") lines.push("```", String(m.content||"").slice(0,2000), "```", "");
+  }
+  downloadOne("lantern-chat-"+new Date().toISOString().slice(0,10)+".md", lines.join("\n"));
+}
+async function undoLast(){
+  hideEmpty();
+  try{ const msg=await store.undoLast(); if(!msg){ errorLine("Nothing to undo in this chat."); return; }
+    const d=document.createElement("div"); d.className="log"; d.innerHTML='<span class="ic">↶</span><span></span>'; d.querySelector("span:last-child").textContent="undo: "+msg; logEl.appendChild(d); scroll();
+    conversation.push({role:"user",content:"(I used /undo: "+msg+".)"},{role:"assistant",content:"Understood, that change was reverted."}); saveSession();
+  }catch(e){ errorLine("Undo failed: "+e.message); }
+}
+function slashCommand(text){
+  const cmd=text.split(/\s+/)[0].toLowerCase();
+  if(cmd==="/undo"){ undoLast(); return true; }
+  if(cmd==="/new"){ $("#newchat").onclick(); return true; }
+  if(cmd==="/history"){ openHistory(); return true; }
+  if(cmd==="/export"){ exportChat(); return true; }
+  if(cmd==="/help"){ hideEmpty(); noteLine("commands: /undo (revert last file change) · /new · /history · /export (download chat as Markdown)"); return true; }
+  return false;
 }
 
 // ---------- rendering ----------
@@ -753,6 +1051,14 @@ function streamDone(t){
   scroll();
 }
 function setProv(n){ $("#prov").textContent=n||""; }
+function fmtTok(n){ return n>=1000?(n/1000).toFixed(n>=10000?0:1)+"k":String(n); }
+function setUsage(u){ const t=(u.prompt|0)+(u.completion|0); $("#usage").innerHTML=t?('tokens <b>'+fmtTok(u.prompt|0)+'</b> in · <b>'+fmtTok(u.completion|0)+'</b> out'):""; }
+function noteLine(t){ const d=document.createElement("div"); d.className="toolnote"; d.textContent=t; logEl.appendChild(d); scroll(); }
+function renderDiff(text){
+  return '<div class="diff">'+String(text||"").split("\n").map(l=>{
+    const c=(l.startsWith("+++")||l.startsWith("---"))?"h":l.startsWith("@@")?"k":l.startsWith("+")?"a":l.startsWith("-")?"d":"";
+    return '<div class="'+c+'">'+esc(l)+'</div>'; }).join("")+'</div>';
+}
 function activity(sum){ clearThinking(); const d=document.createElement("div"); d.className="log"; d.innerHTML='<span class="ic">›</span><span></span>'; d.querySelector("span:last-child").textContent=sum; logEl.appendChild(d); scroll(); }
 function toolResult(name,res){
   clearThinking();
@@ -766,9 +1072,11 @@ function approve(req){
   clearThinking();
   return new Promise((resolve)=>{
     const card=document.createElement("div"); card.className="authorize pending";
-    let inner='<div class="head"><span class="badge">Write file</span><span class="what">'+esc(req.summary)+'</span></div>';
-    inner+='<div class="path">'+esc(req.path||"")+'</div>';
-    if(req.preview) inner+='<pre>'+esc(req.preview)+(req.preview.length>=4000?"\n…":"")+'</pre>';
+    let inner='<div class="head"><span class="badge">'+(req.name==="edit_file"?"Edit file":"Write file")+'</span><span class="what">'+esc(req.summary)+'</span></div>';
+    inner+='<div class="path">'+esc(req.path||"")+(req.isNew?' <span class="stat">(new file)</span>':'')+'</div>';
+    if(req.diff){ const st=req.stats||{}; if(st.added!=null) inner+='<div class="stat"><span class="plus">+'+st.added+'</span> / <span class="minus">-'+st.removed+'</span> lines</div>'; inner+=renderDiff(req.diff); }
+    else if(req.preview!==undefined) inner+='<pre>'+esc(req.preview)+(req.preview.length>=4000?"\n…":"")+'</pre>';
+    else if(!req.isNew) inner+='<div class="stat">no changes — file already has this content</div>';
     inner+='<div class="acts"><button class="btn-allow">Allow</button><button class="btn-deny">Deny</button></div>';
     card.innerHTML=inner; logEl.appendChild(card); scroll();
     let done=false;
@@ -867,12 +1175,16 @@ input.addEventListener("input",()=>{ input.style.height="auto"; input.style.heig
 input.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); send(); } });
 sendBtn.onclick=send;
 stopBtn.onclick=()=>{ runId++; if(cancelApproval) cancelApproval(); };
-$("#newchat").onclick=()=>{ runId++; if(cancelApproval) cancelApproval(); conversation=[]; logEl.innerHTML='<div class="empty" id="empty"><span class="mark">✦</span>Ready. Ask Lantern to build, read, or change something.</div>'; if($("#dot").className.indexOf("err")<0) setDot("ok"); input.focus(); };
+$("#newchat").onclick=()=>{ runId++; if(cancelApproval) cancelApproval(); saveSession(); conversation=[]; SESSION_ID=newId(); USAGE={prompt:0,completion:0}; setUsage(USAGE); store.undo=[]; logEl.innerHTML='<div class="empty" id="empty"><span class="mark">✦</span>Ready. Ask Lantern to build, read, or change something.</div>'; if($("#dot").className.indexOf("err")<0) setDot("ok"); input.focus(); };
+$("#history").onclick=openHistory;
+$("#closeHist").onclick=()=>{ $("#histOverlay").style.display="none"; };
+$("#export").onclick=exportChat;
 
 async function send(){
   const text=input.value.trim(); if(!text||running) return;
-  if(!chain.length){ openSetup(); return; }
   input.value=""; input.style.height="auto";
+  if(text.startsWith("/") && slashCommand(text)) return;
+  if(!chain.length){ input.value=text; openSetup(); return; }
   userTurn(text);
   runId++; const myRun=runId;
   running=true; sendBtn.disabled=true; stopBtn.style.display=""; setDot("run"); showThinking();
@@ -893,6 +1205,7 @@ function renderCaps(){
     ["y","Chat & generate code — works in every browser"],
     [HAS_FS?"y":"n", HAS_FS?"Read & write a real folder you pick":"Read/write a real folder (needs Chrome or Edge)"],
     ["y","Workspace files you download, and files you upload to read"],
+    ["y","Edit files with a diff preview, search files, /undo, chat history, export"],
     ["n","Run commands / install packages — not possible in a browser"]
   ];
   $("#caps").innerHTML=rows.map(([c,t])=>'<div class="r"><span class="'+c+'">'+(c==="y"?"✓":"✕")+'</span><span>'+t+'</span></div>').join("");
@@ -936,7 +1249,7 @@ function chainRow(p){
     if(!url){ status.textContent="ENTER A URL FIRST"; status.className="p-status err"; return; }
     status.textContent="TESTING…"; status.className="p-status";
     try{
-      const models=await listModels(url, keyIn.value.trim());
+      const models=await listModels(url, keyIn.value.trim(), k);
       mSel.innerHTML=models.map(m=>'<option>'+esc(m)+'</option>').join("");
       mSel.style.display="";
       row.dataset.ok="1"; row.classList.add("ok");
@@ -975,15 +1288,16 @@ $("#saveChain").onclick=async ()=>{
   saveChain($("#sessionOnly").checked);
   setProv(chain[0].name);
   try{
-    const models=await listModels(chain[0].baseUrl, chain[0].apiKey);
+    const models=await listModels(chain[0].baseUrl, chain[0].apiKey, chain[0].name);
     fillModels(models, (chain[0].model && models.includes(chain[0].model)) ? chain[0].model : models[0]);
     if(!chain[0].model || !models.includes(chain[0].model)){ chain[0].model=models[0]; saveChain($("#sessionOnly").checked); }
-  }catch(e){}
+  }catch(e){ errorLine(e.message); }
   $("#overlay").style.display="none"; setDot("ok"); renderWorkspace(); input.focus();
 };
 
 // ---------- boot ----------
 (async function(){
+  $("#ver").textContent="v"+LITE_VERSION;
   renderWorkspace();
   loadChain();
   if(!chain.length){ openSetup(); return; }
@@ -991,10 +1305,14 @@ $("#saveChain").onclick=async ()=>{
   // Returning user with a saved chain: skip the config screen entirely.
   $("#overlay").style.display="none";
   try{
-    const models=await listModels(chain[0].baseUrl, chain[0].apiKey);
+    const models=await listModels(chain[0].baseUrl, chain[0].apiKey, chain[0].name);
     fillModels(models, (chain[0].model && models.includes(chain[0].model)) ? chain[0].model : models[0]);
     setDot("ok"); input.focus();
-  }catch(e){ openSetup(); }
+  }catch(e){
+    // Offline or key trouble: keep the saved model usable and say why.
+    if(chain[0].model) fillModels([chain[0].model], chain[0].model);
+    setDot("err"); errorLine(e.message); input.focus();
+  }
 })();
 </script>
 </body>
