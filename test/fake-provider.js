@@ -24,7 +24,15 @@ export function startFakeProvider(port = 0) {
     const [, name, , route] = req.url.split("?")[0].split("/");
     const json = (code, body) => { res.writeHead(code, { "Content-Type": "application/json", ...cors }); res.end(JSON.stringify(body)); };
     if (name.startsWith("badkey")) return json(401, { error: { message: "Invalid API key" } });
-    if (route === "models") return json(200, { data: MODELS.map((id) => ({ id })) });
+    if (route === "models") return json(200, { data: (name.startsWith("empty") ? [] : MODELS).map((id) => ({ id })) });
+    if (route === "pull") {
+      // Ollama's /api/pull: NDJSON progress, or an error line.
+      res.writeHead(200, { "Content-Type": "application/x-ndjson", ...cors });
+      if (name.startsWith("pullfail")) return res.end(JSON.stringify({ error: "pull model manifest: file does not exist" }) + "\n");
+      const lines = [{ status: "pulling manifest" }, { status: "pulling 6a0746a1ec1a", total: 4_683_073_184, completed: 2_000_000_000 },
+        { status: "pulling 6a0746a1ec1a", total: 4_683_073_184, completed: 4_683_073_184 }, { status: "success" }];
+      return res.end(lines.map((l) => JSON.stringify(l)).join("\n") + "\n");
+    }
     if (route !== "chat") return json(404, { error: { message: "not found" } });
     let raw = "";
     req.on("data", (c) => (raw += c));

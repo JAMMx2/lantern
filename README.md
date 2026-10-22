@@ -11,7 +11,7 @@
 [![Lantern Lite](https://img.shields.io/badge/lantern%20lite-single%20HTML%20file-ffb454?style=flat-square&labelColor=0a0f0b)](https://jammx2.github.io/lantern/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ffb454?style=flat-square&labelColor=0a0f0b)](CONTRIBUTING.md)
 
-**A private coding agent that runs on _your_ computer, powered by _your own_ AI — a relay of free cloud tiers, a fully local model via [Ollama](https://ollama.com), or any OpenAI-compatible endpoint.**
+**A private coding agent that runs on _your_ computer, powered by _your own_ AI — the AI app you already have (Ollama, LM Studio, Jan, GPT4All…), a relay of free cloud tiers, or any OpenAI-compatible API.**
 
 It reads files, writes files, and runs commands in a folder you choose — but it **always shows you
 exactly what it's about to do and waits for your OK** before it changes anything.
@@ -46,6 +46,17 @@ The approval card is the whole idea — nothing writes or runs until you say so:
 
 ---
 
+## New in 0.6: use the AI you already have, no terminal
+
+If an AI app is on your computer, Lantern finds it. Open setup and it checks for **Ollama, LM Studio, Jan, GPT4All, Msty, KoboldCpp, llamafile, Docker Model Runner, Text Generation WebUI and vLLM**:
+
+- **Running with a model?** It's added to your chain. Click **Save** and start typing.
+- **Installed but switched off?** Lantern shows the exact clicks to turn its server on, and for Ollama and LM Studio a **Start** button does it for you.
+- **Ollama with no models yet?** Pick one from the list (Lantern suggests the size that fits your computer's memory) and click **Download**. A progress bar shows the download; when it finishes, Ollama joins your chain.
+- **Nothing installed?** Lantern points you to Ollama's or LM Studio's normal installer. Install, open, press **Find** again.
+
+You never type a command. More cloud APIs are recognised too: paste NVIDIA, Hugging Face, DeepSeek, OpenAI, xAI, Together or Fireworks keys alongside the free ones. **Paid APIs always go last in the chain**, so Lantern only spends money when nothing free can answer.
+
 ## New in 0.5: paste once, run anywhere
 
 **Spark: paste anything.** Copy every API key you have (a whole `.env` file, a notes doc, keys in any order) and paste it into one box. Lantern works out which provider each key belongs to from its format, tests them all at the same time, picks a tool-calling coding model for each, orders them fastest-first, and adds Ollama if it's running on your machine. You review the chain and click **Save**. That's the whole setup.
@@ -65,6 +76,7 @@ The approval card is the whole idea — nothing writes or runs until you say so:
 | | The app | Lantern Lite |
 |---|---|---|
 | Spark setup, Lantern Pass, relay lights | Yes | Yes |
+| Use AI already on this computer | Finds, starts, and downloads models, no settings | Finds apps that allow web pages; downloads into Ollama when it can reach it |
 | Read, search & write your files | Yes, everywhere | Yes on Chrome/Edge; upload+download elsewhere |
 | Edit files with a diff preview | Yes | Yes |
 | Run commands / install packages | Yes | No, not possible in a browser |
@@ -90,11 +102,15 @@ Lantern doesn't use *a* provider. It holds a **relay chain** of OpenAI-compatibl
 | **Gemini** | fast | generous free tier | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | **Mistral** | fast | free Experiment plan (Devstral, Codestral) | [console.mistral.ai](https://console.mistral.ai/api-keys) |
 | **OpenRouter** | varies | `:free` models from many labs | [openrouter.ai/keys](https://openrouter.ai/keys) |
-| **Ollama — local** | your hardware | **free forever, offline, fully private** | none — [install](https://ollama.com) + `ollama pull qwen2.5-coder:7b` |
+| **NVIDIA** | fast | free developer credits, open models | [build.nvidia.com](https://build.nvidia.com/) |
+| **Hugging Face** | varies | free monthly credits, open models | [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) |
+| **AI on this computer** | your hardware | **free forever, offline, fully private** | none — see [AI on this computer](#ai-on-this-computer-no-terminal) |
+
+Paid APIs work too and always sit at the end of the chain: **DeepSeek**, **OpenAI**, **xAI**, **Together AI** and **Fireworks**. Any other OpenAI-compatible endpoint can be added as a custom link.
 
 Build the chain at first run (or open **Settings** any time). The fast way is **Spark**: paste all your keys into the top box and Lantern fills in the chain for you. The manual way still works: add a row per provider, **Test**, pick a model, **Save chain**. One provider is fine too — the chain can be a single link.
 
-Spark recognises keys by their published prefixes (`csk-` Cerebras, `gsk_` Groq, `AIza` Gemini, `sk-or-v1-` OpenRouter). Keys without a prefix count when the provider is named on the same line or the line above (`MISTRAL_API_KEY=…`, or `SambaNova:` followed by the key); a bare UUID is read as a SambaNova key. A key it can't place is listed, masked, and sent nowhere.
+Spark recognises keys by their published prefixes (`csk-` Cerebras, `gsk_` Groq, `AIza` Gemini, `sk-or-v1-` OpenRouter, `nvapi-` NVIDIA, `hf_` Hugging Face, `sk-proj-` OpenAI, `xai-` xAI, `tgp_v1_` Together, `fw_` Fireworks). Keys without a distinctive prefix count when the provider is named on the same line or the line above (`MISTRAL_API_KEY=…`, `DEEPSEEK_API_KEY=sk-…`, or `SambaNova:` followed by the key); a bare UUID is read as a SambaNova key. A key it can't place is listed, masked, and sent nowhere.
 
 Responses **stream in live**, token by token, and the header shows which link answered. Lantern also keeps its prompts byte-stable between requests, so providers with prompt caching (Cerebras's cache-aware limits, for one) give you more free tokens and faster starts.
 
@@ -125,11 +141,31 @@ git clone https://github.com/JAMMx2/lantern.git
 - Get one or more free keys: [Cerebras](https://cloud.cerebras.ai/) (no credit card), [Groq](https://console.groq.com/keys), [Gemini](https://aistudio.google.com/apikey). More keys means rate limits never stop you.
 - Paste them all into the **Spark** box at once. Lantern tests each one, picks a model, and lists the chain. Click **Save chain**.
 - Already set up on another computer? Paste your **Lantern Pass** into the same box instead.
-- **Ollama** (free forever, local): install from ollama.com and run `ollama pull qwen2.5-coder:7b`. Spark adds it automatically when it's running.
+- **No keys at all?** Use AI on your computer instead. Setup lists what it finds; see the next section.
 
 Then pick the **folder** you want Lantern to work in (top right), choose a **model**, and start typing.
 
 ---
+
+## AI on this computer (no terminal)
+
+Setup's **AI already on this computer?** panel looks for these apps on their usual ports. If one is installed but its server is off, Lantern shows how to switch it on:
+
+| App | How to switch its server on | Lantern can |
+|---|---|---|
+| [Ollama](https://ollama.com/download) | Open the app (it sits in the menu bar or system tray) | start it, and download a coding model for it |
+| [LM Studio](https://lmstudio.ai/download) | Developer tab → set the server to **Running**, load a model | start its server |
+| [Jan](https://jan.ai/download) | Settings → Local API Server → **Start Server** | open the app |
+| [GPT4All](https://www.nomic.ai/gpt4all) | Settings → tick **Enable Local API Server** (its server may not use tools) | — |
+| [Msty](https://msty.ai) | Make sure its Local AI service is installed | open the app |
+| [KoboldCpp](https://github.com/LostRuins/koboldcpp/releases) | Open it, pick a model file, press **Launch** | — |
+| [llamafile](https://github.com/mozilla-ai/llamafile) | Double-click the `.llamafile` (on Windows, rename it to `.exe` first) | — |
+| [Docker Model Runner](https://docs.docker.com/ai/model-runner/) | Docker Desktop → Settings → AI → enable it with host-side TCP | open Docker Desktop |
+| Text Generation WebUI, vLLM | Start with the OpenAI-compatible API on its default port (5000 / 8000) | — |
+
+**Downloading a model into Ollama:** Lantern offers small coding models that support tools (`qwen2.5-coder` 1.5B to 14B, and `qwen3-coder:30b` for big machines) and preselects the largest that fits your computer's memory. It uses Ollama's own download API, the same thing `ollama pull` does, with a progress bar and a Cancel button.
+
+**In Lantern Lite** the browser can only see apps that allow web pages to call them: in LM Studio, switch on **Enable CORS** in the server settings; Jan allows it by default. Lite can't tell which apps are installed or start them. On a hosted page it only looks when you press **Find**, because your browser may ask permission first. The full app (`npx github:JAMMx2/lantern`) finds and starts everything with no settings at all.
 
 ## How to use it
 
@@ -178,6 +214,8 @@ Open **Settings** (or type `/pass`) once your chain is saved, and choose:
 
 - **You bring your own AI.** Keys are stored only on your computer (in `~/.lantern/config.json`, owner-only permissions) and sent only to the provider you chose. With local Ollama there is no key and no cloud at all.
 - **Spark never guesses with your keys.** Each pasted key is matched to one provider by its format (or a provider named next to it) and only ever sent there. It never tries a key against several services to see which one accepts it.
+- **Local apps are started only when you click.** A Start button runs a fixed command (open the Ollama app, `lms server start` for LM Studio), never anything typed or suggested by the AI, and model downloads go only to Ollama on this computer.
+- **Paid APIs go last.** A pasted paid key never jumps ahead of a free tier, so a rate limit on a free link is the only thing that hands a request to a paid one.
 - **Passes are encrypted.** A sealed Lantern Pass is AES-256-GCM with a key derived from your passphrase (PBKDF2-SHA256, 600,000 rounds). Without the passphrase it's noise. A pass can't relabel an endpoint either: a link's provider is decided by its URL, so a shared recipe can't dress up a stranger's server as "groq" to collect your key.
 - **Writes and commands always ask first.** You see the full file or the exact command before it runs.
 - **Files stay in the folder you pick.** Lantern can't read or write outside it — including through symlinks that point elsewhere (checked by resolving real paths). No touching the rest of your computer's files.
@@ -222,7 +260,8 @@ lantern/
     server.js         # native http server, NDJSON streaming, approval bridge, history routes
     agent.js          # the tool-calling loop, LANTERN.md context, usage accounting
     cerebras.js       # OpenAI-compatible relay client (streaming, usage, failover, relay status)
-    spark.js          # Spark key detection + model picking + Lantern Pass; shared with Lite
+    spark.js          # provider catalog, Spark key detection, model picking, local discovery, Lantern Pass; shared with Lite
+    local.js          # installed-app detection, one-click start, Ollama model downloads (app only)
     tools.js          # list/read/search/write/edit/run/git + path confinement + undo
     diff.js           # unified diff for approval cards
     sessions.js       # ~/.lantern/sessions/*.json
@@ -242,7 +281,8 @@ lantern/
 - **Spark is shared code.** `src/spark.js` is imported by the app and embedded in `lantern-lite.html` between `// <spark>` markers. Edit the module, then run `npm run sync-lite`; the test suite fails if the two drift.
 - **API:** any OpenAI-compatible endpoint works — Cerebras, Groq, SambaNova, Gemini (OpenAI mode), Ollama, LM Studio… The relay lives in `src/cerebras.js`: streaming SSE client with incremental tool-call assembly, plus per-provider cooldown benching (60s after a 429). Model lists are fetched live and filtered to chat-capable models.
 - **Events:** the server streams NDJSON — `provider`, `relay` (per-link lamp state), `hop` (a failover, with the reason), `context`, `assistant_delta`, `assistant_done`, `usage`, `tool_activity`, `tool_request` (with `diff`/`preview`), `tool_result`, `error`, `done`.
-- **Setup routes:** `POST /api/spark` (`{text, passphrase?, verify?}` → a tested, ordered chain for the page to review; saved keys are reused but never sent back to the page) and `POST /api/pass` (`{sealed, passphrase}` → a pass and a Lite link, made from the saved chain).
+- **Setup routes:** `POST /api/spark` (`{text, passphrase?, verify?}` → a tested, ordered chain for the page to review; saved keys are reused but never sent back to the page), `POST /api/pass` (`{sealed, passphrase}` → a pass and a Lite link, made from the saved chain), `GET /api/local` (every local app: running with its models, installed, or neither; plus the Ollama model list sized to this computer), `POST /api/local/start` (`{id}`), and `POST /api/local/pull` (`{model}` → NDJSON download progress).
+- **Adding a provider:** one entry in `SPARK_PROVIDERS` in `src/spark.js` (kind `free`, `paid` or `local`; base URL; key pattern or name hint; signup link), then `npm run sync-lite`. Local apps also get a default port and a `howTo` line; to let the app detect or start one, add its install paths to `src/local.js`.
 - **Tools:** `list_dir`, `read_file`, `search_files`, `git` (status/diff/log, read-only) run automatically; `write_file`, `edit_file`, `run_command` stop for approval. The approval card for file changes carries a unified diff built by `src/diff.js`.
 - **History:** one JSON file per chat in `~/.lantern/sessions/` (owner-only permissions), written after every step. The `/undo` stack lives in the same file.
 - **Extending:** add a tool by (1) implementing it in `tools.js`, (2) adding its JSON schema to `TOOL_DEFS`, (3) deciding whether it belongs in `NEEDS_APPROVAL`, (4) adding a test in `test/`.

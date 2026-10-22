@@ -6,11 +6,12 @@ import { dirname, join, resolve } from "node:path";
 import { randomUUID, webcrypto } from "node:crypto";
 
 import { loadConfig, saveConfig, nameFor } from "./config.js";
-import { listModels } from "./cerebras.js";
+import { listModels, probeModels } from "./cerebras.js";
 import { runAgent } from "./agent.js";
 import { undoLast } from "./tools.js";
 import { newSession, loadSession, saveSession, listSessions, deleteSession, validId } from "./sessions.js";
-import { spark, makePass, passLink, bestModel, SPARK_PROVIDERS } from "./spark.js";
+import { spark, makePass, passLink, bestModel, discoverLocal, recommendOllamaModel, OLLAMA_MODELS, SPARK_PROVIDERS } from "./spark.js";
+import { installedApps, startPlan, startApp, pullOllama, ramGB, MODEL_NAME_RE } from "./local.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(__dirname, "..", "public");
@@ -18,7 +19,19 @@ const PKG = JSON.parse(await fs.readFile(join(__dirname, "..", "package.json"), 
 export const VERSION = PKG.version;
 // Where a Lantern Pass link opens: the hosted Lite (a fork's own Pages URL if it changed homepage).
 const LITE_URL = PKG.homepage || "https://jammx2.github.io/lantern/";
-const CATALOG = SPARK_PROVIDERS.map(({ id, baseUrl, signup, note }) => ({ id, baseUrl, signup, note }));
+const CATALOG = SPARK_PROVIDERS.map(({ id, label, kind, baseUrl, signup, note, howTo }) => ({ id, label, kind, baseUrl, signup, note, howTo }));
+const LOCAL_IDS = new Set(SPARK_PROVIDERS.filter((p) => p.kind === "local").map((p) => p.id));
+const probeLocal = (l) => probeModels(l.baseUrl);
+
+// Every local AI app: running (with its models), installed but off (with the
+// button Lantern can offer, if any), or neither.
+async function localReport() {
+  const [found, installed] = [await discoverLocal({ probe: probeLocal }), installedApps()];
+  return found.map((a) => {
+    const plan = !a.running && installed[a.id] ? startPlan(a.id) : null;
+    return { ...a, installed: a.running || Boolean(installed[a.id]), start: plan ? plan.label : "" };
+  });
+}
 
 const MAX_BODY = 5 * 1024 * 1024; // 5 MB request cap
 
@@ -222,6 +235,7 @@ async function router(req, res) {
         probeLocal: true,
         crypto: webcrypto,
         test: (l) => listModels(l.apiKey || "local", l.baseUrl),
+        probe: probeLocal,
       });
       for (const l of out.links) {
         if (l.keyFrom === "saved") { delete l.apiKey; l.hasKey = true; }
@@ -248,6 +262,48 @@ async function router(req, res) {
     } catch (e) {
       return send(res, 400, { error: e.message, code: e.code });
     }
+  }
+
+  // ---- AI already on this computer (no terminal needed) ----
+  if (req.method === "GET" && url === "/api/local") {
+    const ram = ramGB();
+    return send(res, 200, { apps: await localReport(), ollamaModels: OLLAMA_MODELS, recommended: recommendOllamaModel(ram), ramGB: ram });
+  }
+  if (req.method === "POST" && url === "/api/local/start") {
+    const { id } = await readBody(req);
+    if (!LOCAL_IDS.has(id)) return send(res, 400, { error: "Unknown app." });
+    try {
+      const plan = await startApp(id);
+      return send(res, 200, { ok: true, message: `${plan.label}…` });
+    } catch (e) {
+      return send(res, 400, { error: e.message });
+    }
+  }
+  // Download a model into Ollama, streaming progress as NDJSON.
+  if (req.method === "POST" && url === "/api/local/pull") {
+    const { model } = await readBody(req);
+    if (!MODEL_NAME_RE.test(String(model || ""))) return send(res, 400, { error: "That doesn't look like an Ollama model name." });
+    res.writeHead(200, { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store" });
+    // Cancel the download if the page goes away (Cancel button, closed tab).
+    const stop = new AbortController();
+    res.on("close", () => { if (!res.writableFinished) stop.abort(); });
+    let last = 0;
+    try {
+      await pullOllama(String(model), {
+        signal: stop.signal,
+        onProgress: (p) => {
+          // Ollama reports every chunk; a few updates a second is plenty for a bar.
+          const now = Date.now();
+          if (now - last < 250 && p.total && p.completed < p.total) return;
+          last = now;
+          res.write(JSON.stringify({ type: "progress", ...p }) + "\n");
+        },
+      });
+      res.write(JSON.stringify({ type: "done", model }) + "\n");
+    } catch (e) {
+      if (!stop.signal.aborted) res.write(JSON.stringify({ type: "error", message: e.message }) + "\n");
+    }
+    return res.end();
   }
 
   // Validate one endpoint and list its usable models (no persistence).

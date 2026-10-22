@@ -6,15 +6,53 @@
 // a copy between its <spark> markers — run `npm run sync-lite` after editing.
 // Keep it free of Node and DOM APIs: web standards only (WebCrypto is passed in).
 
+// kind: "free" cloud tiers come first, then custom endpoints, then AI running
+// on this computer, and "paid" APIs last, so money is only spent when nothing
+// free can answer. Local apps are found by their default port; howTo says, in
+// clicks, how to switch each one's server on.
 export const SPARK_PROVIDERS = [
-  { id: "cerebras", baseUrl: "https://api.cerebras.ai/v1", key: /\bcsk-[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /cerebras/i, domains: ["cerebras.ai"], signup: "https://cloud.cerebras.ai/", note: "~1M tokens/day free · fastest" },
-  { id: "groq", baseUrl: "https://api.groq.com/openai/v1", key: /\bgsk_[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /groq/i, domains: ["groq.com"], signup: "https://console.groq.com/keys", note: "14.4k requests/day free · very fast" },
-  { id: "sambanova", baseUrl: "https://api.sambanova.ai/v1", key: null, hint: /samba/i, domains: ["sambanova.ai"], signup: "https://cloud.sambanova.ai/", note: "free tier · big models, fast" },
-  { id: "gemini", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", key: /\bAIza[0-9A-Za-z_-]{35}(?![0-9A-Za-z_-])/, hint: /gemini|google|ai ?studio/i, domains: ["googleapis.com", "aistudio.google.com"], signup: "https://aistudio.google.com/apikey", note: "generous free tier" },
-  { id: "mistral", baseUrl: "https://api.mistral.ai/v1", key: null, hint: /mistral|codestral|devstral/i, domains: ["mistral.ai"], signup: "https://console.mistral.ai/api-keys", note: "free Experiment plan · Devstral" },
-  { id: "openrouter", baseUrl: "https://openrouter.ai/api/v1", key: /\bsk-or-v1-[A-Za-z0-9]{32,}(?![A-Za-z0-9])/, hint: /openrouter/i, domains: ["openrouter.ai"], signup: "https://openrouter.ai/keys", note: ":free models from many labs" },
-  { id: "ollama", baseUrl: "http://localhost:11434/v1", key: null, hint: /ollama/i, domains: ["ollama.com"], signup: "https://ollama.com/download", note: "local · free forever · no key", local: true },
+  { id: "cerebras", label: "Cerebras", kind: "free", baseUrl: "https://api.cerebras.ai/v1", key: /\bcsk-[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /cerebras/i, domains: ["cerebras.ai"], signup: "https://cloud.cerebras.ai/", note: "~1M tokens/day free · fastest" },
+  { id: "groq", label: "Groq", kind: "free", baseUrl: "https://api.groq.com/openai/v1", key: /\bgsk_[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /groq/i, domains: ["groq.com"], signup: "https://console.groq.com/keys", note: "14.4k requests/day free · very fast" },
+  { id: "sambanova", label: "SambaNova", kind: "free", baseUrl: "https://api.sambanova.ai/v1", key: null, hint: /samba/i, domains: ["sambanova.ai"], signup: "https://cloud.sambanova.ai/", note: "free tier · big models, fast" },
+  { id: "gemini", label: "Gemini", kind: "free", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", key: /\bAIza[0-9A-Za-z_-]{35}(?![0-9A-Za-z_-])/, hint: /gemini|google|ai ?studio/i, domains: ["googleapis.com", "aistudio.google.com"], signup: "https://aistudio.google.com/apikey", note: "generous free tier" },
+  { id: "mistral", label: "Mistral", kind: "free", baseUrl: "https://api.mistral.ai/v1", key: null, hint: /mistral|codestral|devstral/i, domains: ["mistral.ai"], signup: "https://console.mistral.ai/api-keys", note: "free Experiment plan · Devstral" },
+  { id: "openrouter", label: "OpenRouter", kind: "free", baseUrl: "https://openrouter.ai/api/v1", key: /\bsk-or-v1-[A-Za-z0-9]{32,}(?![A-Za-z0-9])/, hint: /openrouter/i, domains: ["openrouter.ai"], signup: "https://openrouter.ai/keys", note: ":free models from many labs" },
+  { id: "nvidia", label: "NVIDIA", kind: "free", baseUrl: "https://integrate.api.nvidia.com/v1", key: /\bnvapi-[A-Za-z0-9_-]{40,}(?![A-Za-z0-9_-])/, hint: /nvidia|nvapi/i, domains: ["nvidia.com"], signup: "https://build.nvidia.com/", note: "free developer credits · open models" },
+  { id: "huggingface", label: "Hugging Face", kind: "free", baseUrl: "https://router.huggingface.co/v1", key: /\bhf_[A-Za-z0-9]{30,}(?![A-Za-z0-9])/, hint: /hugging ?face/i, domains: ["huggingface.co", "hf.co"], signup: "https://huggingface.co/settings/tokens", note: "free monthly credits · open models" },
+
+  { id: "ollama", label: "Ollama", kind: "local", baseUrl: "http://localhost:11434/v1", key: null, hint: /ollama/i, domains: ["ollama.com"], signup: "https://ollama.com/download", note: "on this computer · free forever", howTo: "Open the Ollama app. It runs quietly in the menu bar or system tray." },
+  { id: "lmstudio", label: "LM Studio", kind: "local", baseUrl: "http://localhost:1234/v1", key: null, hint: /lm ?studio/i, domains: ["lmstudio.ai"], signup: "https://lmstudio.ai/download", note: "on this computer · desktop app", howTo: "In LM Studio, open the Developer tab, switch the server to Running, and load a model." },
+  { id: "jan", label: "Jan", kind: "local", baseUrl: "http://localhost:1337/v1", key: null, hint: /jan\.ai|\bjan app\b/i, domains: ["jan.ai"], signup: "https://jan.ai/download", note: "on this computer · desktop app", howTo: "In Jan, open Settings, then Local API Server, and press Start Server." },
+  { id: "gpt4all", label: "GPT4All", kind: "local", baseUrl: "http://localhost:4891/v1", key: null, hint: /gpt4all/i, domains: ["nomic.ai", "gpt4all.io"], signup: "https://www.nomic.ai/gpt4all", note: "on this computer · desktop app", howTo: "In GPT4All, open Settings and tick Enable Local API Server. (Its server can chat but may not use tools.)" },
+  { id: "msty", label: "Msty", kind: "local", baseUrl: "http://localhost:10000/v1", key: null, hint: /msty/i, domains: ["msty.app", "msty.ai"], signup: "https://msty.ai", note: "on this computer · desktop app", howTo: "Open Msty and make sure its Local AI service is installed (Settings, Local AI)." },
+  { id: "koboldcpp", label: "KoboldCpp", kind: "local", baseUrl: "http://localhost:5001/v1", key: null, hint: /kobold/i, domains: [], signup: "https://github.com/LostRuins/koboldcpp/releases", note: "on this computer · one-file app", howTo: "Open KoboldCpp, choose a model file, and press Launch." },
+  { id: "llamafile", label: "llamafile / llama.cpp", kind: "local", baseUrl: "http://localhost:8080/v1", key: null, hint: /llamafile|llama\.cpp|llama-server/i, domains: [], signup: "https://github.com/mozilla-ai/llamafile", note: "on this computer · one-file app", howTo: "Double-click your .llamafile (on Windows, rename it to end in .exe first)." },
+  { id: "docker", label: "Docker Model Runner", kind: "local", baseUrl: "http://localhost:12434/engines/v1", key: null, hint: /docker model/i, domains: [], signup: "https://docs.docker.com/ai/model-runner/", note: "on this computer · Docker Desktop", howTo: "In Docker Desktop, open Settings, then AI, and enable Docker Model Runner with host-side TCP support." },
+  { id: "textgen", label: "Text Generation WebUI", kind: "local", baseUrl: "http://localhost:5000/v1", key: null, hint: /oobabooga|text-generation-webui/i, domains: [], signup: "https://github.com/oobabooga/text-generation-webui", note: "on this computer", howTo: "Start it with the API switched on (the Session tab, or the --api option)." },
+  { id: "vllm", label: "vLLM / local server", kind: "local", baseUrl: "http://localhost:8000/v1", key: null, hint: /vllm|lemonade/i, domains: [], signup: "https://docs.vllm.ai/", note: "on this computer", howTo: "Start your server on port 8000 with its OpenAI-compatible API." },
+
+  { id: "deepseek", label: "DeepSeek", kind: "paid", baseUrl: "https://api.deepseek.com/v1", key: null, hint: /deepseek/i, domains: ["deepseek.com"], signup: "https://platform.deepseek.com/api_keys", note: "paid · very low cost" },
+  { id: "openai", label: "OpenAI", kind: "paid", baseUrl: "https://api.openai.com/v1", key: /\bsk-(?:proj|svcacct)-[A-Za-z0-9_-]{20,}|\bsk-[A-Za-z0-9]{20}T3BlbkFJ[A-Za-z0-9]{20}(?![A-Za-z0-9])/, hint: /openai|chatgpt/i, domains: ["openai.com"], signup: "https://platform.openai.com/api-keys", note: "paid · GPT models" },
+  { id: "xai", label: "xAI", kind: "paid", baseUrl: "https://api.x.ai/v1", key: /\bxai-[A-Za-z0-9]{40,}(?![A-Za-z0-9])/, hint: /\bxai\b|\bgrok\b/i, domains: ["x.ai"], signup: "https://console.x.ai/", note: "paid · Grok" },
+  { id: "together", label: "Together AI", kind: "paid", baseUrl: "https://api.together.xyz/v1", key: /\btgp_v1_[A-Za-z0-9_-]{30,}(?![A-Za-z0-9_-])/, hintKeys: true, hint: /together[ _.]?(ai|xyz|api)/i, domains: ["together.xyz", "together.ai"], signup: "https://api.together.ai/settings/api-keys", note: "paid credits · open models" },
+  { id: "fireworks", label: "Fireworks", kind: "paid", baseUrl: "https://api.fireworks.ai/inference/v1", key: /\bfw_[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /fireworks/i, domains: ["fireworks.ai"], signup: "https://fireworks.ai/account/api-keys", note: "paid · fast open models" },
 ];
+
+// Ollama models Lantern can download with one click, smallest first. Every one
+// supports tool calling; minRam is the memory (GB) it runs comfortably in.
+export const OLLAMA_MODELS = [
+  { name: "qwen2.5-coder:1.5b", size: "1.0 GB", minRam: 0 },
+  { name: "qwen2.5-coder:3b", size: "1.9 GB", minRam: 8 },
+  { name: "qwen2.5-coder:7b", size: "4.7 GB", minRam: 16 },
+  { name: "qwen2.5-coder:14b", size: "9.0 GB", minRam: 32 },
+  { name: "qwen3-coder:30b", size: "19 GB", minRam: 48 },
+];
+
+/** The biggest one-click Ollama model that fits this much memory (GB). */
+export function recommendOllamaModel(ramGB) {
+  const fits = OLLAMA_MODELS.filter((m) => (Number(ramGB) || 0) >= m.minRam);
+  return (fits.length ? fits[fits.length - 1] : OLLAMA_MODELS[0]).name;
+}
 
 const PASS_SRC = "lantern1\\.[sr]\\.[A-Za-z0-9_-]{8,}";
 const URL_SRC = "https?:\\/\\/[^\\s\"'<>`]+";
@@ -38,27 +76,32 @@ export function isLoopback(url) {
   return LOOPBACK.has(hostOf(url));
 }
 
+const portOf = (url) => { try { return new URL(url).port; } catch { return ""; } };
+// A local app is recognised by its default port on this machine.
+function localAppAt(u) {
+  if (!LOOPBACK.has(u.hostname.toLowerCase())) return null;
+  return SPARK_PROVIDERS.find((p) => p.kind === "local" && portOf(p.baseUrl) === u.port) || null;
+}
+
 /** The catalog provider an endpoint URL belongs to, or null. */
 export function providerForUrl(url) {
   const u = trimUrl(url);
   const exact = SPARK_PROVIDERS.find((p) => p.baseUrl === u);
   if (exact) return exact;
-  try {
-    const parsed = new URL(u);
-    if (LOOPBACK.has(parsed.hostname) && parsed.port === "11434") return providerById("ollama");
-  } catch { /* not a URL */ }
-  return null;
+  try { return localAppAt(new URL(u)); } catch { return null; }
 }
 
-// A pasted URL is either one of ours (a hint, or a local Ollama endpoint) or a
+// A pasted URL is either one of ours (a hint, or a local app's endpoint) or a
 // custom OpenAI-compatible endpoint. Random links in a pasted file are ignored
 // unless they look like an API base (…/v1, …/openai) or point at this machine.
 function classifyUrl(raw) {
   let u;
   try { u = new URL(raw.replace(/[),.;:'"\]]+$/, "")); } catch { return null; }
   const host = u.hostname.toLowerCase();
-  if (LOOPBACK.has(host) && u.port === "11434") {
-    return { provider: providerById("ollama"), baseUrl: `${u.protocol}//${u.host}/v1` };
+  const app = localAppAt(u);
+  if (app) {
+    const path = u.pathname.replace(/\/+$/, "") || new URL(app.baseUrl).pathname;
+    return { provider: app, baseUrl: `${u.protocol}//${u.host}${path}` };
   }
   for (const p of SPARK_PROVIDERS) {
     if (p.domains.some((d) => host === d || host.endsWith("." + d))) return { hint: p };
@@ -153,7 +196,7 @@ export function detectInput(text) {
       if (!looksSecret(tok) || seenKeys.has(tok)) continue;
       secrets++;
       if (endpoint) add(custom(endpoint, tok));
-      else if (hint && !hint.key && !hint.local) add(mk(hint, tok, "hint"));
+      else if (hint && hint.kind !== "local" && (!hint.key || hint.hintKeys)) add(mk(hint, tok, "hint"));
       else if (!hint && UUID_RE.test(tok)) add(mk(providerById("sambanova"), tok, "guess"));
       else out.unknown.push(mask(tok));
     }
@@ -182,6 +225,8 @@ const MODEL_PREFS = [
   /gemini-2\.5-flash(?!-lite)/i, /kimi-k2/i, /deepseek-v3/i, /llama-?3\.3-70b/i, /qwen-?3-235b/i,
   /glm-4\.[5-9]/i, /llama-4-maverick/i, /codestral/i, /qwen-?3-32b/i, /mistral-(large|medium)/i,
   /llama-4-scout/i, /qwen2\.5-coder/i, /qwen-?3/i, /llama-?3\.[123]/i,
+  // Paid APIs: the cheaper capable model, since they're the last resort.
+  /deepseek-chat/i, /gpt-5-mini/i, /gpt-4\.1-mini/i, /gpt-4o-mini/i, /grok-code-fast/i, /grok-4/i,
 ];
 const UNSTABLE = /preview|experimental|\bexp\b|-exp-|beta/i;
 
@@ -201,12 +246,12 @@ export function bestModel(models, providerId = "") {
   return pool[0];
 }
 
-/** Cloud tiers fastest-first, custom endpoints next, local Ollama last. */
+/** Free cloud tiers fastest-first, then custom endpoints, then this computer, then paid APIs. */
 export function orderChain(links) {
+  const band = { free: 0, local: 200, paid: 300 };
   const rank = (l) => {
-    if (l.name === "ollama") return 100;
     const i = SPARK_PROVIDERS.findIndex((p) => p.id === l.name);
-    return i < 0 ? 50 : i;
+    return i < 0 ? 100 : band[SPARK_PROVIDERS[i].kind] + i;
   };
   return links.map((l, i) => [l, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map((x) => x[0]);
 }
@@ -366,18 +411,39 @@ async function checkLink(link, test, ms) {
 }
 
 /**
+ * Look for AI apps running on this computer by asking each known local port
+ * for its model list. probe(link) resolves to the models (an empty list means
+ * the app is running but has none loaded) or throws when nothing answers.
+ * @returns {Promise<{id,label,baseUrl,running,models,model,howTo,signup}[]>}
+ */
+export async function discoverLocal({ probe, timeoutMs = 2500 } = {}) {
+  const apps = SPARK_PROVIDERS.filter((p) => p.kind === "local");
+  return Promise.all(apps.map(async (p) => {
+    const found = { id: p.id, label: p.label, baseUrl: p.baseUrl, running: false, models: [], model: "", howTo: p.howTo, signup: p.signup };
+    try {
+      const models = await withTimeout(Promise.resolve(probe({ name: p.id, baseUrl: p.baseUrl, apiKey: "" })), timeoutMs);
+      found.running = true;
+      found.models = Array.isArray(models) ? models : [];
+      found.model = bestModel(found.models, p.id);
+    } catch { /* not running here */ }
+    return found;
+  }));
+}
+
+/**
  * The whole Spark flow: detect, open any pass, reuse saved keys, test every
- * link in parallel, pick models, look for a local Ollama, order the chain.
+ * link in parallel, pick models, look for AI running on this computer, order the chain.
  * @param {object} o
  * @param {string} o.text  whatever the user pasted
  * @param {string} [o.passphrase]  for a sealed pass
  * @param {object[]} [o.existing]  the saved chain; its keys fill gaps (marked keyFrom:"saved")
  * @param {(link:object)=>Promise<string[]>} [o.test]  list a link's models, or throw
- * @param {boolean} [o.probeLocal]  also look for Ollama on this machine
+ * @param {boolean} [o.probeLocal]  also look for AI apps running on this computer
+ * @param {(link:object)=>Promise<string[]>} [o.probe]  like test, for local apps (defaults to test)
  * @param {boolean} [o.verify]  false = don't contact anything, just parse
  * @param {Crypto} [o.crypto]  WebCrypto implementation (defaults to globalThis.crypto)
  */
-export async function spark({ text = "", passphrase = "", existing = [], test, probeLocal = false, verify = true, crypto, timeoutMs = 15_000 } = {}) {
+export async function spark({ text = "", passphrase = "", existing = [], test, probe, probeLocal = false, verify = true, crypto, timeoutMs = 15_000 } = {}) {
   const found = detectInput(text);
   let links = found.links.map((l) => ({ ...l }));
   let from = "paste";
@@ -399,21 +465,15 @@ export async function spark({ text = "", passphrase = "", existing = [], test, p
   }
 
   const live = verify && typeof test === "function";
-  const ollama = providerById("ollama");
-  const probe = live && probeLocal && !links.some((l) => l.name === ollama.id)
-    ? (async () => {
-        const cand = { name: ollama.id, baseUrl: ollama.baseUrl, apiKey: "", model: "", source: "detected" };
-        try {
-          cand.models = await withTimeout(Promise.resolve(test(cand)), 2500);
-          cand.model = bestModel(cand.models, cand.name);
-          cand.ok = true;
-          return cand;
-        } catch { return null; }
-      })()
-    : Promise.resolve(null);
+  const scan = live && probeLocal ? discoverLocal({ probe: probe || test }) : Promise.resolve([]);
   const checks = live ? Promise.all(links.map((l) => checkLink(l, test, timeoutMs))) : Promise.resolve();
-  const [local] = await Promise.all([probe, checks]);
-  if (local) links.push(local);
+  const [local] = await Promise.all([scan, checks]);
+  const localFound = [];
+  for (const app of local) {
+    if (!app.running || !app.models.length || links.some((l) => portOf(l.baseUrl) === portOf(app.baseUrl) && isLoopback(l.baseUrl))) continue;
+    links.push({ name: app.id, baseUrl: app.baseUrl, apiKey: "", model: app.model, models: app.models, ok: true, source: "detected" });
+    localFound.push(app.label);
+  }
 
-  return { links: orderChain(links), unknown: found.unknown, notes: found.notes, from, localFound: Boolean(local) };
+  return { links: orderChain(links), unknown: found.unknown, notes: found.notes, from, localFound, local };
 }

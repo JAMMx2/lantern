@@ -417,6 +417,23 @@
   .toggle input{width:15px; height:15px; accent-color:var(--green)}
   .pass-out{margin-top:10px}
   .pass-out[hidden]{display:none}
+
+  /* ---- ai on this computer ---- */
+  .lrow{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-start; border:1px solid var(--line); border-left:2px solid var(--line-br);
+    border-radius:2px; padding:8px 10px; margin-bottom:7px; background:var(--well)}
+  .lrow.on{border-left-color:var(--green)}
+  .lrow .lamp{margin-top:4px; flex:none}
+  .lmain{flex:1 1 220px; min-width:0}
+  .lname{color:var(--green-hi); font-size:12.5px}
+  .lstate{color:var(--faint); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; margin-left:6px}
+  .lhow{color:var(--muted); font-size:11.5px; line-height:1.55; margin-top:3px}
+  .lact{display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; margin-left:auto}
+  .lact select{background:#020403; border:1px solid var(--line-br); color:var(--green-hi); border-radius:2px; padding:5px 6px; font-family:var(--mono); font-size:11.5px; max-width:220px}
+  .ldone{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ok)}
+  .lbar{height:6px; background:#0f1d14; border:1px solid var(--line-br); border-radius:1px; margin-top:6px; overflow:hidden}
+  .lbar i{display:block; height:100%; width:0; background:var(--amber); box-shadow:var(--glow-a); transition:width .3s}
+  .lempty{color:var(--muted); font-size:12px; line-height:1.65; border:1px dashed var(--line-br); border-radius:2px; padding:10px 12px; margin-bottom:7px}
+  .lempty a{color:var(--green-hi)}
   @media (max-width:900px){ .sysline{display:none} }
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important; transition:none !important}
@@ -429,7 +446,7 @@
 <div class="crt-sweep" aria-hidden="true"></div>
 
 <header>
-  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver" id="ver">v0.5</span></div>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver" id="ver">v0.6</span></div>
   <span class="sysline">localhost · your model · your files</span>
   <div class="strip-spacer"></div>
   <div class="field">
@@ -481,7 +498,12 @@
       <textarea id="sparkIn" rows="3" spellcheck="false" autocomplete="off" placeholder="Paste your API keys in any order (a whole .env file is fine), an endpoint URL, or a Lantern Pass…"></textarea>
       <div class="row" id="sparkPhraseRow" style="display:none; margin-top:8px"><input id="sparkPhrase" type="password" placeholder="passphrase for this sealed pass" autocomplete="off" spellcheck="false" /></div>
       <div class="spark-go"><button class="primary" id="sparkGo">Spark</button><span class="spark-msg" id="sparkMsg"></span></div>
-      <div class="prov-note">Recognises Cerebras, Groq, Gemini, OpenRouter, SambaNova and Mistral keys, tests them all at once, picks a coding model for each, orders them fastest-first, and adds Ollama if it's running. Each key only goes to the provider it belongs to.</div>
+      <div class="prov-note">Recognises keys from Cerebras, Groq, Gemini, OpenRouter, NVIDIA, Hugging Face, SambaNova, Mistral, DeepSeek, OpenAI, xAI, Together and Fireworks. Tests them all at once, picks a coding model for each, and orders them: free tiers first, paid APIs last. Each key only goes to the provider it belongs to.</div>
+    </div>
+    <div class="step">
+      <div class="lbl"><b>+ /</b> AI already on this computer? No terminal needed.</div>
+      <div id="localList"></div>
+      <div class="spark-go"><button class="minibtn" id="findLocal">Find AI on this computer</button><span class="spark-msg" id="localMsg"></span></div>
     </div>
     <div class="or">or build it by hand</div>
 
@@ -489,7 +511,7 @@
       <div class="lbl"><b>01 /</b> Providers — fastest first.</div>
       <div id="chain"></div>
       <button class="minibtn" id="addProv">+ add fallback provider</button>
-      <div class="prov-note">Suggested free chain: Cerebras → Groq → Gemini. Add Ollama last as the offline safety net.</div>
+      <div class="prov-note">Suggested free chain: Cerebras → Groq → Gemini, with AI on this computer as the offline safety net. Paid APIs go last, so Lantern only spends money when nothing free can answer.</div>
     </div>
 
     <div class="step">
@@ -947,12 +969,17 @@ function fillModels(models, selected){
 
 // ---- relay chain setup ----
 // Filled from the server's provider catalog at boot (same list Spark uses).
-const PRESETS = { custom: { url:"", link:"", note:"any OpenAI-compatible endpoint" } };
+const PRESETS = { custom: { url:"", link:"", note:"any OpenAI-compatible endpoint", kind:"custom", label:"Custom endpoint" } };
 function loadCatalog(catalog){
   const rest = PRESETS.custom;
   for(const k of Object.keys(PRESETS)) delete PRESETS[k];
-  for(const p of catalog||[]) PRESETS[p.id] = { url:p.baseUrl, link:p.signup, note:p.note };
+  for(const p of catalog||[]) PRESETS[p.id] = { url:p.baseUrl, link:p.signup, note:p.note, kind:p.kind, label:p.label, howTo:p.howTo };
   PRESETS.custom = rest;
+}
+const GROUPS = [["free","Free cloud"],["local","On this computer"],["paid","Paid cloud"]];
+function presetOptions(selected){
+  const opt = (id)=>'<option value="'+id+'"'+(id===selected?" selected":"")+'>'+esc(PRESETS[id].label||id)+'</option>';
+  return GROUPS.map(([kind,title])=>'<optgroup label="'+title+'">'+Object.keys(PRESETS).filter(id=>PRESETS[id].kind===kind).map(opt).join("")+'</optgroup>').join("") + opt("custom");
 }
 let CURRENT = { providers: [], configured:false };
 const jpost = (body)=>({ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
@@ -966,15 +993,16 @@ function presetFor(url){
 // p: a saved link {name, baseUrl, model, hasKey} or a Spark result
 // {name, baseUrl, apiKey, model, models, ok, error, needsKey, hasKey}.
 function chainRow(p){
+  const pristine = !p;  // an untouched blank row that found apps may replace
   const first = Object.keys(PRESETS)[0];
   p = p || { name:first, baseUrl:PRESETS[first].url, model:"", hasKey:false };
   const row = document.createElement("div");
   row.className = "prow";
   const preset = presetFor(p.baseUrl);
+  row.dataset.pristine = pristine ? "1" : "";
+  row.addEventListener("input", ()=>{ row.dataset.pristine = ""; });
   row.innerHTML =
-    '<select class="p-preset">' +
-      Object.keys(PRESETS).map(k=>'<option value="'+k+'"'+(k===preset?" selected":"")+'>'+k+'</option>').join("") +
-    '</select>' +
+    '<select class="p-preset">' + presetOptions(preset) + '</select>' +
     '<input class="p-key" type="password" placeholder="API key" autocomplete="off" spellcheck="false" />' +
     '<button class="minibtn p-test">Test</button>' +
     '<select class="p-model" style="display:none"></select>' +
@@ -993,23 +1021,25 @@ function chainRow(p){
   const markOk = (on)=>{ row.dataset.saved = on ? "1" : ""; row.classList.toggle("ok", !!on); };
   function showPreset(k){
     urlIn.style.display = k==="custom" ? "" : "none";
-    keyIn.placeholder = k==="ollama" ? "no key needed" : (row.dataset.haskey ? "key saved — leave blank to keep" : "API key");
+    const local = PRESETS[k].kind==="local";
+    keyIn.placeholder = local ? "no key needed" : (row.dataset.haskey ? "key saved — leave blank to keep" : "API key");
     link.style.display = PRESETS[k].link ? "" : "none";
     link.href = PRESETS[k].link || "#";
+    link.textContent = local ? "get app ↗" : "key ↗";
   }
   row.dataset.haskey = p.hasKey ? "1" : "";
   if(preset==="custom") urlIn.value = p.baseUrl || "";
   if(p.apiKey && p.apiKey!=="local") keyIn.value = p.apiKey;
   if(p.models && p.models.length) setModels(p.models, p.model);
   else if(p.model) setModels([p.model], p.model);
-  if(p.ok){ markOk(true); setStatus("ok · "+p.models.length+" models · picked "+p.model, "ok"); }
+  if(p.ok){ markOk(true); setStatus("ok · "+p.models.length+" model"+(p.models.length===1?"":"s")+" · picked "+p.model, "ok"); }
   else if(p.error){ markOk(false); setStatus(p.error, p.needsKey ? "" : "err"); }
   else if(p.ok===undefined && (p.hasKey || p.model)){ markOk(true); setStatus("saved", "ok"); }
   else setStatus(PRESETS[preset].note);
   showPreset(preset);
   sel.onchange = ()=>{
-    row.dataset.haskey=""; markOk(false); setModels([], "");
-    showPreset(sel.value); setStatus(PRESETS[sel.value].note);
+    row.dataset.haskey=""; row.dataset.pristine=""; markOk(false); setModels([], "");
+    showPreset(sel.value); setStatus(PRESETS[sel.value].kind==="local" ? PRESETS[sel.value].howTo : PRESETS[sel.value].note);
   };
   row.querySelector(".p-test").onclick = async ()=>{
     const k = sel.value;
@@ -1023,7 +1053,7 @@ function chainRow(p){
       const keep = modelSel2.value && j.models.includes(modelSel2.value) ? modelSel2.value : j.best;
       setModels(j.models, keep);
       markOk(true);
-      setStatus("ok · "+j.models.length+" models · picked "+keep, "ok");
+      setStatus("ok · "+j.models.length+" model"+(j.models.length===1?"":"s")+" · picked "+keep, "ok");
     }catch(e){ setStatus(e.message, "err"); }
   };
   row.querySelector(".p-del").onclick = ()=>row.remove();
@@ -1040,15 +1070,153 @@ function openSetup(){
   keyErr.textContent="";
   overlay.style.display="flex";
   if(!CURRENT.configured) $("#sparkIn").focus();
+  findLocal({ adopt: !CURRENT.configured });
 }
 $("#settings").onclick = openSetup;
+
+// ---- AI already on this computer ----
+// The server checks each local app's port, which installed apps are switched
+// off, and how to switch them on. Running apps can join the chain in a click.
+function rowUrl(row){
+  const k = row.querySelector(".p-preset").value;
+  return (k==="custom" ? row.querySelector(".p-url").value.trim() : PRESETS[k].url).replace(/\/+$/,"");
+}
+function inChain(baseUrl){ return [...$("#chain").querySelectorAll(".prow")].some(r=>rowUrl(r)===baseUrl); }
+function addToChain(links){
+  const box = $("#chain"), rows = box.querySelectorAll(".prow");
+  if(rows.length===1 && rows[0].dataset.pristine) box.innerHTML = "";
+  for(const l of links) if(!inChain(l.baseUrl)) box.appendChild(chainRow(l));
+}
+const fmtGB = (b)=>(b/1e9).toFixed(b>=1e10?0:1)+" GB";
+let LOCAL = null, pulling = null;
+async function findLocal({ adopt=false, quiet=false } = {}){
+  const msg = $("#localMsg");
+  if(!quiet) sparkSay(msg, "Looking…");
+  try{
+    const r = await api("/api/local");
+    LOCAL = await r.json();
+    if(!r.ok) throw new Error(LOCAL.error || "HTTP "+r.status);
+  }catch(e){ sparkSay(msg, e.message, "err"); return; }
+  const fresh = LOCAL.apps.filter(a=>a.running && a.models.length && !inChain(a.baseUrl));
+  if(adopt && fresh.length){
+    addToChain(fresh.map(a=>({ name:a.id, baseUrl:a.baseUrl, model:a.model, models:a.models, ok:true })));
+    sparkSay(msg, "Added "+fresh.map(a=>a.label).join(" and ")+" to your chain below. Save to start.", "ok");
+  } else if(!quiet){
+    const seen = LOCAL.apps.filter(a=>a.installed).length;
+    sparkSay(msg, seen ? "Found "+seen+" AI app"+(seen===1?"":"s")+" on this computer." : "", seen ? "ok" : "");
+  }
+  if(!pulling) renderLocal();  // don't wipe a download's progress bar
+}
+function renderLocal(){
+  const box = $("#localList");
+  if(!LOCAL) return;
+  const apps = LOCAL.apps.filter(a=>a.installed);
+  if(!apps.length){
+    box.innerHTML = '<div class="lempty">No AI apps found on this computer. The easiest one needs no terminal: '+
+      '<a href="https://ollama.com/download" target="_blank" rel="noopener">get Ollama ↗</a>, install it like any app, open it, then press Find again. '+
+      'Lantern will download a coding model for you. Prefer a window you can see? <a href="https://lmstudio.ai/download" target="_blank" rel="noopener">LM Studio ↗</a> works too.</div>';
+    return;
+  }
+  box.innerHTML = "";
+  for(const a of apps){
+    const row = document.createElement("div");
+    const ready = a.running && a.models.length;
+    row.className = "lrow"+(ready?" on":"");
+    const state = ready ? "running · "+a.models.length+" model"+(a.models.length===1?"":"s")
+      : a.running ? "running · no model yet" : "installed · switched off";
+    let how = "";
+    if(ready) how = "Will use "+a.model+".";
+    else if(a.running && a.id!=="ollama") how = "Load a model in "+a.label+", then press Find again.";
+    else if(!a.running) how = a.howTo;
+    row.innerHTML = '<span class="lamp '+(ready?"ok":a.running?"live":"ready")+'"></span>'+
+      '<div class="lmain"><div class="lname"></div><div class="lhow"></div></div><div class="lact"></div>';
+    row.querySelector(".lname").innerHTML = esc(a.label)+'<span class="lstate">'+state+'</span>';
+    row.querySelector(".lhow").textContent = how;
+    const act = row.querySelector(".lact");
+    if(ready){
+      if(inChain(a.baseUrl)) act.innerHTML = '<span class="ldone">in your chain</span>';
+      else { const b = document.createElement("button"); b.className="minibtn"; b.textContent="Use it";
+        b.onclick = ()=>{ addToChain([{ name:a.id, baseUrl:a.baseUrl, model:a.model, models:a.models, ok:true }]); renderLocal(); };
+        act.appendChild(b); }
+    } else if(a.running && a.id==="ollama"){
+      ollamaDownload(row, act);
+    } else if(a.start){
+      const b = document.createElement("button"); b.className="minibtn"; b.textContent=a.start;
+      b.onclick = ()=>startLocal(a, b);
+      act.appendChild(b);
+    }
+    box.appendChild(row);
+  }
+}
+function ollamaDownload(row, act){
+  const pick = document.createElement("select");
+  pick.innerHTML = LOCAL.ollamaModels.map(m=>'<option value="'+esc(m.name)+'"'+(m.name===LOCAL.recommended?" selected":"")+'>'+
+    esc(m.name)+' · '+m.size+(m.name===LOCAL.recommended?' (fits this computer)':'')+'</option>').join("");
+  const go = document.createElement("button"); go.className="minibtn"; go.textContent="Download";
+  act.append(pick, go);
+  row.querySelector(".lhow").textContent = "Pick a coding model and Lantern downloads it into Ollama for you.";
+  go.onclick = ()=>pullModel(pick.value, row, act);
+}
+async function pullModel(model, row, act){
+  const how = row.querySelector(".lhow"), bar = document.createElement("div");
+  bar.className = "lbar"; bar.innerHTML = "<i></i>";
+  act.innerHTML = ""; const stop = document.createElement("button"); stop.className="minibtn"; stop.textContent="Cancel"; act.appendChild(stop);
+  row.querySelector(".lmain").appendChild(bar);
+  how.textContent = "Starting download of "+model+"…";
+  pulling = new AbortController();
+  stop.onclick = ()=>pulling && pulling.abort();
+  try{
+    const res = await api("/api/local/pull", Object.assign(jpost({ model }), { signal:pulling.signal }));
+    if(!res.ok){ const e = await res.json().catch(()=>({})); throw new Error(e.error || "HTTP "+res.status); }
+    const reader = res.body.getReader(), dec = new TextDecoder(); let buf = "", done = false;
+    while(true){
+      const chunk = await reader.read(); if(chunk.done) break;
+      buf += dec.decode(chunk.value, {stream:true});
+      let nl; while((nl = buf.indexOf("\n"))>=0){
+        const line = buf.slice(0,nl).trim(); buf = buf.slice(nl+1); if(!line) continue;
+        const evt = JSON.parse(line);
+        if(evt.type==="error") throw new Error(evt.message);
+        if(evt.type==="done") done = true;
+        if(evt.type==="progress"){
+          if(evt.total){ bar.firstChild.style.width = Math.round(100*evt.completed/evt.total)+"%"; how.textContent = "Downloading "+model+" · "+fmtGB(evt.completed)+" of "+fmtGB(evt.total); }
+          else how.textContent = evt.status;
+        }
+      }
+    }
+    if(!done) throw new Error("The download stopped early. Press Find again to retry.");
+    how.textContent = "Downloaded. Checking it…";
+    pulling = null;
+    await findLocal({ adopt:true });
+  }catch(e){
+    act.innerHTML = ""; bar.remove(); ollamaDownload(row, act);
+    how.textContent = e.name==="AbortError" ? "Download cancelled." : e.message;
+  }finally{ pulling = null; }
+}
+async function startLocal(a, btn){
+  btn.disabled = true; btn.textContent = "Starting…";
+  const r = await api("/api/local/start", jpost({ id:a.id }));
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok){ btn.disabled=false; btn.textContent=a.start; sparkSay($("#localMsg"), j.error || "Couldn't start it.", "err"); return; }
+  // Apps take a few seconds to open their server; keep checking for a while.
+  for(let i=0;i<12;i++){
+    await new Promise(res=>setTimeout(res, 1500));
+    await findLocal({ quiet:true });
+    const now = LOCAL.apps.find(x=>x.id===a.id);
+    if(now && now.running){
+      if(now.models.length) await findLocal({ adopt:true });
+      return;
+    }
+  }
+  sparkSay($("#localMsg"), a.label+" hasn't answered yet. "+a.howTo+" Then press Find again.");
+}
+$("#findLocal").onclick = ()=>findLocal({ adopt:true });
 
 // ---- spark: paste anything -> a tested chain ----
 function sparkSay(el, text, cls){ el.textContent = text; el.className = "spark-msg"+(cls?" "+cls:""); }
 function sparkSummary(j){
   const ok = j.links.filter(l=>l.ok).length, n = j.links.length;
   const parts = [ok+" of "+n+" link"+(n===1?"":"s")+" working"+(j.from!=="paste" ? " from your "+j.from : "")];
-  if(j.localFound) parts.push("found Ollama on this machine");
+  if(j.localFound && j.localFound.length) parts.push("found "+j.localFound.join(" and ")+" on this computer");
   const need = j.links.filter(l=>l.needsKey).length;
   if(need) parts.push(need+(need===1?" needs":" need")+" your key");
   if(j.unknown.length) parts.push("couldn't place "+j.unknown.join(", "));

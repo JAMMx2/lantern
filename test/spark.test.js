@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { webcrypto as crypto } from "node:crypto";
 import {
   detectInput, bestModel, orderChain, makePass, openPass, passLink, passFromHash,
-  generatePassphrase, spark, providerForUrl, SPARK_PROVIDERS,
+  generatePassphrase, spark, providerForUrl, discoverLocal, recommendOllamaModel, SPARK_PROVIDERS,
 } from "../src/spark.js";
 
 const CSK = "csk-" + "a1b2c3d4e5".repeat(5);
@@ -49,15 +49,65 @@ test("model names, env var names and prose are not mistaken for keys", () => {
 
 test("endpoint URLs become links; keys on the same or next line attach to them", () => {
   const { links } = detectInput(
-    `https://api.together.xyz/v1 ${"a1b2c3d4".repeat(8)}\nhttp://localhost:1234/v1\nhttps://my.box:8000/v1\nTOKEN_${"9".repeat(4)}abcdefghijklmnop\nhttp://127.0.0.1:11434\nsee https://console.groq.com/keys and https://example.com/blog`
+    `https://llm.example.net/v1 ${"a1b2c3d4".repeat(8)}\nhttp://localhost:4321/v1\nhttps://my.box:8000/v1\nTOKEN_${"9".repeat(4)}abcdefghijklmnop\nsee https://console.groq.com/keys and https://example.com/blog`
   );
   const urls = links.map((l) => [l.name, l.baseUrl, l.apiKey]);
   assert.deepEqual(urls, [
-    ["custom", "https://api.together.xyz/v1", "a1b2c3d4".repeat(8)],
-    ["custom", "http://localhost:1234/v1", ""],
+    ["custom", "https://llm.example.net/v1", "a1b2c3d4".repeat(8)],
+    ["custom", "http://localhost:4321/v1", ""],
     ["custom", "https://my.box:8000/v1", "TOKEN_9999abcdefghijklmnop"],
-    ["ollama", "http://127.0.0.1:11434/v1", ""],
   ]);
+});
+
+test("local app addresses are recognised by port, with their default path filled in", () => {
+  const { links } = detectInput("http://127.0.0.1:11434\nhttp://localhost:1234/v1\nhttp://localhost:12434");
+  assert.deepEqual(links.map((l) => [l.name, l.baseUrl]), [
+    ["ollama", "http://127.0.0.1:11434/v1"],
+    ["lmstudio", "http://localhost:1234/v1"],
+    ["docker", "http://localhost:12434/engines/v1"],
+  ]);
+  assert.equal(providerForUrl("http://127.0.0.1:1337/v1").id, "jan");
+  assert.equal(providerForUrl("http://10.0.0.5:1234/v1"), null, "only this machine's ports count");
+});
+
+// Assembled at runtime so secret scanners don't take fixtures for real keys.
+const PAID = {
+  openai: ["sk", "proj", "Ab1Cd2Ef3Gh4".repeat(4)].join("-"),
+  openaiLegacy: "sk-" + "A1b2C3d4E5f6G7h8I9j0" + "T3Blbk" + "FJ" + "K1l2M3n4O5p6Q7r8S9t0",
+  xai: "xai" + "-" + "Zq8Wv7".repeat(10),
+  fireworks: "fw" + "_" + "Hk3Lm9Np2Qr5St8V".repeat(2),
+  together: "tgp" + "_v1_" + "Xy7Zw3Uv9Ts1Rq5Po".repeat(2),
+  deepseek: "sk-" + "0a1b2c3d".repeat(4),
+};
+const FREE = {
+  huggingface: "hf" + "_" + "aBcDeFgHiJkLmNoPqRsTuVwXyZ1234".repeat(1) + "5678",
+  nvidia: "nvapi" + "-" + "Qw3Er5Ty7Ui9Op1As".repeat(3),
+};
+
+test("more APIs are recognised by key format; ambiguous sk- keys need the provider named", () => {
+  const text = [
+    `OPENAI_API_KEY=${PAID.openai}`, `old one ${PAID.openaiLegacy}`, `XAI_API_KEY=${PAID.xai}`,
+    `fireworks ${PAID.fireworks}`, PAID.together, `HF_TOKEN=${FREE.huggingface}`, FREE.nvidia,
+    `DEEPSEEK_API_KEY=${PAID.deepseek}`, `mystery ${"sk-" + "9f8e7d6c".repeat(4)}`,
+  ].join("\n");
+  const { links, unknown, notes } = detectInput(text);
+  const n = byName(links);
+  assert.equal(n.openai.apiKey, PAID.openai);
+  assert.match(notes.join(" "), /More than one openai key/);
+  assert.equal(n.xai.apiKey, PAID.xai);
+  assert.equal(n.fireworks.baseUrl, "https://api.fireworks.ai/inference/v1");
+  assert.equal(n.together.apiKey, PAID.together);
+  assert.equal(n.huggingface.apiKey, FREE.huggingface);
+  assert.equal(n.nvidia.apiKey, FREE.nvidia);
+  assert.equal(n.deepseek.apiKey, PAID.deepseek);
+  assert.equal(unknown.length, 1, "an unnamed sk- key could be several services, so it's held back");
+});
+
+test("older prefix-less keys work when the provider is named next to them", () => {
+  const hex = "a1b2c3d4".repeat(8);
+  assert.equal(byName(detectInput(`TOGETHER_API_KEY=${hex}`).links).together.apiKey, hex);
+  assert.equal(byName(detectInput(`https://api.together.xyz/v1 ${hex}`).links).together.apiKey, hex);
+  assert.equal(detectInput(`we meet on Jan 5 ${"Ab3dEf6h".repeat(3)}`).links.length, 0, "a month isn't the Jan app");
 });
 
 test("duplicates collapse; a second key for the same provider is noted, not added", () => {
@@ -83,13 +133,48 @@ test("bestModel prefers strong tool-calling coders and stable releases", () => {
   assert.equal(bestModel(["llama3.1:8b", "qwen2.5-coder:7b"], "ollama"), "qwen2.5-coder:7b");
   assert.equal(bestModel(["some-new-model"], "custom"), "some-new-model");
   assert.equal(bestModel([], "groq"), "");
+  assert.equal(bestModel(["gpt-4o", "gpt-5", "gpt-5-mini", "o3"], "openai"), "gpt-5-mini");
+  assert.equal(bestModel(["deepseek-chat", "deepseek-reasoner"], "deepseek"), "deepseek-chat");
+  assert.equal(bestModel(["grok-3", "grok-4", "grok-code-fast-1"], "xai"), "grok-code-fast-1");
 });
 
-test("orderChain puts cloud tiers fastest-first, custom next, Ollama last", () => {
+test("recommendOllamaModel sizes the download to the computer's memory", () => {
+  assert.equal(recommendOllamaModel(4), "qwen2.5-coder:1.5b");
+  assert.equal(recommendOllamaModel(8), "qwen2.5-coder:3b");
+  assert.equal(recommendOllamaModel(16), "qwen2.5-coder:7b");
+  assert.equal(recommendOllamaModel(24), "qwen2.5-coder:7b");
+  assert.equal(recommendOllamaModel(64), "qwen3-coder:30b");
+});
+
+test("discoverLocal reports running apps, empty apps, and silence", async () => {
+  const seen = [];
+  const found = await discoverLocal({
+    timeoutMs: 50,
+    probe: async (l) => {
+      seen.push(l.name);
+      if (l.name === "lmstudio") return ["text-embedding-nomic", "qwen2.5-coder-7b-instruct"];
+      if (l.name === "ollama") return [];
+      if (l.name === "jan") return new Promise(() => {});
+      throw new Error("connection refused");
+    },
+  });
+  const by = Object.fromEntries(found.map((f) => [f.id, f]));
+  assert.equal(by.lmstudio.running, true);
+  assert.equal(by.lmstudio.model, "qwen2.5-coder-7b-instruct");
+  assert.equal(by.ollama.running, true);
+  assert.deepEqual(by.ollama.models, []);
+  assert.equal(by.jan.running, false, "a hung port times out");
+  assert.equal(by.gpt4all.running, false);
+  assert.ok(by.lmstudio.howTo && by.lmstudio.signup);
+  assert.equal(seen.length, SPARK_PROVIDERS.filter((p) => p.kind === "local").length);
+});
+
+test("orderChain: free tiers fastest-first, then custom, then this computer, paid APIs last", () => {
   const order = orderChain([
-    { name: "ollama" }, { name: "custom" }, { name: "gemini" }, { name: "cerebras" }, { name: "groq" },
+    { name: "openai" }, { name: "lmstudio" }, { name: "ollama" }, { name: "custom" }, { name: "deepseek" },
+    { name: "huggingface" }, { name: "gemini" }, { name: "cerebras" }, { name: "groq" },
   ]).map((l) => l.name);
-  assert.deepEqual(order, ["cerebras", "groq", "gemini", "custom", "ollama"]);
+  assert.deepEqual(order, ["cerebras", "groq", "gemini", "huggingface", "custom", "ollama", "lmstudio", "deepseek", "openai"]);
 });
 
 const CHAIN = [
@@ -142,7 +227,9 @@ test("providerForUrl maps catalog URLs and any loopback :11434 to providers", ()
   assert.equal(providerForUrl("https://api.groq.com/openai/v1/").id, "groq");
   assert.equal(providerForUrl("http://127.0.0.1:11434/v1").id, "ollama");
   assert.equal(providerForUrl("https://api.groq.com.evil.example/v1"), null);
-  assert.equal(SPARK_PROVIDERS.at(-1).id, "ollama");
+  const kinds = SPARK_PROVIDERS.map((p) => p.kind);
+  assert.equal(kinds.join(",").replace(/(\w+)(,\1)*/g, "$1"), "free,local,paid", "catalog is grouped free → local → paid");
+  assert.ok(SPARK_PROVIDERS.filter((p) => p.kind === "local").every((p) => p.howTo), "every local app says how to switch it on");
 });
 
 const fakeModels = {
@@ -164,7 +251,7 @@ test("spark tests every link, picks models, finds Ollama and orders the chain", 
     ["groq", true, "openai/gpt-oss-120b"],
     ["ollama", true, "qwen2.5-coder:7b"],
   ]);
-  assert.equal(out.localFound, true);
+  assert.deepEqual(out.localFound, ["Ollama"]);
   assert.equal(out.from, "paste");
 });
 

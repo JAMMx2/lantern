@@ -65,7 +65,10 @@ test("sessions list is empty at first, undo reports nothing, bad ids rejected", 
 test("config carries the provider catalog for the setup screen", async () => {
   const j = await (await fetch(url("/api/config"), { headers: { "X-Lantern-Token": token } })).json();
   assert.ok(j.catalog.some((p) => p.id === "groq" && p.baseUrl.startsWith("https://")));
-  assert.equal(j.catalog.at(-1).id, "ollama");
+  const ollama = j.catalog.find((p) => p.id === "ollama");
+  assert.equal(ollama.kind, "local");
+  assert.ok(ollama.howTo && ollama.label === "Ollama");
+  assert.equal(j.catalog.at(-1).kind, "paid");
 });
 
 test("spark parses a paste and returns the typed keys for review", async () => {
@@ -105,6 +108,18 @@ test("pass round trip: recipes reuse saved keys without echoing them, sealed pas
   assert.equal(wrong.j.code, "BAD_PASSPHRASE");
   const opened = await post("/api/spark", { text: sealed.j.pass, passphrase: "a long passphrase", verify: false });
   assert.equal(opened.j.links[0].apiKey, "fake-key", "the user unlocked their own pass");
+});
+
+test("local AI routes: report every app, refuse unknown ids and bad model names", async () => {
+  const h = { "X-Lantern-Token": token, "Content-Type": "application/json" };
+  const j = await (await fetch(url("/api/local"), { headers: h })).json();
+  assert.ok(j.apps.some((a) => a.id === "lmstudio" && typeof a.running === "boolean" && a.howTo));
+  assert.ok(j.ollamaModels.some((m) => m.name === j.recommended));
+  assert.equal(typeof j.ramGB, "number");
+  const start = await fetch(url("/api/local/start"), { method: "POST", headers: h, body: JSON.stringify({ id: "rm -rf" }) });
+  assert.equal(start.status, 400);
+  const pull = await fetch(url("/api/local/pull"), { method: "POST", headers: h, body: JSON.stringify({ model: "--help" }) });
+  assert.equal(pull.status, 400);
 });
 
 test("static files cannot escape public/", async () => {

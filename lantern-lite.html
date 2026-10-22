@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="dark" />
 <meta name="theme-color" content="#040604" />
-<meta name="description" content="Lantern Lite v0.5 — a private coding agent that runs entirely in your browser. No install, no server. Paste your keys once and Spark builds a relay of free tiers: Cerebras, Groq, Gemini, OpenRouter, SambaNova, Mistral, or local Ollama." />
-<meta name="version" content="0.5.0" />
+<meta name="description" content="Lantern Lite v0.6 — a private coding agent that runs entirely in your browser. No install, no server. Uses AI already on your computer (LM Studio, Ollama, Jan and more) or your API keys, free tiers first." />
+<meta name="version" content="0.6.0" />
 <meta property="og:title" content="Lantern Lite — in-browser coding agent" />
 <meta property="og:description" content="A private coding agent in a single HTML file. No install, no server, no telemetry. Bring your own model — free Cerebras cloud tier or local Ollama." />
 <title>Lantern Lite</title>
@@ -440,6 +440,23 @@
   .pass-out{margin-top:10px}
   .pass-out[hidden]{display:none}
 
+  /* ---- ai on this computer ---- */
+  .lrow{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-start; border:1px solid var(--line); border-left:2px solid var(--line-br);
+    border-radius:2px; padding:8px 10px; margin-bottom:7px; background:var(--well)}
+  .lrow.on{border-left-color:var(--green)}
+  .lrow .lamp{margin-top:4px; flex:none}
+  .lmain{flex:1 1 220px; min-width:0}
+  .lname{color:var(--green-hi); font-size:12.5px}
+  .lstate{color:var(--faint); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; margin-left:6px}
+  .lhow{color:var(--muted); font-size:11.5px; line-height:1.55; margin-top:3px}
+  .lact{display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; margin-left:auto}
+  .lact select{background:#020403; border:1px solid var(--line-br); color:var(--green-hi); border-radius:2px; padding:5px 6px; font-family:var(--mono); font-size:11.5px; max-width:220px}
+  .ldone{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ok)}
+  .lbar{height:6px; background:#0f1d14; border:1px solid var(--line-br); border-radius:1px; margin-top:6px; overflow:hidden}
+  .lbar i{display:block; height:100%; width:0; background:var(--amber); box-shadow:var(--glow-a); transition:width .3s}
+  .lempty{color:var(--muted); font-size:12px; line-height:1.65; border:1px dashed var(--line-br); border-radius:2px; padding:10px 12px; margin-bottom:7px}
+  .lempty a{color:var(--green-hi)}
+
   @media (max-width:720px){ aside{position:fixed; right:0; top:52px; bottom:0; z-index:15} }
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important; transition:none !important}
@@ -452,7 +469,7 @@
 <div class="crt-sweep" aria-hidden="true"></div>
 
 <header>
-  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="lite">Lite</span><span class="ver" id="ver">v0.5</span></div>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="lite">Lite</span><span class="ver" id="ver">v0.6</span></div>
   <div class="spacer"></div>
   <span class="usage" id="usage" title="Tokens used in this chat (prompt / completion)"></span>
   <div class="field"><span class="micro">Model</span><select id="model" title="Model"></select></div>
@@ -517,7 +534,12 @@
       <textarea id="sparkIn" rows="3" spellcheck="false" autocomplete="off" placeholder="Paste your API keys in any order (a whole .env file is fine), an endpoint URL, or a Lantern Pass…"></textarea>
       <div class="row" id="sparkPhraseRow" style="display:none; margin-top:8px"><input id="sparkPhrase" type="password" placeholder="passphrase for this sealed pass" autocomplete="off" spellcheck="false" /></div>
       <div class="spark-go"><button class="primary" id="sparkGo">Spark</button><span class="spark-msg" id="sparkMsg"></span></div>
-      <div class="prov-note">Recognises Cerebras, Groq, Gemini, OpenRouter, SambaNova and Mistral keys, tests them all at once, picks a coding model for each and orders them fastest-first. Each key only goes to the provider it belongs to, straight from this browser.</div>
+      <div class="prov-note">Recognises keys from Cerebras, Groq, Gemini, OpenRouter, NVIDIA, Hugging Face, SambaNova, Mistral, DeepSeek, OpenAI, xAI, Together and Fireworks. Tests them all at once, picks a coding model for each, and orders them: free tiers first, paid APIs last. Each key only goes to the provider it belongs to, straight from this browser.</div>
+    </div>
+    <div class="step">
+      <div class="lbl"><b>+ /</b> AI already on this computer? No terminal needed.</div>
+      <div id="localList"></div>
+      <div class="spark-go"><button class="minibtn" id="findLocal">Find AI on this computer</button><span class="spark-msg" id="localMsg"></span></div>
     </div>
     <div class="or">or build it by hand</div>
 
@@ -525,7 +547,7 @@
       <div class="lbl"><b>01 /</b> Providers — fastest first.</div>
       <div id="chain"></div>
       <button class="minibtn" id="addProv">+ add fallback provider</button>
-      <div class="prov-note">Suggested free chain: Cerebras → Groq → Gemini. Ollama users on a hosted page: start it with OLLAMA_ORIGINS="*".</div>
+      <div class="prov-note">Suggested free chain: Cerebras → Groq → Gemini. Paid APIs go last, so Lantern only spends money when nothing free can answer.</div>
     </div>
     <div class="step">
       <div class="lbl"><b>02 /</b> Save.</div>
@@ -560,7 +582,7 @@
 
 <script>
 "use strict";
-const LITE_VERSION = "0.5.0";
+const LITE_VERSION = "0.6.0";
 const HOSTED_URL = "https://jammx2.github.io/lantern/";
 const $ = (s)=>document.querySelector(s);
 
@@ -574,15 +596,53 @@ const Spark = (() => {
 // a copy between its <spark> markers — run `npm run sync-lite` after editing.
 // Keep it free of Node and DOM APIs: web standards only (WebCrypto is passed in).
 
+// kind: "free" cloud tiers come first, then custom endpoints, then AI running
+// on this computer, and "paid" APIs last, so money is only spent when nothing
+// free can answer. Local apps are found by their default port; howTo says, in
+// clicks, how to switch each one's server on.
 const SPARK_PROVIDERS = [
-  { id: "cerebras", baseUrl: "https://api.cerebras.ai/v1", key: /\bcsk-[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /cerebras/i, domains: ["cerebras.ai"], signup: "https://cloud.cerebras.ai/", note: "~1M tokens/day free · fastest" },
-  { id: "groq", baseUrl: "https://api.groq.com/openai/v1", key: /\bgsk_[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /groq/i, domains: ["groq.com"], signup: "https://console.groq.com/keys", note: "14.4k requests/day free · very fast" },
-  { id: "sambanova", baseUrl: "https://api.sambanova.ai/v1", key: null, hint: /samba/i, domains: ["sambanova.ai"], signup: "https://cloud.sambanova.ai/", note: "free tier · big models, fast" },
-  { id: "gemini", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", key: /\bAIza[0-9A-Za-z_-]{35}(?![0-9A-Za-z_-])/, hint: /gemini|google|ai ?studio/i, domains: ["googleapis.com", "aistudio.google.com"], signup: "https://aistudio.google.com/apikey", note: "generous free tier" },
-  { id: "mistral", baseUrl: "https://api.mistral.ai/v1", key: null, hint: /mistral|codestral|devstral/i, domains: ["mistral.ai"], signup: "https://console.mistral.ai/api-keys", note: "free Experiment plan · Devstral" },
-  { id: "openrouter", baseUrl: "https://openrouter.ai/api/v1", key: /\bsk-or-v1-[A-Za-z0-9]{32,}(?![A-Za-z0-9])/, hint: /openrouter/i, domains: ["openrouter.ai"], signup: "https://openrouter.ai/keys", note: ":free models from many labs" },
-  { id: "ollama", baseUrl: "http://localhost:11434/v1", key: null, hint: /ollama/i, domains: ["ollama.com"], signup: "https://ollama.com/download", note: "local · free forever · no key", local: true },
+  { id: "cerebras", label: "Cerebras", kind: "free", baseUrl: "https://api.cerebras.ai/v1", key: /\bcsk-[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /cerebras/i, domains: ["cerebras.ai"], signup: "https://cloud.cerebras.ai/", note: "~1M tokens/day free · fastest" },
+  { id: "groq", label: "Groq", kind: "free", baseUrl: "https://api.groq.com/openai/v1", key: /\bgsk_[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /groq/i, domains: ["groq.com"], signup: "https://console.groq.com/keys", note: "14.4k requests/day free · very fast" },
+  { id: "sambanova", label: "SambaNova", kind: "free", baseUrl: "https://api.sambanova.ai/v1", key: null, hint: /samba/i, domains: ["sambanova.ai"], signup: "https://cloud.sambanova.ai/", note: "free tier · big models, fast" },
+  { id: "gemini", label: "Gemini", kind: "free", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", key: /\bAIza[0-9A-Za-z_-]{35}(?![0-9A-Za-z_-])/, hint: /gemini|google|ai ?studio/i, domains: ["googleapis.com", "aistudio.google.com"], signup: "https://aistudio.google.com/apikey", note: "generous free tier" },
+  { id: "mistral", label: "Mistral", kind: "free", baseUrl: "https://api.mistral.ai/v1", key: null, hint: /mistral|codestral|devstral/i, domains: ["mistral.ai"], signup: "https://console.mistral.ai/api-keys", note: "free Experiment plan · Devstral" },
+  { id: "openrouter", label: "OpenRouter", kind: "free", baseUrl: "https://openrouter.ai/api/v1", key: /\bsk-or-v1-[A-Za-z0-9]{32,}(?![A-Za-z0-9])/, hint: /openrouter/i, domains: ["openrouter.ai"], signup: "https://openrouter.ai/keys", note: ":free models from many labs" },
+  { id: "nvidia", label: "NVIDIA", kind: "free", baseUrl: "https://integrate.api.nvidia.com/v1", key: /\bnvapi-[A-Za-z0-9_-]{40,}(?![A-Za-z0-9_-])/, hint: /nvidia|nvapi/i, domains: ["nvidia.com"], signup: "https://build.nvidia.com/", note: "free developer credits · open models" },
+  { id: "huggingface", label: "Hugging Face", kind: "free", baseUrl: "https://router.huggingface.co/v1", key: /\bhf_[A-Za-z0-9]{30,}(?![A-Za-z0-9])/, hint: /hugging ?face/i, domains: ["huggingface.co", "hf.co"], signup: "https://huggingface.co/settings/tokens", note: "free monthly credits · open models" },
+
+  { id: "ollama", label: "Ollama", kind: "local", baseUrl: "http://localhost:11434/v1", key: null, hint: /ollama/i, domains: ["ollama.com"], signup: "https://ollama.com/download", note: "on this computer · free forever", howTo: "Open the Ollama app. It runs quietly in the menu bar or system tray." },
+  { id: "lmstudio", label: "LM Studio", kind: "local", baseUrl: "http://localhost:1234/v1", key: null, hint: /lm ?studio/i, domains: ["lmstudio.ai"], signup: "https://lmstudio.ai/download", note: "on this computer · desktop app", howTo: "In LM Studio, open the Developer tab, switch the server to Running, and load a model." },
+  { id: "jan", label: "Jan", kind: "local", baseUrl: "http://localhost:1337/v1", key: null, hint: /jan\.ai|\bjan app\b/i, domains: ["jan.ai"], signup: "https://jan.ai/download", note: "on this computer · desktop app", howTo: "In Jan, open Settings, then Local API Server, and press Start Server." },
+  { id: "gpt4all", label: "GPT4All", kind: "local", baseUrl: "http://localhost:4891/v1", key: null, hint: /gpt4all/i, domains: ["nomic.ai", "gpt4all.io"], signup: "https://www.nomic.ai/gpt4all", note: "on this computer · desktop app", howTo: "In GPT4All, open Settings and tick Enable Local API Server. (Its server can chat but may not use tools.)" },
+  { id: "msty", label: "Msty", kind: "local", baseUrl: "http://localhost:10000/v1", key: null, hint: /msty/i, domains: ["msty.app", "msty.ai"], signup: "https://msty.ai", note: "on this computer · desktop app", howTo: "Open Msty and make sure its Local AI service is installed (Settings, Local AI)." },
+  { id: "koboldcpp", label: "KoboldCpp", kind: "local", baseUrl: "http://localhost:5001/v1", key: null, hint: /kobold/i, domains: [], signup: "https://github.com/LostRuins/koboldcpp/releases", note: "on this computer · one-file app", howTo: "Open KoboldCpp, choose a model file, and press Launch." },
+  { id: "llamafile", label: "llamafile / llama.cpp", kind: "local", baseUrl: "http://localhost:8080/v1", key: null, hint: /llamafile|llama\.cpp|llama-server/i, domains: [], signup: "https://github.com/mozilla-ai/llamafile", note: "on this computer · one-file app", howTo: "Double-click your .llamafile (on Windows, rename it to end in .exe first)." },
+  { id: "docker", label: "Docker Model Runner", kind: "local", baseUrl: "http://localhost:12434/engines/v1", key: null, hint: /docker model/i, domains: [], signup: "https://docs.docker.com/ai/model-runner/", note: "on this computer · Docker Desktop", howTo: "In Docker Desktop, open Settings, then AI, and enable Docker Model Runner with host-side TCP support." },
+  { id: "textgen", label: "Text Generation WebUI", kind: "local", baseUrl: "http://localhost:5000/v1", key: null, hint: /oobabooga|text-generation-webui/i, domains: [], signup: "https://github.com/oobabooga/text-generation-webui", note: "on this computer", howTo: "Start it with the API switched on (the Session tab, or the --api option)." },
+  { id: "vllm", label: "vLLM / local server", kind: "local", baseUrl: "http://localhost:8000/v1", key: null, hint: /vllm|lemonade/i, domains: [], signup: "https://docs.vllm.ai/", note: "on this computer", howTo: "Start your server on port 8000 with its OpenAI-compatible API." },
+
+  { id: "deepseek", label: "DeepSeek", kind: "paid", baseUrl: "https://api.deepseek.com/v1", key: null, hint: /deepseek/i, domains: ["deepseek.com"], signup: "https://platform.deepseek.com/api_keys", note: "paid · very low cost" },
+  { id: "openai", label: "OpenAI", kind: "paid", baseUrl: "https://api.openai.com/v1", key: /\bsk-(?:proj|svcacct)-[A-Za-z0-9_-]{20,}|\bsk-[A-Za-z0-9]{20}T3BlbkFJ[A-Za-z0-9]{20}(?![A-Za-z0-9])/, hint: /openai|chatgpt/i, domains: ["openai.com"], signup: "https://platform.openai.com/api-keys", note: "paid · GPT models" },
+  { id: "xai", label: "xAI", kind: "paid", baseUrl: "https://api.x.ai/v1", key: /\bxai-[A-Za-z0-9]{40,}(?![A-Za-z0-9])/, hint: /\bxai\b|\bgrok\b/i, domains: ["x.ai"], signup: "https://console.x.ai/", note: "paid · Grok" },
+  { id: "together", label: "Together AI", kind: "paid", baseUrl: "https://api.together.xyz/v1", key: /\btgp_v1_[A-Za-z0-9_-]{30,}(?![A-Za-z0-9_-])/, hintKeys: true, hint: /together[ _.]?(ai|xyz|api)/i, domains: ["together.xyz", "together.ai"], signup: "https://api.together.ai/settings/api-keys", note: "paid credits · open models" },
+  { id: "fireworks", label: "Fireworks", kind: "paid", baseUrl: "https://api.fireworks.ai/inference/v1", key: /\bfw_[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /fireworks/i, domains: ["fireworks.ai"], signup: "https://fireworks.ai/account/api-keys", note: "paid · fast open models" },
 ];
+
+// Ollama models Lantern can download with one click, smallest first. Every one
+// supports tool calling; minRam is the memory (GB) it runs comfortably in.
+const OLLAMA_MODELS = [
+  { name: "qwen2.5-coder:1.5b", size: "1.0 GB", minRam: 0 },
+  { name: "qwen2.5-coder:3b", size: "1.9 GB", minRam: 8 },
+  { name: "qwen2.5-coder:7b", size: "4.7 GB", minRam: 16 },
+  { name: "qwen2.5-coder:14b", size: "9.0 GB", minRam: 32 },
+  { name: "qwen3-coder:30b", size: "19 GB", minRam: 48 },
+];
+
+/** The biggest one-click Ollama model that fits this much memory (GB). */
+function recommendOllamaModel(ramGB) {
+  const fits = OLLAMA_MODELS.filter((m) => (Number(ramGB) || 0) >= m.minRam);
+  return (fits.length ? fits[fits.length - 1] : OLLAMA_MODELS[0]).name;
+}
 
 const PASS_SRC = "lantern1\\.[sr]\\.[A-Za-z0-9_-]{8,}";
 const URL_SRC = "https?:\\/\\/[^\\s\"'<>`]+";
@@ -606,27 +666,32 @@ function isLoopback(url) {
   return LOOPBACK.has(hostOf(url));
 }
 
+const portOf = (url) => { try { return new URL(url).port; } catch { return ""; } };
+// A local app is recognised by its default port on this machine.
+function localAppAt(u) {
+  if (!LOOPBACK.has(u.hostname.toLowerCase())) return null;
+  return SPARK_PROVIDERS.find((p) => p.kind === "local" && portOf(p.baseUrl) === u.port) || null;
+}
+
 /** The catalog provider an endpoint URL belongs to, or null. */
 function providerForUrl(url) {
   const u = trimUrl(url);
   const exact = SPARK_PROVIDERS.find((p) => p.baseUrl === u);
   if (exact) return exact;
-  try {
-    const parsed = new URL(u);
-    if (LOOPBACK.has(parsed.hostname) && parsed.port === "11434") return providerById("ollama");
-  } catch { /* not a URL */ }
-  return null;
+  try { return localAppAt(new URL(u)); } catch { return null; }
 }
 
-// A pasted URL is either one of ours (a hint, or a local Ollama endpoint) or a
+// A pasted URL is either one of ours (a hint, or a local app's endpoint) or a
 // custom OpenAI-compatible endpoint. Random links in a pasted file are ignored
 // unless they look like an API base (…/v1, …/openai) or point at this machine.
 function classifyUrl(raw) {
   let u;
   try { u = new URL(raw.replace(/[),.;:'"\]]+$/, "")); } catch { return null; }
   const host = u.hostname.toLowerCase();
-  if (LOOPBACK.has(host) && u.port === "11434") {
-    return { provider: providerById("ollama"), baseUrl: `${u.protocol}//${u.host}/v1` };
+  const app = localAppAt(u);
+  if (app) {
+    const path = u.pathname.replace(/\/+$/, "") || new URL(app.baseUrl).pathname;
+    return { provider: app, baseUrl: `${u.protocol}//${u.host}${path}` };
   }
   for (const p of SPARK_PROVIDERS) {
     if (p.domains.some((d) => host === d || host.endsWith("." + d))) return { hint: p };
@@ -721,7 +786,7 @@ function detectInput(text) {
       if (!looksSecret(tok) || seenKeys.has(tok)) continue;
       secrets++;
       if (endpoint) add(custom(endpoint, tok));
-      else if (hint && !hint.key && !hint.local) add(mk(hint, tok, "hint"));
+      else if (hint && hint.kind !== "local" && (!hint.key || hint.hintKeys)) add(mk(hint, tok, "hint"));
       else if (!hint && UUID_RE.test(tok)) add(mk(providerById("sambanova"), tok, "guess"));
       else out.unknown.push(mask(tok));
     }
@@ -750,6 +815,8 @@ const MODEL_PREFS = [
   /gemini-2\.5-flash(?!-lite)/i, /kimi-k2/i, /deepseek-v3/i, /llama-?3\.3-70b/i, /qwen-?3-235b/i,
   /glm-4\.[5-9]/i, /llama-4-maverick/i, /codestral/i, /qwen-?3-32b/i, /mistral-(large|medium)/i,
   /llama-4-scout/i, /qwen2\.5-coder/i, /qwen-?3/i, /llama-?3\.[123]/i,
+  // Paid APIs: the cheaper capable model, since they're the last resort.
+  /deepseek-chat/i, /gpt-5-mini/i, /gpt-4\.1-mini/i, /gpt-4o-mini/i, /grok-code-fast/i, /grok-4/i,
 ];
 const UNSTABLE = /preview|experimental|\bexp\b|-exp-|beta/i;
 
@@ -769,12 +836,12 @@ function bestModel(models, providerId = "") {
   return pool[0];
 }
 
-/** Cloud tiers fastest-first, custom endpoints next, local Ollama last. */
+/** Free cloud tiers fastest-first, then custom endpoints, then this computer, then paid APIs. */
 function orderChain(links) {
+  const band = { free: 0, local: 200, paid: 300 };
   const rank = (l) => {
-    if (l.name === "ollama") return 100;
     const i = SPARK_PROVIDERS.findIndex((p) => p.id === l.name);
-    return i < 0 ? 50 : i;
+    return i < 0 ? 100 : band[SPARK_PROVIDERS[i].kind] + i;
   };
   return links.map((l, i) => [l, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map((x) => x[0]);
 }
@@ -934,18 +1001,39 @@ async function checkLink(link, test, ms) {
 }
 
 /**
+ * Look for AI apps running on this computer by asking each known local port
+ * for its model list. probe(link) resolves to the models (an empty list means
+ * the app is running but has none loaded) or throws when nothing answers.
+ * @returns {Promise<{id,label,baseUrl,running,models,model,howTo,signup}[]>}
+ */
+async function discoverLocal({ probe, timeoutMs = 2500 } = {}) {
+  const apps = SPARK_PROVIDERS.filter((p) => p.kind === "local");
+  return Promise.all(apps.map(async (p) => {
+    const found = { id: p.id, label: p.label, baseUrl: p.baseUrl, running: false, models: [], model: "", howTo: p.howTo, signup: p.signup };
+    try {
+      const models = await withTimeout(Promise.resolve(probe({ name: p.id, baseUrl: p.baseUrl, apiKey: "" })), timeoutMs);
+      found.running = true;
+      found.models = Array.isArray(models) ? models : [];
+      found.model = bestModel(found.models, p.id);
+    } catch { /* not running here */ }
+    return found;
+  }));
+}
+
+/**
  * The whole Spark flow: detect, open any pass, reuse saved keys, test every
- * link in parallel, pick models, look for a local Ollama, order the chain.
+ * link in parallel, pick models, look for AI running on this computer, order the chain.
  * @param {object} o
  * @param {string} o.text  whatever the user pasted
  * @param {string} [o.passphrase]  for a sealed pass
  * @param {object[]} [o.existing]  the saved chain; its keys fill gaps (marked keyFrom:"saved")
  * @param {(link:object)=>Promise<string[]>} [o.test]  list a link's models, or throw
- * @param {boolean} [o.probeLocal]  also look for Ollama on this machine
+ * @param {boolean} [o.probeLocal]  also look for AI apps running on this computer
+ * @param {(link:object)=>Promise<string[]>} [o.probe]  like test, for local apps (defaults to test)
  * @param {boolean} [o.verify]  false = don't contact anything, just parse
  * @param {Crypto} [o.crypto]  WebCrypto implementation (defaults to globalThis.crypto)
  */
-async function spark({ text = "", passphrase = "", existing = [], test, probeLocal = false, verify = true, crypto, timeoutMs = 15_000 } = {}) {
+async function spark({ text = "", passphrase = "", existing = [], test, probe, probeLocal = false, verify = true, crypto, timeoutMs = 15_000 } = {}) {
   const found = detectInput(text);
   let links = found.links.map((l) => ({ ...l }));
   let from = "paste";
@@ -967,32 +1055,30 @@ async function spark({ text = "", passphrase = "", existing = [], test, probeLoc
   }
 
   const live = verify && typeof test === "function";
-  const ollama = providerById("ollama");
-  const probe = live && probeLocal && !links.some((l) => l.name === ollama.id)
-    ? (async () => {
-        const cand = { name: ollama.id, baseUrl: ollama.baseUrl, apiKey: "", model: "", source: "detected" };
-        try {
-          cand.models = await withTimeout(Promise.resolve(test(cand)), 2500);
-          cand.model = bestModel(cand.models, cand.name);
-          cand.ok = true;
-          return cand;
-        } catch { return null; }
-      })()
-    : Promise.resolve(null);
+  const scan = live && probeLocal ? discoverLocal({ probe: probe || test }) : Promise.resolve([]);
   const checks = live ? Promise.all(links.map((l) => checkLink(l, test, timeoutMs))) : Promise.resolve();
-  const [local] = await Promise.all([probe, checks]);
-  if (local) links.push(local);
+  const [local] = await Promise.all([scan, checks]);
+  const localFound = [];
+  for (const app of local) {
+    if (!app.running || !app.models.length || links.some((l) => portOf(l.baseUrl) === portOf(app.baseUrl) && isLoopback(l.baseUrl))) continue;
+    links.push({ name: app.id, baseUrl: app.baseUrl, apiKey: "", model: app.model, models: app.models, ok: true, source: "detected" });
+    localFound.push(app.label);
+  }
 
-  return { links: orderChain(links), unknown: found.unknown, notes: found.notes, from, localFound: Boolean(local) };
+  return { links: orderChain(links), unknown: found.unknown, notes: found.notes, from, localFound, local };
 }
-return { SPARK_PROVIDERS, MIN_PASSPHRASE, PASS_ITERATIONS, isLoopback, providerForUrl, detectInput, bestModel, orderChain, generatePassphrase, makePass, openPass, passLink, passFromHash, spark };
+return { SPARK_PROVIDERS, OLLAMA_MODELS, recommendOllamaModel, MIN_PASSPHRASE, PASS_ITERATIONS, isLoopback, providerForUrl, detectInput, bestModel, orderChain, generatePassphrase, makePass, openPass, passLink, passFromHash, discoverLocal, spark };
 })();
 // </spark>
 
 const PRESETS = {};
-for(const p of Spark.SPARK_PROVIDERS) PRESETS[p.id] = { url:p.baseUrl, link:p.signup, note:p.note };
-PRESETS.ollama.note = "local · free · needs OLLAMA_ORIGINS on a hosted page";
-PRESETS.custom = { url:"", link:"", note:"any OpenAI-compatible endpoint" };
+for(const p of Spark.SPARK_PROVIDERS) PRESETS[p.id] = { url:p.baseUrl, link:p.signup, note:p.note, kind:p.kind, label:p.label, howTo:p.howTo };
+PRESETS.custom = { url:"", link:"", note:"any OpenAI-compatible endpoint", kind:"custom", label:"Custom endpoint" };
+const GROUPS = [["free","Free cloud"],["local","On this computer"],["paid","Paid cloud"]];
+function presetOptions(selected){
+  const opt=(id)=>'<option value="'+id+'"'+(id===selected?" selected":"")+'>'+esc(PRESETS[id].label||id)+'</option>';
+  return GROUPS.map(([kind,title])=>'<optgroup label="'+title+'">'+Object.keys(PRESETS).filter(id=>PRESETS[id].kind===kind).map(opt).join("")+'</optgroup>').join("")+opt("custom");
+}
 const LS_CHAIN="lantern_lite_chain", LS_KEY="lantern_lite_key", LS_MODEL="lantern_lite_model", LS_URL="lantern_lite_url", LS_SESSIONS="lantern_lite_sessions";
 
 // ---------- relay chain storage ----------
@@ -1256,7 +1342,7 @@ Explore before changing things. Work in small, clear steps and explain what you'
 }
 
 // ---------- provider relay (streaming) ----------
-const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil|gemma|veo|imagen|aqa|learnlm|live|dialog/i;
+const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil|gemma|veo|imagen|aqa|learnlm|live|dialog|realtime|transcribe|search|computer-use|codex|babbage|davinci|sora|deep-research/i;
 function describeError(status, detail, who){
   who=who||"the provider"; const d=String(detail||"").trim();
   switch(status){
@@ -1727,12 +1813,13 @@ function renderCaps(){
 // p: a saved link {name, baseUrl, apiKey, model} or a Spark result
 // {name, baseUrl, apiKey, model, models, ok, error, needsKey}.
 function chainRow(p){
+  const pristine=!p;  // an untouched blank row that found apps may replace
   p = p || { name:"cerebras", baseUrl:PRESETS.cerebras.url, apiKey:"", model:"" };
   const row=document.createElement("div");
   row.className="prow";
   const preset = presetFor(p.baseUrl);
   row.innerHTML =
-    '<select class="p-preset">'+Object.keys(PRESETS).map(k=>'<option value="'+k+'"'+(k===preset?" selected":"")+'>'+k+'</option>').join("")+'</select>'+
+    '<select class="p-preset">'+presetOptions(preset)+'</select>'+
     '<input class="p-key" type="password" placeholder="API key" autocomplete="off" spellcheck="false" />'+
     '<button class="minibtn p-test">Test</button>'+
     '<select class="p-model" style="display:none"></select>'+
@@ -1748,7 +1835,9 @@ function chainRow(p){
   const markOk=(on)=>{ row.dataset.ok=on?"1":""; row.classList.toggle("ok",!!on); };
   function showPreset(k){
     urlIn.style.display = k==="custom" ? "" : "none";
-    keyIn.placeholder = k==="ollama" ? "no key needed" : "API key";
+    const local = PRESETS[k].kind==="local";
+    keyIn.placeholder = local ? "no key needed" : "API key";
+    link.textContent = local ? "get app ↗" : "key ↗";
     link.style.display = PRESETS[k].link ? "" : "none";
     link.href = PRESETS[k].link||"#";
   }
@@ -1756,12 +1845,14 @@ function chainRow(p){
   if(p.apiKey && p.apiKey!=="local") keyIn.value=p.apiKey;
   if(p.models && p.models.length) setModels(p.models, p.model);
   else if(p.model) setModels([p.model], p.model);
-  if(p.ok){ markOk(true); setStatus("ok · "+p.models.length+" models · picked "+p.model, "ok"); }
+  if(p.ok){ markOk(true); setStatus("ok · "+p.models.length+" model"+(p.models.length===1?"":"s")+" · picked "+p.model, "ok"); }
   else if(p.error){ markOk(false); setStatus(p.error, p.needsKey?"":"err"); }
   else if(p.ok===undefined && p.baseUrl && (p.apiKey || p.model)){ markOk(true); setStatus("saved", "ok"); }
   else setStatus(PRESETS[preset].note);
   showPreset(preset);
-  sel.onchange=()=>{ markOk(false); setModels([], ""); showPreset(sel.value); setStatus(PRESETS[sel.value].note); };
+  row.dataset.pristine=pristine?"1":"";
+  row.addEventListener("input", ()=>{ row.dataset.pristine=""; });
+  sel.onchange=()=>{ row.dataset.pristine=""; markOk(false); setModels([], ""); showPreset(sel.value); setStatus(PRESETS[sel.value].kind==="local"?PRESETS[sel.value].howTo:PRESETS[sel.value].note); };
   row.querySelector(".p-test").onclick=async ()=>{
     const k=sel.value;
     const url = k==="custom" ? urlIn.value.trim() : PRESETS[k].url;
@@ -1771,7 +1862,7 @@ function chainRow(p){
       const models=await listModels(url, keyIn.value.trim(), k);
       const keep = mSel.value && models.includes(mSel.value) ? mSel.value : Spark.bestModel(models, k);
       setModels(models, keep); markOk(true);
-      setStatus("ok · "+models.length+" models · picked "+keep, "ok");
+      setStatus("ok · "+models.length+" model"+(models.length===1?"":"s")+" · picked "+keep, "ok");
     }catch(e){ setStatus(e.message, "err"); }
   };
   row.querySelector(".p-del").onclick=()=>row.remove();
@@ -1787,6 +1878,10 @@ function openSetup(){
   if(!$("#passPhrase").value && self.crypto) $("#passPhrase").value=Spark.generatePassphrase(self.crypto);
   $("#keyErr").textContent="";
   if(!chain.length) $("#sparkIn").focus();
+  // A hosted (https) page asking localhost can raise a browser permission
+  // prompt, so there it waits for the Find button.
+  if(location.protocol!=="https:") findLocal({ adopt:!chain.length });
+  else if(!LOCAL) renderLocal();
 }
 $("#settings").onclick=()=>openSetup();
 $("#relay").onclick=()=>openSetup();
@@ -1821,12 +1916,111 @@ $("#saveChain").onclick=async ()=>{
   $("#overlay").style.display="none"; setDot("ok"); renderWorkspace(); input.focus();
 };
 
+// ---------- AI already on this computer ----------
+// A browser can only see local apps that allow web pages to call them (CORS);
+// it can't tell which apps are installed or start them. The full app can.
+async function liteProbe(l){
+  const r=await fetch(l.baseUrl.replace(/\/+$/,"")+"/models",{signal:AbortSignal.timeout(2000)});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  const j=await r.json();
+  if(!j||!Array.isArray(j.data)) throw new Error("not a model list");
+  return j.data.map(m=>m&&m.id).filter(Boolean).filter(id=>!NON_CHAT.test(id)).sort();
+}
+function rowUrl(row){ const k=row.querySelector(".p-preset").value; return (k==="custom"?row.querySelector(".p-url").value.trim():PRESETS[k].url).replace(/\/+$/,""); }
+function inChain(baseUrl){ return [...$("#chain").querySelectorAll(".prow")].some(r=>rowUrl(r)===baseUrl); }
+function addToChain(links){
+  const box=$("#chain"), rows=box.querySelectorAll(".prow");
+  if(rows.length===1 && rows[0].dataset.pristine) box.innerHTML="";
+  for(const l of links) if(!inChain(l.baseUrl)) box.appendChild(chainRow(l));
+}
+const fmtGB=(b)=>(b/1e9).toFixed(b>=1e10?0:1)+" GB";
+// navigator.deviceMemory tops out at 8, which really means "8 or more".
+const RAM_GB = navigator.deviceMemory && navigator.deviceMemory<8 ? navigator.deviceMemory : 16;
+let LOCAL=null, pulling=null;
+async function findLocal({ adopt=false, quiet=false }={}){
+  const msg=$("#localMsg");
+  if(!quiet) sparkSay(msg, "Looking…");
+  const apps=await Spark.discoverLocal({ probe:liteProbe });
+  LOCAL={ apps, ollamaModels:Spark.OLLAMA_MODELS, recommended:Spark.recommendOllamaModel(RAM_GB) };
+  const fresh=apps.filter(a=>a.running && a.models.length && !inChain(a.baseUrl));
+  if(adopt && fresh.length){
+    addToChain(fresh.map(a=>({ name:a.id, baseUrl:a.baseUrl, model:a.model, models:a.models, ok:true })));
+    sparkSay(msg, "Added "+fresh.map(a=>a.label).join(" and ")+" to your chain below. Save to start.", "ok");
+  } else if(!quiet){
+    const n=apps.filter(a=>a.running).length;
+    sparkSay(msg, n?"Found "+n+" AI app"+(n===1?"":"s")+" answering.":"", n?"ok":"");
+  }
+  if(!pulling) renderLocal();
+}
+function renderLocal(){
+  const box=$("#localList");
+  const apps=LOCAL?LOCAL.apps.filter(a=>a.running):[];
+  const tip='Lantern Lite can only see apps that allow web pages to talk to them. LM Studio: Developer tab, server settings, switch on <b>Enable CORS</b>. Jan: keep CORS on in Local API Server. '+
+    'The full app finds every AI app on your computer and can start them and download models with no settings at all: <code>npx github:JAMMx2/lantern</code>.';
+  if(!LOCAL){ box.innerHTML='<div class="lempty">Press Find to look for LM Studio, Ollama, Jan, GPT4All and other AI apps running on this computer. Your browser may ask for permission first.</div>'; return; }
+  if(!apps.length){
+    box.innerHTML='<div class="lempty">No AI apps answered. No app yet? <a href="https://lmstudio.ai/download" target="_blank" rel="noopener">LM Studio ↗</a> is an ordinary app with a window, no terminal needed. '+tip+'</div>';
+    return;
+  }
+  box.innerHTML="";
+  for(const a of apps){
+    const ready=a.models.length>0, row=document.createElement("div");
+    row.className="lrow"+(ready?" on":"");
+    row.innerHTML='<span class="lamp '+(ready?"ok":"live")+'"></span><div class="lmain"><div class="lname"></div><div class="lhow"></div></div><div class="lact"></div>';
+    row.querySelector(".lname").innerHTML=esc(a.label)+'<span class="lstate">'+(ready?"running · "+a.models.length+" model"+(a.models.length===1?"":"s"):"running · no model yet")+'</span>';
+    row.querySelector(".lhow").textContent=ready?"Will use "+a.model+".":a.id==="ollama"?"":"Load a model in "+a.label+", then press Find again.";
+    const act=row.querySelector(".lact");
+    if(ready){
+      if(inChain(a.baseUrl)) act.innerHTML='<span class="ldone">in your chain</span>';
+      else { const b=document.createElement("button"); b.className="minibtn"; b.textContent="Use it";
+        b.onclick=()=>{ addToChain([{ name:a.id, baseUrl:a.baseUrl, model:a.model, models:a.models, ok:true }]); renderLocal(); }; act.appendChild(b); }
+    } else if(a.id==="ollama") ollamaDownload(row, act, a.baseUrl);
+    box.appendChild(row);
+  }
+  if(location.protocol==="https:"){ const t=document.createElement("div"); t.className="lhow"; t.innerHTML=tip; box.appendChild(t); }
+}
+function ollamaDownload(row, act, baseUrl){
+  const pick=document.createElement("select");
+  pick.innerHTML=LOCAL.ollamaModels.map(m=>'<option value="'+esc(m.name)+'"'+(m.name===LOCAL.recommended?" selected":"")+'>'+esc(m.name)+' · '+m.size+(m.name===LOCAL.recommended?' (fits this computer)':'')+'</option>').join("");
+  const go=document.createElement("button"); go.className="minibtn"; go.textContent="Download";
+  act.append(pick, go);
+  row.querySelector(".lhow").textContent="Pick a coding model and Lantern downloads it into Ollama for you.";
+  go.onclick=()=>pullModel(pick.value, row, act, baseUrl);
+}
+async function pullModel(model, row, act, baseUrl){
+  const how=row.querySelector(".lhow"), bar=document.createElement("div");
+  bar.className="lbar"; bar.innerHTML="<i></i>"; row.querySelector(".lmain").appendChild(bar);
+  act.innerHTML=""; const stop=document.createElement("button"); stop.className="minibtn"; stop.textContent="Cancel"; act.appendChild(stop);
+  how.textContent="Starting download of "+model+"…";
+  pulling=new AbortController(); stop.onclick=()=>pulling&&pulling.abort();
+  try{
+    const r=await fetch(baseUrl.replace(/\/v1\/?$/,"")+"/api/pull",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model, name:model, stream:true}), signal:pulling.signal});
+    if(!r.ok) throw new Error("Ollama refused the download (HTTP "+r.status+").");
+    const reader=r.body.getReader(), dec=new TextDecoder(); let buf="", ok=false;
+    const line=(l)=>{ if(!l.trim()) return; const e=JSON.parse(l); if(e.error) throw new Error("Ollama: "+e.error);
+      if(e.status==="success") ok=true;
+      if(e.total){ bar.firstChild.style.width=Math.round(100*(e.completed||0)/e.total)+"%"; how.textContent="Downloading "+model+" · "+fmtGB(e.completed||0)+" of "+fmtGB(e.total); }
+      else how.textContent=e.status||""; };
+    while(true){ const c=await reader.read(); if(c.done) break; buf+=dec.decode(c.value,{stream:true});
+      let nl; while((nl=buf.indexOf("\n"))>=0){ line(buf.slice(0,nl)); buf=buf.slice(nl+1); } }
+    line(buf);
+    if(!ok) throw new Error("The download stopped early. Press Find again to retry.");
+    how.textContent="Downloaded. Checking it…";
+    pulling=null; await findLocal({ adopt:true });
+  }catch(e){
+    act.innerHTML=""; bar.remove(); ollamaDownload(row, act, baseUrl);
+    how.textContent=e.name==="AbortError"?"Download cancelled.":e.message;
+  }finally{ pulling=null; }
+}
+$("#findLocal").onclick=()=>findLocal({ adopt:true });
+
 // ---------- spark: paste anything -> a tested chain ----------
 function sparkSay(el, text, cls){ el.textContent=text; el.className="spark-msg"+(cls?" "+cls:""); }
 function sparkSummary(j){
   const ok=j.links.filter(l=>l.ok).length, n=j.links.length;
   const parts=[ok+" of "+n+" link"+(n===1?"":"s")+" working"+(j.from!=="paste"?" from your "+j.from:"")];
-  if(j.localFound) parts.push("found Ollama on this machine");
+  if(j.localFound && j.localFound.length) parts.push("found "+j.localFound.join(" and ")+" on this computer");
   const need=j.links.filter(l=>l.needsKey).length;
   if(need) parts.push(need+(need===1?" needs":" need")+" your key");
   if(j.unknown.length) parts.push("couldn't place "+j.unknown.join(", "));
@@ -1843,9 +2037,9 @@ async function runSpark(){
   try{
     // Probing localhost from a hosted page can trigger a browser permission
     // prompt, so only look for Ollama there when the user mentioned it.
-    const probeLocal = location.protocol!=="https:" || /ollama|11434/i.test(text);
+    const probeLocal = location.protocol!=="https:" || /ollama|lm ?studio|gpt4all|msty|kobold|llamafile|localhost|127\.0\.0\.1/i.test(text);
     const j=await Spark.spark({ text, passphrase:$("#sparkPhrase").value, existing:chain, probeLocal,
-      crypto:self.crypto, test:(l)=>listModels(l.baseUrl, l.apiKey, l.name) });
+      crypto:self.crypto, test:(l)=>listModels(l.baseUrl, l.apiKey, l.name), probe:liteProbe });
     if(!j.links.length){
       sparkSay(msg, j.unknown.length
         ? "Couldn't tell which provider "+j.unknown.join(", ")+" belongs to. Put the provider's name on the line above the key, or add it by hand below."

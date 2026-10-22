@@ -15,6 +15,7 @@ user's approval. That makes its security model worth stating plainly.
 - **Keys sent to the wrong place during setup.** Spark assigns each pasted key to one provider by its published format, or by a provider named on the same or previous line, and sends it only to that provider. It never tries a key against several services to see which accepts it. Keys it can't place are shown masked and sent nowhere.
 - **Leaked setup.** A sealed Lantern Pass is AES-256-GCM with a key from PBKDF2-SHA256 (600,000 iterations, random 16-byte salt and 12-byte IV, authenticated with a fixed associated-data label). The passphrase is never stored and never put in a pass or a link. Pass links carry the pass in the URL fragment, which browsers don't send to servers, and Lite strips it from the address bar on open.
 - **Forged recipes.** A pass can't relabel an endpoint: each link's provider is decided from its URL, never from the name inside the pass, and recipe passes are stripped of any keys they claim to carry. A shared recipe can't make a stranger's server look like "groq" to collect your key.
+- **Surprise programs.** Setup's Start buttons run one fixed command per app (open the Ollama app, `lms server start` from LM Studio's own folder, open Jan/Msty/Docker Desktop), chosen from an allowlist by app id. No text from the page, a pasted file or the model reaches a command line, and the agent can't press these buttons. Model downloads go only to Ollama on `127.0.0.1`, with the model name checked against a strict pattern.
 - **Keys echoed to the page.** `/api/config` and `/api/spark` never return a saved key. Exporting a sealed pass is the one route by which saved keys leave `config.json`, encrypted under the passphrase you chose.
 
 **What Lantern does not defend against**
@@ -41,3 +42,4 @@ Most interesting areas, in rough order:
 2. Driving the agent without the session token (`src/server.js`).
 3. Getting a write or command to execute without an approval card being resolved.
 4. Recovering keys from a sealed Lantern Pass without its passphrase, or getting Spark or a pass to send a key to a provider it doesn't belong to (`src/spark.js`).
+5. Making `/api/local/start` or `/api/local/pull` run anything other than their fixed commands and Ollama's download API (`src/local.js`).

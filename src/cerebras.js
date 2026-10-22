@@ -10,8 +10,9 @@ const baseOf = (u) => String(u || DEFAULT_BASE_URL).replace(/\/+$/, "");
 
 // Models that show up on /models but can't hold a tool-calling chat.
 // Also excludes Gemini-listed models that can't do function calling
-// (gemma, veo, imagen, aqa, learnlm, live/audio variants) — picking one 400s.
-const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil|gemma|veo|imagen|aqa|learnlm|live|dialog/i;
+// (gemma, veo, imagen, aqa, learnlm, live/audio variants) and OpenAI's
+// realtime/transcribe/search/codex models, which don't take chat completions.
+const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil|gemma|veo|imagen|aqa|learnlm|live|dialog|realtime|transcribe|search|computer-use|codex|babbage|davinci|sora|deep-research/i;
 
 // Shown only if the live /models call fails (no key yet, offline, etc.).
 export const FALLBACK_MODELS = [
@@ -40,11 +41,26 @@ export async function listModels(apiKey, baseUrl) {
     .filter((id) => !NON_CHAT.test(id))
     .sort();
   if (ids.length) return ids;
-  // An empty list usually means a fresh local server with nothing pulled yet.
+  // An empty list usually means a fresh local app with no model loaded yet.
   if (/localhost|127\.0\.0\.1/.test(baseOf(baseUrl))) {
-    throw new Error("No models installed yet. Try: ollama pull qwen2.5-coder:7b");
+    throw new Error(/:11434/.test(baseOf(baseUrl))
+      ? "Ollama has no models yet. In Settings, under AI on this computer, Lantern can download one for you."
+      : "No model is loaded yet. Load one in the app, then Test again.");
   }
   return FALLBACK_MODELS;
+}
+
+/**
+ * Is an OpenAI-compatible server answering here? Resolves to its chat models
+ * ([] = running, nothing loaded) and throws when nothing that looks like a
+ * model API answers. Keyless and quick, for finding apps on this computer.
+ */
+export async function probeModels(baseUrl, timeoutMs = 2000) {
+  const res = await fetch(`${baseOf(baseUrl)}/models`, { signal: AbortSignal.timeout(timeoutMs) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data || !Array.isArray(data.data)) throw new Error("Not an OpenAI-compatible model list.");
+  return data.data.map((m) => m && m.id).filter(Boolean).filter((id) => !NON_CHAT.test(id)).sort();
 }
 
 /**

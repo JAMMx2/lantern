@@ -2,6 +2,32 @@
 
 All notable changes to Lantern. Versions follow [semver](https://semver.org).
 
+## 0.6.0 — 2026-10-22
+
+Lantern now works with the AI people already have, with no terminal anywhere in the path, and recognises many more APIs.
+
+### Added — AI on this computer
+- **Finds local AI apps** on their usual ports: Ollama, LM Studio, Jan, GPT4All, Msty, KoboldCpp, llamafile / llama.cpp, Docker Model Runner, Text Generation WebUI and vLLM. Running apps with a model are added to the chain; setup scans automatically on first run (the app, and Lite when it isn't on a hosted page).
+- **Installed but switched off** (the app): Lantern spots Ollama, LM Studio, Jan, GPT4All, Msty and Docker Desktop in their usual install folders and shows, in clicks, how to switch each server on. **Start Ollama** and **Start LM Studio's server** buttons do it for you; Jan, Msty and Docker Desktop get an Open button.
+- **One-click model download into Ollama**, through Ollama's own API with a progress bar and Cancel. Lantern suggests the largest tool-capable coding model that fits the computer's memory (`qwen2.5-coder` 1.5B–14B, `qwen3-coder:30b`). Works in Lite too when Ollama allows the page.
+- If nothing is installed, setup points to the normal Ollama and LM Studio installers.
+
+### Added — more APIs
+- Recognised by key format: **NVIDIA** (`nvapi-`), **Hugging Face** (`hf_`), **OpenAI** (`sk-proj-`), **xAI** (`xai-`), **Together AI** (`tgp_v1_`, or older keys named on their line), **Fireworks** (`fw_`); **DeepSeek** when named (`DEEPSEEK_API_KEY=sk-…`), since bare `sk-` keys could belong to several services.
+- Providers now come in three kinds. Chains are ordered free cloud tiers, custom endpoints, AI on this computer, then **paid APIs last**, so money is only spent when nothing free can answer.
+- The provider dropdown is grouped: Free cloud, On this computer, Paid cloud, Custom.
+- Model picks for the new providers favour the cheaper capable model on paid APIs (`gpt-5-mini`, `deepseek-chat`, `grok-code-fast-1`).
+
+### Changed
+- An empty local app now says what to do ("Lantern can download one for you" for Ollama, "load a model in the app" elsewhere) instead of suggesting a terminal command.
+- OpenAI's realtime, transcription, search and codex models are left out of model lists, since they don't take chat completions.
+- "1 MODELS" reads "1 MODEL".
+
+### Developer
+- `src/local.js`: installed-app detection, start plans and Ollama pulls, all injectable for tests. `test/local.test.js` covers macOS, Windows and Linux paths, fixed start commands, pull progress and errors, and model-name checks.
+- `discoverLocal`, `OLLAMA_MODELS` and `recommendOllamaModel` live in the shared `src/spark.js`.
+- `GET /api/local`, `POST /api/local/start`, `POST /api/local/pull`.
+
 ## 0.5.0 — 2026-10-22
 
 Setup goes from "fill in a form per provider" to "paste once", and your setup now travels between the app, Lite, and other devices.
