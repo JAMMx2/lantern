@@ -2,6 +2,37 @@
 
 All notable changes to Lantern. Versions follow [semver](https://semver.org).
 
+## 0.5.0 — 2026-10-22
+
+Setup goes from "fill in a form per provider" to "paste once", and your setup now travels between the app, Lite, and other devices.
+
+### Added — both builds
+- **Spark: paste anything.** One box at the top of setup takes API keys in any order (a whole `.env` file is fine), endpoint URLs, or a Lantern Pass. Keys are matched to providers by format (`csk-`, `gsk_`, `AIza`, `sk-or-v1-`) or by a provider named on the same or previous line; every link is tested in parallel, a tool-calling coding model is picked for each, and the chain is ordered fastest-first with Ollama last. The app also adds Ollama automatically when it's running locally. Pasting runs Spark immediately; Ctrl/Cmd+Enter re-runs it.
+- **Lantern Pass.** Export the saved chain as a **sealed** pass (keys included, AES-256-GCM, PBKDF2-SHA256 600k) or a **recipe** (endpoints and models only). Passes are interchangeable between the app and Lite, and come with a link to the hosted Lite (`…/#pass=…`) that sets it up in one step. A suggested random passphrase (~78 bits) is offered.
+- **Relay lights.** One lamp per link in the header (ready, answering, answered last, resting with a countdown). Click to open setup. Failovers show in the chat as `cerebras rate-limited · trying groq`.
+- **More free providers:** Mistral and OpenRouter presets (OpenRouter prefers `:free` models).
+- **Smarter Test button:** picks a coding model from the list instead of the alphabetically first one.
+- `/spark` and `/pass` slash commands.
+
+### Added — the app
+- `POST /api/spark` and `POST /api/pass`; `/api/config` now returns the provider catalog the setup screen is built from.
+- NDJSON events `relay` and `hop`.
+- One-command start documented: `npx github:JAMMx2/lantern`.
+
+### Added — Lantern Lite
+- Opening a pass link removes the pass from the address bar and asks for the passphrase if the pass is sealed.
+- The footer hint and the model's instructions point to `npx github:JAMMx2/lantern` when a task needs real commands.
+
+### Changed
+- Custom endpoints are named by host (`api.together.xyz`) instead of `custom`, so lamps and failover notes say where they point.
+- Saved keyless links (Ollama, custom endpoints) no longer have to be re-tested every time setup is reopened.
+- The setup card scrolls instead of clipping on short screens.
+
+### Developer
+- `src/spark.js` is shared: the app imports it and `npm run sync-lite` embeds it in `lantern-lite.html`. The suite fails if they drift, and also checks that a pass sealed by one build opens in the other.
+- `test/fake-provider.js`: a local OpenAI-compatible stub (rate-limited, bad-key and tool-calling providers) used by the new relay tests and handy for UI work.
+- CI runs `npm test` on Node 18, 20 and 22.
+
 ## 0.4.0 — 2026-10-13
 
 ### Fixed

@@ -62,6 +62,51 @@ test("sessions list is empty at first, undo reports nothing, bad ids rejected", 
   assert.equal(bad.status, 400);
 });
 
+test("config carries the provider catalog for the setup screen", async () => {
+  const j = await (await fetch(url("/api/config"), { headers: { "X-Lantern-Token": token } })).json();
+  assert.ok(j.catalog.some((p) => p.id === "groq" && p.baseUrl.startsWith("https://")));
+  assert.equal(j.catalog.at(-1).id, "ollama");
+});
+
+test("spark parses a paste and returns the typed keys for review", async () => {
+  const h = { "X-Lantern-Token": token, "Content-Type": "application/json" };
+  const key = "gsk_" + "Ab12".repeat(10);
+  const r = await fetch(url("/api/spark"), { method: "POST", headers: h, body: JSON.stringify({ text: `GROQ=${key}`, verify: false }) });
+  const j = await r.json();
+  assert.equal(r.status, 200);
+  assert.deepEqual(j.links.map((l) => [l.name, l.apiKey]), [["groq", key]]);
+});
+
+test("pass round trip: recipes reuse saved keys without echoing them, sealed passes need the passphrase", async () => {
+  const h = { "X-Lantern-Token": token, "Content-Type": "application/json" };
+  const post = async (path, body) => {
+    const r = await fetch(url(path), { method: "POST", headers: h, body: JSON.stringify(body) });
+    return { status: r.status, j: await r.json() };
+  };
+
+  const weak = await post("/api/pass", { sealed: true, passphrase: "short" });
+  assert.equal(weak.status, 400);
+  assert.equal(weak.j.code, "WEAK_PASSPHRASE");
+
+  const recipe = await post("/api/pass", { sealed: false });
+  assert.match(recipe.j.pass, /^lantern1\.r\./);
+  assert.match(recipe.j.link, /#pass=lantern1\.r\./);
+  const fromRecipe = await post("/api/spark", { text: recipe.j.link, verify: false });
+  assert.equal(JSON.stringify(fromRecipe.j).includes("fake-key"), false);
+  assert.equal(fromRecipe.j.links[0].hasKey, true);
+  assert.equal(fromRecipe.j.from, "recipe pass");
+
+  const sealed = await post("/api/pass", { sealed: true, passphrase: "a long passphrase" });
+  assert.match(sealed.j.pass, /^lantern1\.s\./);
+  const locked = await post("/api/spark", { text: sealed.j.pass, verify: false });
+  assert.equal(locked.j.needPassphrase, true);
+  const wrong = await post("/api/spark", { text: sealed.j.pass, passphrase: "not the passphrase", verify: false });
+  assert.equal(wrong.status, 400);
+  assert.equal(wrong.j.code, "BAD_PASSPHRASE");
+  const opened = await post("/api/spark", { text: sealed.j.pass, passphrase: "a long passphrase", verify: false });
+  assert.equal(opened.j.links[0].apiKey, "fake-key", "the user unlocked their own pass");
+});
+
 test("static files cannot escape public/", async () => {
   const res = await fetch(url("/../package.json"));
   assert.equal(res.status, 404);

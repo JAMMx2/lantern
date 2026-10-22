@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { relayChat } from "./cerebras.js";
+import { relayChat, relayStatus } from "./cerebras.js";
 import {
   TOOL_DEFS,
   NEEDS_APPROVAL,
@@ -109,6 +109,8 @@ export async function runAgent({ providers, root, session, message, emit, reques
   trimConversation(conversation);
   const projectContext = await loadProjectContext(root);
   if (projectContext) emit({ type: "context", file: "LANTERN.md", chars: projectContext.length });
+  const label = (p) => p.name || p.baseUrl;
+  const lights = (p, state) => emit({ type: "relay", active: p ? providers.indexOf(p) : -1, state, links: relayStatus(providers) });
 
   for (let step = 0; step < MAX_STEPS; step++) {
     const messages = [{ role: "system", content: SYSTEM_PROMPT(root, projectContext) }, ...conversation];
@@ -120,13 +122,19 @@ export async function runAgent({ providers, root, session, message, emit, reques
         messages,
         tools: TOOL_DEFS,
         onDelta: (text) => emit({ type: "assistant_delta", text }),
-        onProvider: (p) => emit({ type: "provider", name: p.name || p.baseUrl, model: p.model }),
+        onProvider: (p) => {
+          emit({ type: "provider", name: label(p), model: p.model });
+          lights(p, "live");
+        },
+        onHop: ({ from, to, reason }) => emit({ type: "hop", from: label(from), to: label(to), reason }),
       });
     } catch (e) {
+      lights(null, "");
       emit({ type: "error", message: e.message });
       await save();
       return;
     }
+    lights(reply.provider, "ok");
 
     if (reply.usage) {
       session.usage.prompt += reply.usage.prompt_tokens | 0;

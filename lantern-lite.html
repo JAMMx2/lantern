@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="dark" />
 <meta name="theme-color" content="#040604" />
-<meta name="description" content="Lantern Lite v0.4 — a private coding agent that runs entirely in your browser. No install, no server. Bring your own model: Cerebras cloud, Groq, Gemini, or local Ollama." />
-<meta name="version" content="0.4.0" />
+<meta name="description" content="Lantern Lite v0.5 — a private coding agent that runs entirely in your browser. No install, no server. Paste your keys once and Spark builds a relay of free tiers: Cerebras, Groq, Gemini, OpenRouter, SambaNova, Mistral, or local Ollama." />
+<meta name="version" content="0.5.0" />
 <meta property="og:title" content="Lantern Lite — in-browser coding agent" />
 <meta property="og:description" content="A private coding agent in a single HTML file. No install, no server, no telemetry. Bring your own model — free Cerebras cloud tier or local Ollama." />
 <title>Lantern Lite</title>
@@ -294,11 +294,11 @@
   /* ---- onboarding / settings ---- */
   .overlay{
     position:fixed; inset:0; background:rgba(2,4,3,.92);
-    display:flex; align-items:center; justify-content:center; padding:20px; z-index:20;
+    display:flex; align-items:flex-start; justify-content:center; padding:20px; z-index:20;
     backdrop-filter:blur(3px); overflow:auto;
   }
   .card{
-    width:100%; max-width:560px; background:#070c08;
+    width:100%; max-width:560px; background:#070c08; margin:auto;
     border:1px solid var(--line-br); border-radius:3px; padding:0 26px 24px;
     box-shadow:0 0 70px rgba(59,240,126,.14), inset 0 0 60px rgba(59,240,126,.03);
   }
@@ -416,6 +416,30 @@
   .resumed{font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); text-align:center; margin:0 0 18px}
   .resumed::before{content:"── "} .resumed::after{content:" ──"}
 
+  /* ---- relay lights: one lamp per link in the chain ---- */
+  .relay{display:flex; align-items:center; gap:3px; padding:4px 2px; cursor:pointer}
+  .relay:empty{display:none}
+  .lamp{width:8px; height:14px; border-radius:1px; background:#0f1d14; border:1px solid var(--line-br);
+    transition:background .25s, box-shadow .25s, border-color .25s}
+  .lamp.ready{background:rgba(59,240,126,.28); border-color:rgba(59,240,126,.45)}
+  .lamp.ok{background:var(--green); border-color:var(--green); box-shadow:var(--glow-g)}
+  .lamp.live{background:var(--amber); border-color:var(--amber); box-shadow:var(--glow-a); animation:pulse 1.1s ease-in-out infinite}
+  .lamp.benched{background:rgba(255,109,94,.55); border-color:var(--red); box-shadow:0 0 6px rgba(255,109,94,.35)}
+  .log.hop, .log.hop .ic{color:var(--amber)}
+  .log.hop .ic{text-shadow:var(--glow-a)}
+
+  /* ---- spark + lantern pass ---- */
+  .card textarea{width:100%; flex:none; min-height:70px; max-height:180px; resize:vertical; font-size:12.5px; padding:9px 11px}
+  .spark-go{display:flex; gap:10px; align-items:center; margin-top:8px}
+  .spark-go button{flex:none; white-space:nowrap}
+  .spark-msg{font-size:11.5px; line-height:1.55; color:var(--muted)}
+  .spark-msg.ok{color:var(--ok)}
+  .spark-msg.err{color:var(--red)}
+  .or{font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--faint); text-align:center; margin:2px 0 16px}
+  .or::before,.or::after{content:" ── "; color:var(--line-br)}
+  .pass-out{margin-top:10px}
+  .pass-out[hidden]{display:none}
+
   @media (max-width:720px){ aside{position:fixed; right:0; top:52px; bottom:0; z-index:15} }
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important; transition:none !important}
@@ -428,7 +452,7 @@
 <div class="crt-sweep" aria-hidden="true"></div>
 
 <header>
-  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="lite">Lite</span><span class="ver" id="ver">v0.4</span></div>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="lite">Lite</span><span class="ver" id="ver">v0.5</span></div>
   <div class="spacer"></div>
   <span class="usage" id="usage" title="Tokens used in this chat (prompt / completion)"></span>
   <div class="field"><span class="micro">Model</span><select id="model" title="Model"></select></div>
@@ -437,8 +461,11 @@
   <button class="newchat ibtn" id="history" title="Resume an earlier chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</button>
   <button class="newchat ibtn" id="export" title="Download this chat as Markdown"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>Export</button>
   <button class="chip ibtn" id="settings" title="Providers &amp; settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
-  <span class="micro" id="prov" title="Active provider"></span>
-  <span class="dot" id="dot"></span>
+  <div class="field">
+    <span class="relay" id="relay" role="button" tabindex="0" aria-label="Relay chain status, click to edit"></span>
+    <span class="micro" id="prov" title="Active provider"></span>
+    <span class="dot" id="dot"></span>
+  </div>
 </header>
 
 <div class="stage">
@@ -464,7 +491,7 @@
     <button class="stop" id="stop" style="display:none">Stop</button>
     <button class="send" id="send">Send</button>
   </div>
-  <div class="hint" id="hint">writes always ask first · /undo reverts the last file change · running commands isn't possible in a browser — use the app version for that</div>
+  <div class="hint" id="hint">writes always ask first · /undo reverts the last file change · to run commands too, start the full app with: npx github:JAMMx2/lantern</div>
 </footer>
 
 <input type="file" id="filepick" multiple style="display:none" />
@@ -483,7 +510,16 @@
 <div class="overlay" id="overlay">
   <div class="card">
     <h1><span class="mark">✦</span> Lantern Lite</h1>
-    <p class="sub">A coding agent that runs entirely in your browser — no install, no server. Build a relay chain: Lantern tries providers top-to-bottom and hops when one rate-limits. Free tiers stack.</p>
+    <p class="sub">A coding agent that runs entirely in your browser — no install, no server. It keeps a relay chain: Lantern tries providers top-to-bottom and hops when one rate-limits, so free tiers stack.</p>
+
+    <div class="step">
+      <div class="lbl"><b>00 /</b> Spark — paste anything.</div>
+      <textarea id="sparkIn" rows="3" spellcheck="false" autocomplete="off" placeholder="Paste your API keys in any order (a whole .env file is fine), an endpoint URL, or a Lantern Pass…"></textarea>
+      <div class="row" id="sparkPhraseRow" style="display:none; margin-top:8px"><input id="sparkPhrase" type="password" placeholder="passphrase for this sealed pass" autocomplete="off" spellcheck="false" /></div>
+      <div class="spark-go"><button class="primary" id="sparkGo">Spark</button><span class="spark-msg" id="sparkMsg"></span></div>
+      <div class="prov-note">Recognises Cerebras, Groq, Gemini, OpenRouter, SambaNova and Mistral keys, tests them all at once, picks a coding model for each and orders them fastest-first. Each key only goes to the provider it belongs to, straight from this browser.</div>
+    </div>
+    <div class="or">or build it by hand</div>
 
     <div class="step">
       <div class="lbl"><b>01 /</b> Providers — fastest first.</div>
@@ -499,6 +535,18 @@
       <label class="toggle"><input type="checkbox" id="sessionOnly" /> Don't save keys — forget when I close this tab</label>
       <div class="err-msg" id="keyErr"></div>
     </div>
+    <div class="step" id="shareStep" style="display:none">
+      <div class="lbl"><b>03 /</b> Take it anywhere — Lantern Pass.</div>
+      <label class="toggle"><input type="radio" name="passKind" value="sealed" checked /> Sealed: includes your keys, locked with a passphrase</label>
+      <label class="toggle"><input type="radio" name="passKind" value="recipe" /> Recipe: no keys, safe to share with your team</label>
+      <div class="row" id="passPhraseRow" style="margin-top:9px"><input id="passPhrase" type="text" autocomplete="off" spellcheck="false" placeholder="passphrase (10+ characters)" /><button class="minibtn" id="passNew" title="Suggest a strong passphrase">new</button></div>
+      <div class="spark-go"><button class="minibtn" id="passMake">Make pass</button><span class="spark-msg" id="passMsg"></span></div>
+      <div class="pass-out" id="passOut" hidden>
+        <textarea id="passText" rows="3" readonly spellcheck="false"></textarea>
+        <div class="spark-go"><button class="minibtn" id="passCopy">Copy pass</button><button class="minibtn" id="passCopyLink">Copy link</button></div>
+      </div>
+      <div class="prov-note">Open the link on another device, or paste the pass into Spark (in Lite or the app). Made from your saved chain. The passphrase is never inside the pass or the link: keep it, or send it separately.</div>
+    </div>
     <div class="step">
       <div class="lbl"><b>What this browser can do:</b></div>
       <div class="caps" id="caps"></div>
@@ -512,16 +560,439 @@
 
 <script>
 "use strict";
-const LITE_VERSION = "0.4.0";
+const LITE_VERSION = "0.5.0";
+const HOSTED_URL = "https://jammx2.github.io/lantern/";
 const $ = (s)=>document.querySelector(s);
-const PRESETS = {
-  cerebras:  { url:"https://api.cerebras.ai/v1", link:"https://cloud.cerebras.ai/", note:"~1M tokens/day free · fastest" },
-  groq:      { url:"https://api.groq.com/openai/v1", link:"https://console.groq.com/keys", note:"14.4k requests/day free · very fast" },
-  sambanova: { url:"https://api.sambanova.ai/v1", link:"https://cloud.sambanova.ai/", note:"free tier · big models, fast" },
-  gemini:    { url:"https://generativelanguage.googleapis.com/v1beta/openai", link:"https://aistudio.google.com/apikey", note:"generous free tier" },
-  ollama:    { url:"http://localhost:11434/v1", link:"https://ollama.com/download", note:"local · free · needs OLLAMA_ORIGINS" },
-  custom:    { url:"", link:"", note:"any OpenAI-compatible endpoint" },
-};
+
+// <spark> generated from src/spark.js by `npm run sync-lite`. Edit that file, not this block.
+const Spark = (() => {
+// Spark: turn whatever the user pastes (keys, a .env file, endpoint URLs, a
+// Lantern Pass) into a tested, ordered relay chain.
+// Lantern Pass: a whole chain as one string, sealed with a passphrase.
+//
+// Shared by both builds. The app imports this file; lantern-lite.html embeds
+// a copy between its <spark> markers — run `npm run sync-lite` after editing.
+// Keep it free of Node and DOM APIs: web standards only (WebCrypto is passed in).
+
+const SPARK_PROVIDERS = [
+  { id: "cerebras", baseUrl: "https://api.cerebras.ai/v1", key: /\bcsk-[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /cerebras/i, domains: ["cerebras.ai"], signup: "https://cloud.cerebras.ai/", note: "~1M tokens/day free · fastest" },
+  { id: "groq", baseUrl: "https://api.groq.com/openai/v1", key: /\bgsk_[A-Za-z0-9]{20,}(?![A-Za-z0-9])/, hint: /groq/i, domains: ["groq.com"], signup: "https://console.groq.com/keys", note: "14.4k requests/day free · very fast" },
+  { id: "sambanova", baseUrl: "https://api.sambanova.ai/v1", key: null, hint: /samba/i, domains: ["sambanova.ai"], signup: "https://cloud.sambanova.ai/", note: "free tier · big models, fast" },
+  { id: "gemini", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", key: /\bAIza[0-9A-Za-z_-]{35}(?![0-9A-Za-z_-])/, hint: /gemini|google|ai ?studio/i, domains: ["googleapis.com", "aistudio.google.com"], signup: "https://aistudio.google.com/apikey", note: "generous free tier" },
+  { id: "mistral", baseUrl: "https://api.mistral.ai/v1", key: null, hint: /mistral|codestral|devstral/i, domains: ["mistral.ai"], signup: "https://console.mistral.ai/api-keys", note: "free Experiment plan · Devstral" },
+  { id: "openrouter", baseUrl: "https://openrouter.ai/api/v1", key: /\bsk-or-v1-[A-Za-z0-9]{32,}(?![A-Za-z0-9])/, hint: /openrouter/i, domains: ["openrouter.ai"], signup: "https://openrouter.ai/keys", note: ":free models from many labs" },
+  { id: "ollama", baseUrl: "http://localhost:11434/v1", key: null, hint: /ollama/i, domains: ["ollama.com"], signup: "https://ollama.com/download", note: "local · free forever · no key", local: true },
+];
+
+const PASS_SRC = "lantern1\\.[sr]\\.[A-Za-z0-9_-]{8,}";
+const URL_SRC = "https?:\\/\\/[^\\s\"'<>`]+";
+const SECRET_SRC = "[A-Za-z0-9][A-Za-z0-9_-]{18,}[A-Za-z0-9]";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const LOOPBACK = new Set(["localhost", "127.0.0.1", "[::1]", "::1", "0.0.0.0"]);
+
+const MIN_PASSPHRASE = 10;
+const PASS_ITERATIONS = 600_000;
+
+const trimUrl = (u) => String(u || "").trim().replace(/\/+$/, "");
+const sameUrl = (a, b) => trimUrl(a) === trimUrl(b);
+const providerById = (id) => SPARK_PROVIDERS.find((p) => p.id === id);
+const mask = (s) => (s.length > 12 ? s.slice(0, 4) + "…" + s.slice(-4) : "…");
+
+function hostOf(url) {
+  try { return new URL(url).hostname.toLowerCase(); } catch { return ""; }
+}
+
+function isLoopback(url) {
+  return LOOPBACK.has(hostOf(url));
+}
+
+/** The catalog provider an endpoint URL belongs to, or null. */
+function providerForUrl(url) {
+  const u = trimUrl(url);
+  const exact = SPARK_PROVIDERS.find((p) => p.baseUrl === u);
+  if (exact) return exact;
+  try {
+    const parsed = new URL(u);
+    if (LOOPBACK.has(parsed.hostname) && parsed.port === "11434") return providerById("ollama");
+  } catch { /* not a URL */ }
+  return null;
+}
+
+// A pasted URL is either one of ours (a hint, or a local Ollama endpoint) or a
+// custom OpenAI-compatible endpoint. Random links in a pasted file are ignored
+// unless they look like an API base (…/v1, …/openai) or point at this machine.
+function classifyUrl(raw) {
+  let u;
+  try { u = new URL(raw.replace(/[),.;:'"\]]+$/, "")); } catch { return null; }
+  const host = u.hostname.toLowerCase();
+  if (LOOPBACK.has(host) && u.port === "11434") {
+    return { provider: providerById("ollama"), baseUrl: `${u.protocol}//${u.host}/v1` };
+  }
+  for (const p of SPARK_PROVIDERS) {
+    if (p.domains.some((d) => host === d || host.endsWith("." + d))) return { hint: p };
+  }
+  const path = u.pathname.replace(/\/+$/, "");
+  if (LOOPBACK.has(host) || /\/(v\d+(beta\d*)?|openai)(\/|$)/i.test(path + "/")) {
+    return { custom: `${u.protocol}//${u.host}${path}` };
+  }
+  return null;
+}
+
+// Earliest provider name mentioned on a line ("SAMBANOVA_API_KEY=", "groq:").
+function hintOf(line) {
+  let best = null, at = Infinity;
+  for (const p of SPARK_PROVIDERS) {
+    const m = p.hint.exec(line);
+    if (m && m.index < at) { best = p; at = m.index; }
+  }
+  return best;
+}
+
+// Long, mixed letters+digits, with one long unbroken run: keys look like that,
+// model names ("llama-3.3-70b-versatile") and env var names don't.
+function looksSecret(tok) {
+  if (UUID_RE.test(tok)) return true;
+  if (!/[0-9]/.test(tok) || !/[A-Za-z]/.test(tok)) return false;
+  return tok.split(/[-_]/).some((part) => part.length >= 16);
+}
+
+/**
+ * Find everything usable in a blob of pasted text. Keys are attributed by
+ * their format (csk-, gsk_, AIza, sk-or-v1-), then by a provider named on the
+ * same or previous line. A key is only ever matched to one provider: nothing
+ * here guesses by trying a key against several services.
+ * @returns {{pass:string|null, links:object[], unknown:string[], notes:string[]}}
+ */
+function detectInput(text) {
+  const out = { pass: null, links: [], unknown: [], notes: [] };
+  const src = String(text || "");
+  const passMatch = new RegExp(PASS_SRC).exec(src);
+  if (passMatch) out.pass = passMatch[0];
+
+  const seenKeys = new Set();
+  const add = (link) => {
+    if (link.apiKey) {
+      if (seenKeys.has(link.apiKey)) return;
+      seenKeys.add(link.apiKey);
+    }
+    const prev = out.links.find((l) => sameUrl(l.baseUrl, link.baseUrl));
+    if (!prev) { out.links.push(link); return; }
+    if (!prev.apiKey && link.apiKey) prev.apiKey = link.apiKey;
+    else if (link.apiKey) out.notes.push(`More than one ${link.name} key; kept the first.`);
+  };
+  const mk = (p, apiKey, source, baseUrl) => ({ name: p.id, baseUrl: baseUrl || p.baseUrl, apiKey: apiKey || "", model: "", source });
+  const custom = (baseUrl, apiKey) => ({ name: "custom", baseUrl, apiKey: apiKey || "", model: "", source: "url" });
+
+  // A line that only names a provider ("SambaNova:") or only holds an endpoint
+  // lends that context to the next line, where the key usually sits.
+  let pending = null;
+  for (const rawLine of src.split(/\r?\n/)) {
+    if (!rawLine.trim()) continue;
+    const line = rawLine.replace(new RegExp(PASS_SRC, "g"), " ");
+    const words = line.replace(new RegExp(URL_SRC, "g"), " ");
+    let rest = words;
+    let keys = 0;
+
+    for (const p of SPARK_PROVIDERS) {
+      if (!p.key) continue;
+      for (const m of rest.matchAll(new RegExp(p.key.source, "g"))) {
+        add(mk(p, m[0], "key"));
+        rest = rest.replace(m[0], " ");
+        keys++;
+      }
+    }
+
+    let ownEndpoint = null, urlHint = null;
+    for (const m of line.matchAll(new RegExp(URL_SRC, "g"))) {
+      const c = classifyUrl(m[0]);
+      if (!c) continue;
+      if (c.provider) { add(mk(c.provider, "", "url", c.baseUrl)); keys++; }
+      else if (c.custom) ownEndpoint = ownEndpoint || c.custom;
+      else if (c.hint) urlHint = urlHint || c.hint;
+    }
+
+    const ownHint = hintOf(rest) || urlHint;
+    const endpoint = ownEndpoint || (!ownHint && pending && pending.custom) || null;
+    const hint = ownHint || (!ownEndpoint && pending && pending.hint) || null;
+
+    let secrets = 0;
+    for (const m of rest.matchAll(new RegExp(SECRET_SRC, "g"))) {
+      const tok = m[0];
+      if (!looksSecret(tok) || seenKeys.has(tok)) continue;
+      secrets++;
+      if (endpoint) add(custom(endpoint, tok));
+      else if (hint && !hint.key && !hint.local) add(mk(hint, tok, "hint"));
+      else if (!hint && UUID_RE.test(tok)) add(mk(providerById("sambanova"), tok, "guess"));
+      else out.unknown.push(mask(tok));
+    }
+
+    if (pending) {
+      const consumed = secrets > 0 && ((pending.custom && endpoint === pending.custom) || (pending.hint && hint === pending.hint));
+      if (!consumed && pending.custom) add(custom(pending.custom));
+      pending = null;
+    }
+    if (!secrets && !keys) {
+      if (ownEndpoint) pending = { custom: ownEndpoint };
+      else if (ownHint) pending = { hint: ownHint };
+    } else if (ownEndpoint && !secrets) {
+      add(custom(ownEndpoint));
+    }
+  }
+  if (pending && pending.custom) add(custom(pending.custom));
+  return out;
+}
+
+// Ranked by how well each model drives a tool-calling coding loop on free
+// tiers. Model menus change constantly; anything unmatched falls back to the
+// first listed model, and the user can always pick another.
+const MODEL_PREFS = [
+  /qwen-?3-coder/i, /gpt-oss-120b/i, /devstral/i, /gemini-[3-9][\d.]*-flash(?!-lite)/i,
+  /gemini-2\.5-flash(?!-lite)/i, /kimi-k2/i, /deepseek-v3/i, /llama-?3\.3-70b/i, /qwen-?3-235b/i,
+  /glm-4\.[5-9]/i, /llama-4-maverick/i, /codestral/i, /qwen-?3-32b/i, /mistral-(large|medium)/i,
+  /llama-4-scout/i, /qwen2\.5-coder/i, /qwen-?3/i, /llama-?3\.[123]/i,
+];
+const UNSTABLE = /preview|experimental|\bexp\b|-exp-|beta/i;
+
+/** Pick the model Spark would choose for a provider from its live model list. */
+function bestModel(models, providerId = "") {
+  const list = (models || []).filter(Boolean);
+  if (!list.length) return "";
+  let pool = list;
+  if (providerId === "openrouter") {
+    const free = list.filter((m) => /:free$/.test(m));
+    if (free.length) pool = free;
+  }
+  for (const re of MODEL_PREFS) {
+    const hits = pool.filter((m) => re.test(m));
+    if (hits.length) return hits.find((m) => !UNSTABLE.test(m)) || hits[0];
+  }
+  return pool[0];
+}
+
+/** Cloud tiers fastest-first, custom endpoints next, local Ollama last. */
+function orderChain(links) {
+  const rank = (l) => {
+    if (l.name === "ollama") return 100;
+    const i = SPARK_PROVIDERS.findIndex((p) => p.id === l.name);
+    return i < 0 ? 50 : i;
+  };
+  return links.map((l, i) => [l, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map((x) => x[0]);
+}
+
+// ---- Lantern Pass ----
+// lantern1.r.<base64url(json)>                      recipe: endpoints + models, no keys
+// lantern1.s.<base64url(salt16 | iv12 | ciphertext)> sealed: AES-256-GCM, PBKDF2-SHA256 key
+
+const AAD = new TextEncoder().encode("lantern1.s");
+
+function b64u(bytes) {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function unb64u(s) {
+  const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+function cryptoOf(c) {
+  const impl = c || globalThis.crypto;
+  if (!impl || !impl.subtle) throw new Error("Sealed passes need WebCrypto. Open Lantern over https, localhost, or from a file.");
+  return impl;
+}
+async function passKey(passphrase, salt, c) {
+  const base = await c.subtle.importKey("raw", new TextEncoder().encode(passphrase), "PBKDF2", false, ["deriveKey"]);
+  return c.subtle.deriveKey(
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations: PASS_ITERATIONS },
+    base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+  );
+}
+function passError(message, code) {
+  const e = new Error(message);
+  if (code) e.code = code;
+  return e;
+}
+
+/** A random passphrase like "K7QM-2XTP-9WRE-HN4D" (~78 bits, no look-alike characters). */
+function generatePassphrase(c) {
+  const abc = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
+  const impl = c || globalThis.crypto;
+  let out = "";
+  while (out.length < 16) {
+    for (const b of impl.getRandomValues(new Uint8Array(24))) {
+      if (b < 240 && out.length < 16) out += abc[b % abc.length];
+    }
+  }
+  return out.match(/.{4}/g).join("-");
+}
+
+/**
+ * Pack a chain into a pass. Sealed passes carry the keys, encrypted;
+ * recipes carry only endpoints and models, so they're safe to share.
+ */
+async function makePass(chain, { passphrase = "", sealed = true, crypto } = {}) {
+  const links = (chain || []).filter((p) => p && p.baseUrl).map((p) => {
+    const link = { name: p.name || "custom", baseUrl: trimUrl(p.baseUrl), model: p.model || "" };
+    if (sealed && p.apiKey && p.apiKey !== "local") link.apiKey = p.apiKey;
+    return link;
+  });
+  if (!links.length) throw passError("There's no chain to pack yet. Save one first.");
+  const body = new TextEncoder().encode(JSON.stringify({ v: 1, links }));
+  if (!sealed) return "lantern1.r." + b64u(body);
+  if (String(passphrase).length < MIN_PASSPHRASE) {
+    throw passError(`Use a passphrase of at least ${MIN_PASSPHRASE} characters.`, "WEAK_PASSPHRASE");
+  }
+  const c = cryptoOf(crypto);
+  const salt = c.getRandomValues(new Uint8Array(16));
+  const iv = c.getRandomValues(new Uint8Array(12));
+  const key = await passKey(String(passphrase), salt, c);
+  const ct = new Uint8Array(await c.subtle.encrypt({ name: "AES-GCM", iv, additionalData: AAD }, key, body));
+  const all = new Uint8Array(salt.length + iv.length + ct.length);
+  all.set(salt, 0); all.set(iv, 16); all.set(ct, 28);
+  return "lantern1.s." + b64u(all);
+}
+
+// Whatever a pass claims, a link's provider is decided by its URL — so a
+// shared recipe can't label a stranger's server "groq" and collect your key.
+function cleanLink(l) {
+  if (!l || typeof l.baseUrl !== "string" || !/^https?:\/\//i.test(l.baseUrl) || l.baseUrl.length > 300) return null;
+  const baseUrl = trimUrl(l.baseUrl);
+  const p = providerForUrl(baseUrl);
+  const link = { name: p ? p.id : "custom", baseUrl, model: typeof l.model === "string" ? l.model.slice(0, 200) : "", apiKey: "" };
+  if (typeof l.apiKey === "string" && l.apiKey.length <= 500) link.apiKey = l.apiKey;
+  return link;
+}
+
+/** Open a pass. Throws with code NEED_PASSPHRASE / BAD_PASSPHRASE for sealed passes. */
+async function openPass(pass, { passphrase = "", crypto } = {}) {
+  const m = new RegExp(PASS_SRC).exec(String(pass || ""));
+  if (!m) throw passError("That isn't a Lantern Pass.");
+  const [, kind, data] = m[0].split(".");
+  const damaged = () => passError("This Lantern Pass is damaged. Copy it again, all the way to the end.");
+  let bytes;
+  try { bytes = unb64u(data); } catch { throw damaged(); }
+  let json;
+  if (kind === "r") {
+    json = new TextDecoder().decode(bytes);
+  } else {
+    if (!passphrase) throw passError("This pass is sealed. Enter its passphrase.", "NEED_PASSPHRASE");
+    if (bytes.length < 16 + 12 + 16) throw damaged();
+    const c = cryptoOf(crypto);
+    const key = await passKey(String(passphrase), bytes.slice(0, 16), c);
+    try {
+      json = new TextDecoder().decode(await c.subtle.decrypt({ name: "AES-GCM", iv: bytes.slice(16, 28), additionalData: AAD }, key, bytes.slice(28)));
+    } catch {
+      throw passError("Wrong passphrase, or the pass was altered.", "BAD_PASSPHRASE");
+    }
+  }
+  let obj;
+  try { obj = JSON.parse(json); } catch { throw damaged(); }
+  if (!obj || obj.v !== 1 || !Array.isArray(obj.links)) throw passError("This pass was made by a newer Lantern. Update and try again.");
+  const links = obj.links.map(cleanLink).filter(Boolean);
+  if (kind === "r") for (const l of links) l.apiKey = "";
+  return { sealed: kind === "s", links };
+}
+
+function passLink(base, pass) {
+  return String(base || "").replace(/#.*$/, "") + "#pass=" + pass;
+}
+
+function passFromHash(hash) {
+  const m = /(?:^#|&)pass=([^&]+)/.exec(String(hash || ""));
+  if (!m) return null;
+  let v;
+  try { v = decodeURIComponent(m[1]); } catch { return null; }
+  const p = new RegExp("^" + PASS_SRC + "$").exec(v);
+  return p ? p[0] : null;
+}
+
+function withTimeout(promise, ms) {
+  let t;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => { t = setTimeout(() => reject(new Error(`No answer after ${Math.round(ms / 1000)}s.`)), ms); }),
+  ]).finally(() => clearTimeout(t));
+}
+
+async function checkLink(link, test, ms) {
+  if (!link.apiKey && link.name !== "custom" && !isLoopback(link.baseUrl)) {
+    link.ok = false;
+    link.needsKey = true;
+    link.error = `Paste your ${link.name} key here, then Test.`;
+    return;
+  }
+  try {
+    const models = await withTimeout(Promise.resolve(test(link)), ms);
+    link.models = models;
+    link.model = link.model && models.includes(link.model) ? link.model : bestModel(models, link.name);
+    link.ok = true;
+  } catch (e) {
+    link.ok = false;
+    link.error = String((e && e.message) || e);
+  }
+}
+
+/**
+ * The whole Spark flow: detect, open any pass, reuse saved keys, test every
+ * link in parallel, pick models, look for a local Ollama, order the chain.
+ * @param {object} o
+ * @param {string} o.text  whatever the user pasted
+ * @param {string} [o.passphrase]  for a sealed pass
+ * @param {object[]} [o.existing]  the saved chain; its keys fill gaps (marked keyFrom:"saved")
+ * @param {(link:object)=>Promise<string[]>} [o.test]  list a link's models, or throw
+ * @param {boolean} [o.probeLocal]  also look for Ollama on this machine
+ * @param {boolean} [o.verify]  false = don't contact anything, just parse
+ * @param {Crypto} [o.crypto]  WebCrypto implementation (defaults to globalThis.crypto)
+ */
+async function spark({ text = "", passphrase = "", existing = [], test, probeLocal = false, verify = true, crypto, timeoutMs = 15_000 } = {}) {
+  const found = detectInput(text);
+  let links = found.links.map((l) => ({ ...l }));
+  let from = "paste";
+  if (found.pass) {
+    const opened = await openPass(found.pass, { passphrase, crypto });
+    from = opened.sealed ? "sealed pass" : "recipe pass";
+    const merged = opened.links.map((l) => ({ ...l, source: "pass" }));
+    for (const l of links) {
+      const twin = merged.find((x) => sameUrl(x.baseUrl, l.baseUrl));
+      if (!twin) merged.push(l);
+      else if (!twin.apiKey && l.apiKey) twin.apiKey = l.apiKey;
+    }
+    links = merged;
+  }
+  for (const l of links) {
+    if (l.apiKey) continue;
+    const saved = (existing || []).find((x) => x && sameUrl(x.baseUrl, l.baseUrl) && x.apiKey && x.apiKey !== "local");
+    if (saved) { l.apiKey = saved.apiKey; l.keyFrom = "saved"; }
+  }
+
+  const live = verify && typeof test === "function";
+  const ollama = providerById("ollama");
+  const probe = live && probeLocal && !links.some((l) => l.name === ollama.id)
+    ? (async () => {
+        const cand = { name: ollama.id, baseUrl: ollama.baseUrl, apiKey: "", model: "", source: "detected" };
+        try {
+          cand.models = await withTimeout(Promise.resolve(test(cand)), 2500);
+          cand.model = bestModel(cand.models, cand.name);
+          cand.ok = true;
+          return cand;
+        } catch { return null; }
+      })()
+    : Promise.resolve(null);
+  const checks = live ? Promise.all(links.map((l) => checkLink(l, test, timeoutMs))) : Promise.resolve();
+  const [local] = await Promise.all([probe, checks]);
+  if (local) links.push(local);
+
+  return { links: orderChain(links), unknown: found.unknown, notes: found.notes, from, localFound: Boolean(local) };
+}
+return { SPARK_PROVIDERS, MIN_PASSPHRASE, PASS_ITERATIONS, isLoopback, providerForUrl, detectInput, bestModel, orderChain, generatePassphrase, makePass, openPass, passLink, passFromHash, spark };
+})();
+// </spark>
+
+const PRESETS = {};
+for(const p of Spark.SPARK_PROVIDERS) PRESETS[p.id] = { url:p.baseUrl, link:p.signup, note:p.note };
+PRESETS.ollama.note = "local · free · needs OLLAMA_ORIGINS on a hosted page";
+PRESETS.custom = { url:"", link:"", note:"any OpenAI-compatible endpoint" };
 const LS_CHAIN="lantern_lite_chain", LS_KEY="lantern_lite_key", LS_MODEL="lantern_lite_model", LS_URL="lantern_lite_url", LS_SESSIONS="lantern_lite_sessions";
 
 // ---------- relay chain storage ----------
@@ -546,7 +1017,8 @@ function saveChain(sessionOnly){
 }
 function clearChain(){ chain=[]; localStorage.removeItem(LS_CHAIN); sessionStorage.removeItem(LS_CHAIN);
   localStorage.removeItem(LS_KEY); sessionStorage.removeItem(LS_KEY); }
-function presetFor(url){ for(const [k,v] of Object.entries(PRESETS)){ if(v.url && v.url===url) return k; } return "custom"; }
+function hostName(url){ try{ return new URL(url).host; }catch{ return "custom"; } }
+function presetFor(url){ url=String(url||"").replace(/\/+$/,""); for(const [k,v] of Object.entries(PRESETS)){ if(v.url && v.url===url) return k; } return "custom"; }
 
 // ---------- capability detection ----------
 const HAS_FS = typeof window.showDirectoryPicker === "function";
@@ -777,7 +1249,7 @@ Tools:
 - edit_file — change a specific snippet in an existing file (preferred for small changes; the user sees a diff).
 - write_file — create a new file or rewrite one completely.
 edit_file and write_file require the user's approval each time — they see the exact change before it's written. If denied, adapt; never work around a denial.
-- You CANNOT run shell commands or install anything — that's not possible in a browser. If a task needs that, say so and explain what the user would run themselves (or point them to the installable app version).
+- You CANNOT run shell commands or install anything — that's not possible in a browser. If a task needs that, say so and explain what the user would run themselves, or suggest the full Lantern app, which can run commands with their approval: with Node.js installed, \`npx github:JAMMx2/lantern\` starts it.
 
 Explore before changing things. Work in small, clear steps and explain what you're doing in plain, non-technical language. Assume the user may not be a programmer.`
   + (projectContext ? `\n\nThe user keeps project notes for you in LANTERN.md. Follow them:\n<project-notes>\n${projectContext}\n</project-notes>` : "");
@@ -859,8 +1331,23 @@ async function chatStream({url, key, model, messages, tools, onDelta, who}){
   const tc=calls.filter(Boolean);
   return {role:"assistant", content, tool_calls: tc.length?tc:undefined, usage: usage||undefined};
 }
-const benchUntil=new Map();
-async function relayChat({messages, tools, onDelta, onProvider}){
+const benchUntil=new Map(), benchWhy=new Map();
+function hopReason(e){
+  const s=e&&e.status|0;
+  if(s===429) return "rate-limited";
+  if(s===401||s===403) return "rejected the key";
+  if(s===404) return "doesn't have that model";
+  if(s===413) return "said the chat is too long";
+  if(s===400) return "refused the request";
+  if(s>=500) return "had a server error ("+s+")";
+  return "unreachable";
+}
+function relayStatus(){
+  const now=Date.now();
+  return chain.map(p=>{ const until=benchUntil.get(p.baseUrl)||0;
+    return until>now ? {name:p.name, state:"benched", until, reason:benchWhy.get(p.baseUrl)||""} : {name:p.name, state:"ready", until:0, reason:""}; });
+}
+async function relayChat({messages, tools, onDelta, onProvider, onHop}){
   if(!chain.length) throw new Error("No providers configured.");
   const fresh=chain.filter(p=>(benchUntil.get(p.baseUrl)||0)<Date.now());
   const order=fresh.length?fresh:chain;
@@ -870,12 +1357,15 @@ async function relayChat({messages, tools, onDelta, onProvider}){
       if(onProvider) onProvider(p);
       const reply=await chatStream({url:p.baseUrl, key:p.apiKey, model:p.model, messages, tools, onDelta, who:p.name});
       benchUntil.delete(p.baseUrl);
-      return reply;
+      return {...reply, provider:p};
     }catch(e){
       lastErr=e;
       if(e.streamedSome) throw e;
-      const st=e.status|0;
+      const st=e.status|0, why=hopReason(e);
       benchUntil.set(p.baseUrl, Date.now()+(st===429?60000:(st===401||st===403)?300000:20000));
+      benchWhy.set(p.baseUrl, why);
+      const next=order[order.indexOf(p)+1];
+      if(next && onHop) onHop({from:p, to:next, reason:why});
     }
   }
   throw new Error((order.length>1?"All "+order.length+" providers failed. Last: ":"")+(lastErr?lastErr.message:"unknown error"));
@@ -916,9 +1406,11 @@ async function runAgent(userText, myRun){
     try{
       reply=await relayChat({messages, tools:TOOL_DEFS,
         onDelta:(t)=>{ if(runId===myRun) streamDelta(t); },
-        onProvider:(p)=>{ if(runId===myRun) setProv(p.name||p.baseUrl); }});
-    }catch(e){ if(runId===myRun){ streamDone(); errorLine(e.message); saveSession(); } return; }
+        onProvider:(p)=>{ if(runId===myRun){ setProv(p.name||p.baseUrl); setLamps(relayStatus(), chain.indexOf(p), "live"); } },
+        onHop:(h)=>{ if(runId===myRun) hopLine({from:h.from.name, to:h.to.name, reason:h.reason}); }});
+    }catch(e){ if(runId===myRun){ setLamps(relayStatus()); streamDone(); errorLine(e.message); saveSession(); } return; }
     if(runId!==myRun) return;
+    setLamps(relayStatus(), chain.indexOf(reply.provider), "ok");
     if(reply.usage){ USAGE.prompt+=reply.usage.prompt_tokens|0; USAGE.completion+=reply.usage.completion_tokens|0; setUsage(USAGE); }
     const calls=reply.tool_calls||[];
     if(reply.content) streamDone(reply.content); else streamDone();
@@ -1015,7 +1507,9 @@ function slashCommand(text){
   if(cmd==="/new"){ $("#newchat").onclick(); return true; }
   if(cmd==="/history"){ openHistory(); return true; }
   if(cmd==="/export"){ exportChat(); return true; }
-  if(cmd==="/help"){ hideEmpty(); noteLine("commands: /undo (revert last file change) · /new · /history · /export (download chat as Markdown)"); return true; }
+  if(cmd==="/spark"){ openSetup(); $("#sparkIn").focus(); return true; }
+  if(cmd==="/pass"){ openSetup(); $("#shareStep").scrollIntoView({block:"center"}); return true; }
+  if(cmd==="/help"){ hideEmpty(); noteLine("commands: /undo (revert last file change) · /new · /history · /export (download chat as Markdown) · /spark (paste keys to rebuild the chain) · /pass (take your setup to another device)"); return true; }
   return false;
 }
 
@@ -1054,6 +1548,26 @@ function setProv(n){ $("#prov").textContent=n||""; }
 function fmtTok(n){ return n>=1000?(n/1000).toFixed(n>=10000?0:1)+"k":String(n); }
 function setUsage(u){ const t=(u.prompt|0)+(u.completion|0); $("#usage").innerHTML=t?('tokens <b>'+fmtTok(u.prompt|0)+'</b> in · <b>'+fmtTok(u.completion|0)+'</b> out'):""; }
 function noteLine(t){ const d=document.createElement("div"); d.className="toolnote"; d.textContent=t; logEl.appendChild(d); scroll(); }
+
+// ---------- relay lights ----------
+let LINKS=[], LAMP_ACTIVE=-1, LAMP_STATE="";
+function setLamps(links, active, state){ LINKS=links||[]; LAMP_ACTIVE=active??-1; LAMP_STATE=state||""; renderLamps(); }
+function renderLamps(){
+  const box=$("#relay"), now=Date.now();
+  while(box.children.length>LINKS.length) box.lastChild.remove();
+  while(box.children.length<LINKS.length) box.appendChild(document.createElement("span"));
+  LINKS.forEach((l,i)=>{
+    const benched=l.state==="benched" && l.until>now;
+    const cls=benched?"benched":(i===LAMP_ACTIVE && LAMP_STATE)?LAMP_STATE:"ready";
+    const what=benched?(l.reason||"resting")+", back in "+Math.ceil((l.until-now)/1000)+"s"
+      :cls==="live"?"answering":cls==="ok"?"answered last":"ready";
+    box.children[i].className="lamp "+cls;
+    box.children[i].title=(i+1)+". "+l.name+" · "+what;
+  });
+  box.title=LINKS.length?"Relay: "+LINKS.map(l=>l.name).join(" → ")+" · click to edit":"";
+}
+setInterval(()=>{ if(LINKS.some(l=>l.state==="benched")) renderLamps(); },1000);
+function hopLine(h){ clearThinking(); const d=document.createElement("div"); d.className="log hop"; d.innerHTML='<span class="ic">↷</span><span></span>'; d.querySelector("span:last-child").textContent=h.from+" "+h.reason+" · trying "+h.to; logEl.appendChild(d); scroll(); if(running) showThinking(); }
 function renderDiff(text){
   return '<div class="diff">'+String(text||"").split("\n").map(l=>{
     const c=(l.startsWith("+++")||l.startsWith("---"))?"h":l.startsWith("@@")?"k":l.startsWith("+")?"a":l.startsWith("-")?"d":"";
@@ -1210,12 +1724,13 @@ function renderCaps(){
   ];
   $("#caps").innerHTML=rows.map(([c,t])=>'<div class="r"><span class="'+c+'">'+(c==="y"?"✓":"✕")+'</span><span>'+t+'</span></div>').join("");
 }
+// p: a saved link {name, baseUrl, apiKey, model} or a Spark result
+// {name, baseUrl, apiKey, model, models, ok, error, needsKey}.
 function chainRow(p){
   p = p || { name:"cerebras", baseUrl:PRESETS.cerebras.url, apiKey:"", model:"" };
   const row=document.createElement("div");
-  row.className="prow"+(p.apiKey?" ok":"");
-  row.dataset.ok = p.apiKey ? "1" : "";
-  const preset = presetFor(p.baseUrl||PRESETS.cerebras.url);
+  row.className="prow";
+  const preset = presetFor(p.baseUrl);
   row.innerHTML =
     '<select class="p-preset">'+Object.keys(PRESETS).map(k=>'<option value="'+k+'"'+(k===preset?" selected":"")+'>'+k+'</option>').join("")+'</select>'+
     '<input class="p-key" type="password" placeholder="API key" autocomplete="off" spellcheck="false" />'+
@@ -1228,33 +1743,36 @@ function chainRow(p){
   const sel=row.querySelector(".p-preset"), urlIn=row.querySelector(".p-url");
   const keyIn=row.querySelector(".p-key"), mSel=row.querySelector(".p-model");
   const status=row.querySelector(".p-status"), link=row.querySelector(".p-link");
-  if(preset==="custom"){ urlIn.style.display=""; urlIn.value=p.baseUrl||""; }
-  if(p.apiKey){ keyIn.value=p.apiKey; }
-  if(p.model){ mSel.style.display=""; mSel.innerHTML='<option>'+esc(p.model)+'</option>'; }
-  if(p.apiKey){ status.textContent="SAVED"; status.className="p-status ok"; }
-  function syncRow(){
-    const k=sel.value;
+  const setStatus=(text,cls)=>{ status.textContent=String(text||"").toUpperCase().slice(0,96); status.className="p-status"+(cls?" "+cls:""); };
+  const setModels=(models,pick)=>{ mSel.innerHTML=models.map(m=>'<option'+(m===pick?' selected':'')+'>'+esc(m)+'</option>').join(""); mSel.style.display=models.length?"":"none"; };
+  const markOk=(on)=>{ row.dataset.ok=on?"1":""; row.classList.toggle("ok",!!on); };
+  function showPreset(k){
     urlIn.style.display = k==="custom" ? "" : "none";
     keyIn.placeholder = k==="ollama" ? "no key needed" : "API key";
     link.style.display = PRESETS[k].link ? "" : "none";
     link.href = PRESETS[k].link||"#";
-    status.textContent = PRESETS[k].note.toUpperCase(); status.className="p-status";
-    row.dataset.ok=""; row.classList.remove("ok");
-    mSel.style.display="none"; mSel.innerHTML="";
   }
-  sel.onchange=syncRow;
+  if(preset==="custom") urlIn.value=p.baseUrl||"";
+  if(p.apiKey && p.apiKey!=="local") keyIn.value=p.apiKey;
+  if(p.models && p.models.length) setModels(p.models, p.model);
+  else if(p.model) setModels([p.model], p.model);
+  if(p.ok){ markOk(true); setStatus("ok · "+p.models.length+" models · picked "+p.model, "ok"); }
+  else if(p.error){ markOk(false); setStatus(p.error, p.needsKey?"":"err"); }
+  else if(p.ok===undefined && p.baseUrl && (p.apiKey || p.model)){ markOk(true); setStatus("saved", "ok"); }
+  else setStatus(PRESETS[preset].note);
+  showPreset(preset);
+  sel.onchange=()=>{ markOk(false); setModels([], ""); showPreset(sel.value); setStatus(PRESETS[sel.value].note); };
   row.querySelector(".p-test").onclick=async ()=>{
     const k=sel.value;
     const url = k==="custom" ? urlIn.value.trim() : PRESETS[k].url;
-    if(!url){ status.textContent="ENTER A URL FIRST"; status.className="p-status err"; return; }
-    status.textContent="TESTING…"; status.className="p-status";
+    if(!url){ setStatus("enter a url first", "err"); return; }
+    setStatus("testing…");
     try{
       const models=await listModels(url, keyIn.value.trim(), k);
-      mSel.innerHTML=models.map(m=>'<option>'+esc(m)+'</option>').join("");
-      mSel.style.display="";
-      row.dataset.ok="1"; row.classList.add("ok");
-      status.textContent="OK · "+models.length+" MODELS"; status.className="p-status ok";
-    }catch(e){ status.textContent=String(e.message).toUpperCase().slice(0,80); status.className="p-status err"; }
+      const keep = mSel.value && models.includes(mSel.value) ? mSel.value : Spark.bestModel(models, k);
+      setModels(models, keep); markOk(true);
+      setStatus("ok · "+models.length+" models · picked "+keep, "ok");
+    }catch(e){ setStatus(e.message, "err"); }
   };
   row.querySelector(".p-del").onclick=()=>row.remove();
   return row;
@@ -1264,11 +1782,17 @@ function openSetup(){
   (chain.length?chain:[null]).forEach(p=>box.appendChild(chainRow(p)));
   $("#overlay").style.display="flex"; renderCaps();
   $("#settingsActions").style.display=chain.length?"flex":"none";
+  $("#shareStep").style.display=chain.length?"":"none";
+  $("#passOut").hidden=true; sparkSay($("#passMsg"), "");
+  if(!$("#passPhrase").value && self.crypto) $("#passPhrase").value=Spark.generatePassphrase(self.crypto);
   $("#keyErr").textContent="";
+  if(!chain.length) $("#sparkIn").focus();
 }
 $("#settings").onclick=()=>openSetup();
+$("#relay").onclick=()=>openSetup();
+$("#relay").onkeydown=(e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openSetup(); } };
 $("#closeSettings").onclick=()=>{ $("#overlay").style.display="none"; };
-$("#forgetKey").onclick=()=>{ clearChain(); setProv(""); setDot(""); $("#settingsActions").style.display="none"; $("#keyErr").textContent="Chain forgotten. Build a new one to continue."; $("#chain").innerHTML=""; $("#chain").appendChild(chainRow()); };
+$("#forgetKey").onclick=()=>{ clearChain(); setProv(""); setDot(""); setLamps([]); $("#settingsActions").style.display="none"; $("#shareStep").style.display="none"; $("#keyErr").textContent="Chain forgotten. Build a new one to continue."; $("#chain").innerHTML=""; $("#chain").appendChild(chainRow()); };
 $("#addProv").onclick=()=>$("#chain").appendChild(chainRow());
 $("#saveChain").onclick=async ()=>{
   $("#keyErr").textContent="";
@@ -1277,31 +1801,116 @@ $("#saveChain").onclick=async ()=>{
   const next=[];
   for(const row of rows){
     const k=row.querySelector(".p-preset").value;
-    const url = k==="custom" ? row.querySelector(".p-url").value.trim() : PRESETS[k].url;
+    const url = k==="custom" ? row.querySelector(".p-url").value.trim().replace(/\/+$/,"") : PRESETS[k].url;
     if(!url){ $("#keyErr").textContent="A custom row is missing its URL."; return; }
-    if(!row.dataset.ok){ $("#keyErr").textContent="Press Test on each new provider first."; return; }
-    next.push({ name:k, baseUrl:url,
+    if(!row.dataset.ok){ $("#keyErr").textContent="Press Test on each new provider first, or remove the rows you don't need."; return; }
+    next.push({ name: k==="custom" ? hostName(url) : k, baseUrl:url,
       apiKey:row.querySelector(".p-key").value.trim(),
       model:row.querySelector(".p-model").value||"" });
   }
   chain=next;
   saveChain($("#sessionOnly").checked);
   setProv(chain[0].name);
+  setLamps(relayStatus());
   try{
     const models=await listModels(chain[0].baseUrl, chain[0].apiKey, chain[0].name);
-    fillModels(models, (chain[0].model && models.includes(chain[0].model)) ? chain[0].model : models[0]);
-    if(!chain[0].model || !models.includes(chain[0].model)){ chain[0].model=models[0]; saveChain($("#sessionOnly").checked); }
+    const want=(chain[0].model && models.includes(chain[0].model)) ? chain[0].model : Spark.bestModel(models, chain[0].name);
+    fillModels(models, want);
+    if(chain[0].model!==want){ chain[0].model=want; saveChain($("#sessionOnly").checked); }
   }catch(e){ errorLine(e.message); }
   $("#overlay").style.display="none"; setDot("ok"); renderWorkspace(); input.focus();
 };
+
+// ---------- spark: paste anything -> a tested chain ----------
+function sparkSay(el, text, cls){ el.textContent=text; el.className="spark-msg"+(cls?" "+cls:""); }
+function sparkSummary(j){
+  const ok=j.links.filter(l=>l.ok).length, n=j.links.length;
+  const parts=[ok+" of "+n+" link"+(n===1?"":"s")+" working"+(j.from!=="paste"?" from your "+j.from:"")];
+  if(j.localFound) parts.push("found Ollama on this machine");
+  const need=j.links.filter(l=>l.needsKey).length;
+  if(need) parts.push(need+(need===1?" needs":" need")+" your key");
+  if(j.unknown.length) parts.push("couldn't place "+j.unknown.join(", "));
+  for(const t of j.notes||[]) parts.push(t.replace(/\.$/,""));
+  return parts.join(" · ")+". Check the chain below, then Save.";
+}
+let sparking=false;
+async function runSpark(){
+  const msg=$("#sparkMsg"), text=$("#sparkIn").value.trim();
+  if(sparking) return;
+  if(!text){ sparkSay(msg, "Paste a key, a .env file, an endpoint URL, or a Lantern Pass first.", "err"); $("#sparkIn").focus(); return; }
+  sparking=true; $("#sparkGo").disabled=true;
+  sparkSay(msg, "Testing everything at once…");
+  try{
+    // Probing localhost from a hosted page can trigger a browser permission
+    // prompt, so only look for Ollama there when the user mentioned it.
+    const probeLocal = location.protocol!=="https:" || /ollama|11434/i.test(text);
+    const j=await Spark.spark({ text, passphrase:$("#sparkPhrase").value, existing:chain, probeLocal,
+      crypto:self.crypto, test:(l)=>listModels(l.baseUrl, l.apiKey, l.name) });
+    if(!j.links.length){
+      sparkSay(msg, j.unknown.length
+        ? "Couldn't tell which provider "+j.unknown.join(", ")+" belongs to. Put the provider's name on the line above the key, or add it by hand below."
+        : "Nothing recognised. Paste an API key (csk-…, gsk_…, AIza…, sk-or-…), an endpoint URL, or a Lantern Pass.", "err");
+      return;
+    }
+    const box=$("#chain"); box.innerHTML="";
+    j.links.forEach(l=>box.appendChild(chainRow(l)));
+    $("#sparkIn").value=""; $("#sparkPhrase").value=""; $("#sparkPhraseRow").style.display="none";
+    sparkSay(msg, sparkSummary(j), j.links.some(l=>l.ok)?"ok":"err");
+    $("#saveChain").focus();
+  }catch(e){
+    if(e.code==="NEED_PASSPHRASE"){ $("#sparkPhraseRow").style.display=""; $("#sparkPhrase").focus(); sparkSay(msg, e.message); }
+    else sparkSay(msg, e.message, "err");
+  }finally{ sparking=false; $("#sparkGo").disabled=false; }
+}
+$("#sparkGo").onclick=runSpark;
+$("#sparkIn").addEventListener("paste", ()=>setTimeout(runSpark, 0));
+$("#sparkIn").addEventListener("keydown", (e)=>{ if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); runSpark(); } });
+$("#sparkPhrase").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); runSpark(); } });
+
+// ---------- lantern pass ----------
+const passKind=()=>document.querySelector('input[name="passKind"]:checked').value;
+for(const r of document.querySelectorAll('input[name="passKind"]')){
+  r.onchange=()=>{ $("#passPhraseRow").style.display=passKind()==="sealed"?"":"none"; $("#passOut").hidden=true; };
+}
+$("#passNew").onclick=()=>{ $("#passPhrase").value=Spark.generatePassphrase(self.crypto); };
+// A pass link opens wherever this page lives; from a file on disk, the hosted copy.
+function passBase(){ return /^https?:$/.test(location.protocol) ? location.origin+location.pathname : HOSTED_URL; }
+let PASS=null;
+$("#passMake").onclick=async ()=>{
+  const msg=$("#passMsg"), sealed=passKind()==="sealed";
+  sparkSay(msg, sealed?"Sealing…":"Packing…");
+  try{
+    const pass=await Spark.makePass(chain, { sealed, passphrase:$("#passPhrase").value, crypto:self.crypto });
+    PASS={ pass, link:Spark.passLink(passBase(), pass) };
+    $("#passText").value=pass; $("#passOut").hidden=false;
+    sparkSay(msg, sealed?"Sealed. Keep the passphrase: without it this pass can't be opened.":"Recipe ready: endpoints and models only, no keys.", "ok");
+  }catch(e){ sparkSay(msg, e.message, "err"); }
+};
+async function copyText(text, btn){
+  try{ await navigator.clipboard.writeText(text); }
+  catch{ const t=$("#passText"), v=t.value; t.value=text; t.select(); document.execCommand("copy"); t.value=v; }
+  const was=btn.textContent; btn.textContent="Copied"; setTimeout(()=>{ btn.textContent=was; }, 1400);
+}
+$("#passCopy").onclick=()=>PASS && copyText(PASS.pass, $("#passCopy"));
+$("#passCopyLink").onclick=()=>PASS && copyText(PASS.link, $("#passCopyLink"));
 
 // ---------- boot ----------
 (async function(){
   $("#ver").textContent="v"+LITE_VERSION;
   renderWorkspace();
   loadChain();
+  // Opened from a Lantern Pass link: drop the pass from the address bar (it
+  // never reached any server: it's in the #fragment) and hand it to Spark.
+  const linked=Spark.passFromHash(location.hash);
+  if(linked){
+    history.replaceState(null, "", location.pathname+location.search);
+    openSetup(); $("#sparkIn").value=linked; runSpark();
+    if(chain.length) setLamps(relayStatus());
+    return;
+  }
   if(!chain.length){ openSetup(); return; }
   setProv(chain[0].name||"");
+  setLamps(relayStatus());
   // Returning user with a saved chain: skip the config screen entirely.
   $("#overlay").style.display="none";
   try{

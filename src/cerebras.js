@@ -226,21 +226,48 @@ export async function chatCompletionStream({ apiKey, baseUrl, model, messages, t
 // ---- the relay ----
 // After a failure, a provider sits out for a bit so we don't hammer it.
 const cooldowns = new Map(); // baseUrl -> retry-after timestamp (ms)
+const benchReasons = new Map(); // baseUrl -> short reason, for the relay lights
 
 function benched(p) {
   return (cooldowns.get(baseOf(p.baseUrl)) || 0) > Date.now();
 }
-function bench(p, ms) {
+function bench(p, ms, reason) {
   cooldowns.set(baseOf(p.baseUrl), Date.now() + ms);
+  benchReasons.set(baseOf(p.baseUrl), reason);
+}
+
+/** A few words on why a provider was skipped: "rate-limited", "rejected the key"… */
+export function hopReason(e) {
+  const s = e?.status | 0;
+  if (s === 429) return "rate-limited";
+  if (s === 401 || s === 403) return "rejected the key";
+  if (s === 404) return "doesn't have that model";
+  if (s === 413) return "said the chat is too long";
+  if (s === 400) return "refused the request";
+  if (s >= 500) return `had a server error (${s})`;
+  return "unreachable";
+}
+
+/** Per-link state for the relay lights: ready, or benched until a time. */
+export function relayStatus(providers = []) {
+  const now = Date.now();
+  return providers.map((p) => {
+    const b = baseOf(p.baseUrl);
+    const until = cooldowns.get(b) || 0;
+    return until > now
+      ? { name: p.name || b, state: "benched", until, reason: benchReasons.get(b) || "" }
+      : { name: p.name || b, state: "ready", until: 0, reason: "" };
+  });
 }
 
 /**
  * Try each provider in order until one completes the request.
  * providers: [{ name, baseUrl, apiKey, model }]
  * onProvider(p) fires when a provider is about to be tried.
+ * onHop({from, to, reason}) fires when a failure hands the request down the chain.
  * Never fails over mid-stream: once text reached the user, an error surfaces.
  */
-export async function relayChat({ providers, messages, tools, onDelta, onProvider }) {
+export async function relayChat({ providers, messages, tools, onDelta, onProvider, onHop }) {
   if (!providers || !providers.length) {
     throw new Error("No providers configured.");
   }
@@ -266,9 +293,12 @@ export async function relayChat({ providers, messages, tools, onDelta, onProvide
       lastErr = e;
       if (e.streamedSome) throw e; // user already saw partial text — don't duplicate
       const s = e.status | 0;
-      if (s === 429) bench(p, 60_000);            // rate limited: sit out a minute
-      else if (s === 401 || s === 403) bench(p, 5 * 60_000); // bad key: back off hard
-      else bench(p, 20_000);                      // network/5xx: brief bench
+      const reason = hopReason(e);
+      if (s === 429) bench(p, 60_000, reason);            // rate limited: sit out a minute
+      else if (s === 401 || s === 403) bench(p, 5 * 60_000, reason); // bad key: back off hard
+      else bench(p, 20_000, reason);                      // network/5xx: brief bench
+      const next = order[order.indexOf(p) + 1];
+      if (next && onHop) onHop({ from: p, to: next, reason });
     }
   }
   throw new Error(

@@ -17,6 +17,8 @@ export function nameFor(baseUrl = "") {
   if (baseUrl.includes("groq")) return "groq";
   if (baseUrl.includes("sambanova")) return "sambanova";
   if (baseUrl.includes("googleapis")) return "gemini";
+  if (baseUrl.includes("mistral.ai")) return "mistral";
+  if (baseUrl.includes("openrouter.ai")) return "openrouter";
   if (baseUrl.includes(":11434")) return "ollama";
   return "custom";
 }

@@ -3,17 +3,22 @@ import { promises as fs } from "node:fs";
 import { existsSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
-import { randomUUID } from "node:crypto";
+import { randomUUID, webcrypto } from "node:crypto";
 
 import { loadConfig, saveConfig, nameFor } from "./config.js";
 import { listModels } from "./cerebras.js";
 import { runAgent } from "./agent.js";
 import { undoLast } from "./tools.js";
 import { newSession, loadSession, saveSession, listSessions, deleteSession, validId } from "./sessions.js";
+import { spark, makePass, passLink, bestModel, SPARK_PROVIDERS } from "./spark.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(__dirname, "..", "public");
-export const VERSION = JSON.parse(await fs.readFile(join(__dirname, "..", "package.json"), "utf8")).version;
+const PKG = JSON.parse(await fs.readFile(join(__dirname, "..", "package.json"), "utf8"));
+export const VERSION = PKG.version;
+// Where a Lantern Pass link opens: the hosted Lite (a fork's own Pages URL if it changed homepage).
+const LITE_URL = PKG.homepage || "https://jammx2.github.io/lantern/";
+const CATALOG = SPARK_PROVIDERS.map(({ id, baseUrl, signup, note }) => ({ id, baseUrl, signup, note }));
 
 const MAX_BODY = 5 * 1024 * 1024; // 5 MB request cap
 
@@ -199,7 +204,50 @@ async function router(req, res) {
         name: p.name, baseUrl: p.baseUrl, model: p.model, hasKey: Boolean(p.apiKey && p.apiKey !== "local"),
       })),
       cwd: cfg.lastCwd && existsSync(cfg.lastCwd) ? cfg.lastCwd : process.cwd(),
+      catalog: CATALOG,
     });
+  }
+
+  // Spark: paste anything (keys, a .env, URLs, a Lantern Pass) -> a tested chain
+  // for the page to review. Keys come back only if they arrived in this request
+  // (typed, or inside a pass the user unlocked); saved keys stay on disk.
+  if (req.method === "POST" && url === "/api/spark") {
+    const body = await readBody(req);
+    try {
+      const out = await spark({
+        text: String(body.text || "").slice(0, 100_000),
+        passphrase: String(body.passphrase || ""),
+        existing: loadConfig().providers || [],
+        verify: body.verify !== false,
+        probeLocal: true,
+        crypto: webcrypto,
+        test: (l) => listModels(l.apiKey || "local", l.baseUrl),
+      });
+      for (const l of out.links) {
+        if (l.keyFrom === "saved") { delete l.apiKey; l.hasKey = true; }
+      }
+      return send(res, 200, out);
+    } catch (e) {
+      if (e.code === "NEED_PASSPHRASE") return send(res, 200, { needPassphrase: true, message: e.message });
+      return send(res, 400, { error: e.message, code: e.code });
+    }
+  }
+
+  // Lantern Pass from the saved chain. Sealed passes are the one way saved keys
+  // leave config.json — encrypted under the passphrase the user chose.
+  if (req.method === "POST" && url === "/api/pass") {
+    const body = await readBody(req);
+    const providers = loadConfig().providers || [];
+    try {
+      const pass = await makePass(providers, {
+        passphrase: String(body.passphrase || ""),
+        sealed: body.sealed !== false,
+        crypto: webcrypto,
+      });
+      return send(res, 200, { pass, link: passLink(LITE_URL, pass) });
+    } catch (e) {
+      return send(res, 400, { error: e.message, code: e.code });
+    }
   }
 
   // Validate one endpoint and list its usable models (no persistence).
@@ -210,7 +258,7 @@ async function router(req, res) {
     if (!baseUrl) return send(res, 400, { error: "Missing endpoint URL." });
     try {
       const models = await listModels(apiKey, baseUrl);
-      return send(res, 200, { ok: true, models });
+      return send(res, 200, { ok: true, models, best: bestModel(models, nameFor(baseUrl)) });
     } catch (e) {
       return send(res, 400, { error: `Couldn't connect: ${e.message}` });
     }
