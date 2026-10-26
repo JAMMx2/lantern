@@ -2,6 +2,81 @@
 
 All notable changes to Lantern. Versions follow [semver](https://semver.org).
 
+## 0.7.0 — 2026-10-26
+
+Lantern becomes a free AI helper for people who have never used AI, not only a coding agent.
+
+### Added — both builds
+- **Home screen with things to try:** Write an email, Explain it simply, Fix my writing, Plan something, Brainstorm ideas, Quiz me, Make a web page, Read a document. A card fills the message box with a sentence to finish and selects the first `[blank]`; the hint line says what to do.
+- **Guided free key:** setup walks through getting a free key from Gemini (a Google account is enough), Groq or Cerebras, with a button that opens the right page. Coming back to the tab puts the cursor in the paste box, and pasting connects by itself.
+- **Everyday-helper instructions:** the model is told it's a friendly assistant for people who may never have used AI (questions, writing, explaining, planning, tutoring, building), to use file tools only when the request involves files or making something, and today's date (it changes once a day, so prompt caching still works).
+- **Readable answers:** a shared, safe Markdown renderer (`src/markdown.js`) for headings, nested lists, numbered lists with a start, tables with alignment, quotes, rules, links and code. All text is escaped first, and links must be http(s) or mailto and open in a new tab without access to the page.
+
+### Changed
+- Setup reads as four plain steps: *Get a free AI key*, *Or use AI already on this computer*, *Your AI: check it, then save*, *Take it to another device*. "Spark" is now the **Connect** button, "Save chain" is **Save and start**, and successful connections name the service ("Connected Groq") instead of counting links.
+- The message box says "Ask anything…"; the footer hint is written for non-programmers.
+
+### Developer
+- `scripts/sync-lite.js` is now `scripts/sync-shared.js` (`npm run sync`): it embeds `src/spark.js` in Lite and `src/markdown.js` in both pages, and `test/shared-sync.test.js` checks every copy, including that both pages render Markdown exactly like the module.
+- `test/fake-provider.js` streams newlines correctly and answers "plan" requests with a formatted reply, for checking the renderer in the UI.
+
+## 0.6.0 — 2026-10-22
+
+Lantern now works with the AI people already have, with no terminal anywhere in the path, and recognises many more APIs.
+
+### Added — AI on this computer
+- **Finds local AI apps** on their usual ports: Ollama, LM Studio, Jan, GPT4All, Msty, KoboldCpp, llamafile / llama.cpp, Docker Model Runner, Text Generation WebUI and vLLM. Running apps with a model are added to the chain; setup scans automatically on first run (the app, and Lite when it isn't on a hosted page).
+- **Installed but switched off** (the app): Lantern spots Ollama, LM Studio, Jan, GPT4All, Msty and Docker Desktop in their usual install folders and shows, in clicks, how to switch each server on. **Start Ollama** and **Start LM Studio's server** buttons do it for you; Jan, Msty and Docker Desktop get an Open button.
+- **One-click model download into Ollama**, through Ollama's own API with a progress bar and Cancel. Lantern suggests the largest tool-capable coding model that fits the computer's memory (`qwen2.5-coder` 1.5B–14B, `qwen3-coder:30b`). Works in Lite too when Ollama allows the page.
+- If nothing is installed, setup points to the normal Ollama and LM Studio installers.
+
+### Added — more APIs
+- Recognised by key format: **NVIDIA** (`nvapi-`), **Hugging Face** (`hf_`), **OpenAI** (`sk-proj-`), **xAI** (`xai-`), **Together AI** (`tgp_v1_`, or older keys named on their line), **Fireworks** (`fw_`); **DeepSeek** when named (`DEEPSEEK_API_KEY=sk-…`), since bare `sk-` keys could belong to several services.
+- Providers now come in three kinds. Chains are ordered free cloud tiers, custom endpoints, AI on this computer, then **paid APIs last**, so money is only spent when nothing free can answer.
+- The provider dropdown is grouped: Free cloud, On this computer, Paid cloud, Custom.
+- Model picks for the new providers favour the cheaper capable model on paid APIs (`gpt-5-mini`, `deepseek-chat`, `grok-code-fast-1`).
+
+### Changed
+- An empty local app now says what to do ("Lantern can download one for you" for Ollama, "load a model in the app" elsewhere) instead of suggesting a terminal command.
+- OpenAI's realtime, transcription, search and codex models are left out of model lists, since they don't take chat completions.
+- "1 MODELS" reads "1 MODEL".
+
+### Developer
+- `src/local.js`: installed-app detection, start plans and Ollama pulls, all injectable for tests. `test/local.test.js` covers macOS, Windows and Linux paths, fixed start commands, pull progress and errors, and model-name checks.
+- `discoverLocal`, `OLLAMA_MODELS` and `recommendOllamaModel` live in the shared `src/spark.js`.
+- `GET /api/local`, `POST /api/local/start`, `POST /api/local/pull`.
+
+## 0.5.0 — 2026-10-22
+
+Setup goes from "fill in a form per provider" to "paste once", and your setup now travels between the app, Lite, and other devices.
+
+### Added — both builds
+- **Spark: paste anything.** One box at the top of setup takes API keys in any order (a whole `.env` file is fine), endpoint URLs, or a Lantern Pass. Keys are matched to providers by format (`csk-`, `gsk_`, `AIza`, `sk-or-v1-`) or by a provider named on the same or previous line; every link is tested in parallel, a tool-calling coding model is picked for each, and the chain is ordered fastest-first with Ollama last. The app also adds Ollama automatically when it's running locally. Pasting runs Spark immediately; Ctrl/Cmd+Enter re-runs it.
+- **Lantern Pass.** Export the saved chain as a **sealed** pass (keys included, AES-256-GCM, PBKDF2-SHA256 600k) or a **recipe** (endpoints and models only). Passes are interchangeable between the app and Lite, and come with a link to the hosted Lite (`…/#pass=…`) that sets it up in one step. A suggested random passphrase (~78 bits) is offered.
+- **Relay lights.** One lamp per link in the header (ready, answering, answered last, resting with a countdown). Click to open setup. Failovers show in the chat as `cerebras rate-limited · trying groq`.
+- **More free providers:** Mistral and OpenRouter presets (OpenRouter prefers `:free` models).
+- **Smarter Test button:** picks a coding model from the list instead of the alphabetically first one.
+- `/spark` and `/pass` slash commands.
+
+### Added — the app
+- `POST /api/spark` and `POST /api/pass`; `/api/config` now returns the provider catalog the setup screen is built from.
+- NDJSON events `relay` and `hop`.
+- One-command start documented: `npx github:JAMMx2/lantern`.
+
+### Added — Lantern Lite
+- Opening a pass link removes the pass from the address bar and asks for the passphrase if the pass is sealed.
+- The footer hint and the model's instructions point to `npx github:JAMMx2/lantern` when a task needs real commands.
+
+### Changed
+- Custom endpoints are named by host (`api.together.xyz`) instead of `custom`, so lamps and failover notes say where they point.
+- Saved keyless links (Ollama, custom endpoints) no longer have to be re-tested every time setup is reopened.
+- The setup card scrolls instead of clipping on short screens.
+
+### Developer
+- `src/spark.js` is shared: the app imports it and `npm run sync-lite` embeds it in `lantern-lite.html`. The suite fails if they drift, and also checks that a pass sealed by one build opens in the other.
+- `test/fake-provider.js`: a local OpenAI-compatible stub (rate-limited, bad-key and tool-calling providers) used by the new relay tests and handy for UI work.
+- CI runs `npm test` on Node 18, 20 and 22.
+
 ## 0.4.0 — 2026-10-13
 
 ### Fixed

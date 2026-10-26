@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { relayChat } from "./cerebras.js";
+import { relayChat, relayStatus } from "./cerebras.js";
 import {
   TOOL_DEFS,
   NEEDS_APPROVAL,
@@ -13,20 +13,27 @@ export const MAX_STEPS = 30;
 export const CONTEXT_FILES = ["LANTERN.md", "lantern.md", ".lantern.md"];
 const CONTEXT_CAP = 8_000;
 
-const SYSTEM_PROMPT = (root, projectContext) =>
-  `You are Lantern, a local coding assistant running on the user's own computer, powered by the user's own AI provider.
+// The date changes once a day, so the prompt stays byte-identical (and
+// cacheable by the provider) for every request in between.
+export const today = () =>
+  new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
-You are working inside this folder: ${root}
-All file paths you use are relative to that folder.
+export const SYSTEM_PROMPT = (root, projectContext, date = today()) =>
+  `You are Lantern, a friendly AI helper running on the user's own computer, powered by the AI they chose. Many people who use you have never used AI before, so be warm, clear and practical, use everyday words, and explain any technical term you can't avoid.
 
-Tools:
-- list_dir, read_file, search_files, git — explore. These run automatically.
-- edit_file — change a specific snippet in an existing file (preferred for small changes; the user sees a diff).
-- write_file — create a new file or rewrite one completely.
-- run_command — run a shell command (install, test, build, git commit...).
-edit_file, write_file and run_command require the user's approval each time — they see exactly what you intend to do and click Allow or Deny. If they deny, adapt or ask why; never try to work around a denial.
+Today is ${date}.
 
-Explore before changing things. Work in small, clear steps. Before using a tool, briefly tell the user in plain, non-technical language what you're about to do and why. After finishing, summarize what changed. Assume the user may not be a programmer.` +
+Help with anything people ask an AI assistant: answer questions, explain things simply, write and polish text (emails, letters, posts, CVs), summarise, brainstorm, plan, teach and quiz, and build things like web pages, small apps and scripts. Keep answers as short as the question allows, and use headings, lists or a table when they make an answer easier to scan.
+
+You can also work with files in this folder on their computer: ${root}
+File paths are relative to it. Tools:
+- list_dir, read_file, search_files, git: look around. These run automatically.
+- edit_file: change part of an existing file (the user sees exactly what changes).
+- write_file: create a new file or rewrite one.
+- run_command: run a command (install, test, build, git...).
+edit_file, write_file and run_command need the user's approval each time: they see what you intend and click Allow or Deny. If they deny, adapt or ask why; never work around a denial.
+
+Use tools only when the request is about their files or making something; for questions, writing help and conversation, just answer. When you make something they'll open (a web page, a document), save it as a file, then tell them its name and how to open it (for a web page: double-click the .html file). Before using a tool, say in one plain sentence what you're about to do, and afterwards sum up what changed.` +
   (projectContext
     ? `\n\nThe user keeps project notes for you in LANTERN.md. Follow them:\n<project-notes>\n${projectContext}\n</project-notes>`
     : "");
@@ -109,9 +116,12 @@ export async function runAgent({ providers, root, session, message, emit, reques
   trimConversation(conversation);
   const projectContext = await loadProjectContext(root);
   if (projectContext) emit({ type: "context", file: "LANTERN.md", chars: projectContext.length });
+  const label = (p) => p.name || p.baseUrl;
+  const lights = (p, state) => emit({ type: "relay", active: p ? providers.indexOf(p) : -1, state, links: relayStatus(providers) });
+  const date = today();
 
   for (let step = 0; step < MAX_STEPS; step++) {
-    const messages = [{ role: "system", content: SYSTEM_PROMPT(root, projectContext) }, ...conversation];
+    const messages = [{ role: "system", content: SYSTEM_PROMPT(root, projectContext, date) }, ...conversation];
 
     let reply;
     try {
@@ -120,13 +130,19 @@ export async function runAgent({ providers, root, session, message, emit, reques
         messages,
         tools: TOOL_DEFS,
         onDelta: (text) => emit({ type: "assistant_delta", text }),
-        onProvider: (p) => emit({ type: "provider", name: p.name || p.baseUrl, model: p.model }),
+        onProvider: (p) => {
+          emit({ type: "provider", name: label(p), model: p.model });
+          lights(p, "live");
+        },
+        onHop: ({ from, to, reason }) => emit({ type: "hop", from: label(from), to: label(to), reason }),
       });
     } catch (e) {
+      lights(null, "");
       emit({ type: "error", message: e.message });
       await save();
       return;
     }
+    lights(reply.provider, "ok");
 
     if (reply.usage) {
       session.usage.prompt += reply.usage.prompt_tokens | 0;

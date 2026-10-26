@@ -10,8 +10,9 @@ const baseOf = (u) => String(u || DEFAULT_BASE_URL).replace(/\/+$/, "");
 
 // Models that show up on /models but can't hold a tool-calling chat.
 // Also excludes Gemini-listed models that can't do function calling
-// (gemma, veo, imagen, aqa, learnlm, live/audio variants) — picking one 400s.
-const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil|gemma|veo|imagen|aqa|learnlm|live|dialog/i;
+// (gemma, veo, imagen, aqa, learnlm, live/audio variants) and OpenAI's
+// realtime/transcribe/search/codex models, which don't take chat completions.
+const NON_CHAT = /whisper|tts|embed|moderation|rerank|guard|audio|image|vision-preview|dall-e|paraphrase|distil|gemma|veo|imagen|aqa|learnlm|live|dialog|realtime|transcribe|search|computer-use|codex|babbage|davinci|sora|deep-research/i;
 
 // Shown only if the live /models call fails (no key yet, offline, etc.).
 export const FALLBACK_MODELS = [
@@ -40,11 +41,26 @@ export async function listModels(apiKey, baseUrl) {
     .filter((id) => !NON_CHAT.test(id))
     .sort();
   if (ids.length) return ids;
-  // An empty list usually means a fresh local server with nothing pulled yet.
+  // An empty list usually means a fresh local app with no model loaded yet.
   if (/localhost|127\.0\.0\.1/.test(baseOf(baseUrl))) {
-    throw new Error("No models installed yet. Try: ollama pull qwen2.5-coder:7b");
+    throw new Error(/:11434/.test(baseOf(baseUrl))
+      ? "Ollama has no models yet. In Settings, under AI on this computer, Lantern can download one for you."
+      : "No model is loaded yet. Load one in the app, then Test again.");
   }
   return FALLBACK_MODELS;
+}
+
+/**
+ * Is an OpenAI-compatible server answering here? Resolves to its chat models
+ * ([] = running, nothing loaded) and throws when nothing that looks like a
+ * model API answers. Keyless and quick, for finding apps on this computer.
+ */
+export async function probeModels(baseUrl, timeoutMs = 2000) {
+  const res = await fetch(`${baseOf(baseUrl)}/models`, { signal: AbortSignal.timeout(timeoutMs) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data || !Array.isArray(data.data)) throw new Error("Not an OpenAI-compatible model list.");
+  return data.data.map((m) => m && m.id).filter(Boolean).filter((id) => !NON_CHAT.test(id)).sort();
 }
 
 /**
@@ -226,21 +242,48 @@ export async function chatCompletionStream({ apiKey, baseUrl, model, messages, t
 // ---- the relay ----
 // After a failure, a provider sits out for a bit so we don't hammer it.
 const cooldowns = new Map(); // baseUrl -> retry-after timestamp (ms)
+const benchReasons = new Map(); // baseUrl -> short reason, for the relay lights
 
 function benched(p) {
   return (cooldowns.get(baseOf(p.baseUrl)) || 0) > Date.now();
 }
-function bench(p, ms) {
+function bench(p, ms, reason) {
   cooldowns.set(baseOf(p.baseUrl), Date.now() + ms);
+  benchReasons.set(baseOf(p.baseUrl), reason);
+}
+
+/** A few words on why a provider was skipped: "rate-limited", "rejected the key"… */
+export function hopReason(e) {
+  const s = e?.status | 0;
+  if (s === 429) return "rate-limited";
+  if (s === 401 || s === 403) return "rejected the key";
+  if (s === 404) return "doesn't have that model";
+  if (s === 413) return "said the chat is too long";
+  if (s === 400) return "refused the request";
+  if (s >= 500) return `had a server error (${s})`;
+  return "unreachable";
+}
+
+/** Per-link state for the relay lights: ready, or benched until a time. */
+export function relayStatus(providers = []) {
+  const now = Date.now();
+  return providers.map((p) => {
+    const b = baseOf(p.baseUrl);
+    const until = cooldowns.get(b) || 0;
+    return until > now
+      ? { name: p.name || b, state: "benched", until, reason: benchReasons.get(b) || "" }
+      : { name: p.name || b, state: "ready", until: 0, reason: "" };
+  });
 }
 
 /**
  * Try each provider in order until one completes the request.
  * providers: [{ name, baseUrl, apiKey, model }]
  * onProvider(p) fires when a provider is about to be tried.
+ * onHop({from, to, reason}) fires when a failure hands the request down the chain.
  * Never fails over mid-stream: once text reached the user, an error surfaces.
  */
-export async function relayChat({ providers, messages, tools, onDelta, onProvider }) {
+export async function relayChat({ providers, messages, tools, onDelta, onProvider, onHop }) {
   if (!providers || !providers.length) {
     throw new Error("No providers configured.");
   }
@@ -266,9 +309,12 @@ export async function relayChat({ providers, messages, tools, onDelta, onProvide
       lastErr = e;
       if (e.streamedSome) throw e; // user already saw partial text — don't duplicate
       const s = e.status | 0;
-      if (s === 429) bench(p, 60_000);            // rate limited: sit out a minute
-      else if (s === 401 || s === 403) bench(p, 5 * 60_000); // bad key: back off hard
-      else bench(p, 20_000);                      // network/5xx: brief bench
+      const reason = hopReason(e);
+      if (s === 429) bench(p, 60_000, reason);            // rate limited: sit out a minute
+      else if (s === 401 || s === 403) bench(p, 5 * 60_000, reason); // bad key: back off hard
+      else bench(p, 20_000, reason);                      // network/5xx: brief bench
+      const next = order[order.indexOf(p) + 1];
+      if (next && onHop) onHop({ from: p, to: next, reason });
     }
   }
   throw new Error(

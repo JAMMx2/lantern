@@ -3,17 +3,35 @@ import { promises as fs } from "node:fs";
 import { existsSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
-import { randomUUID } from "node:crypto";
+import { randomUUID, webcrypto } from "node:crypto";
 
 import { loadConfig, saveConfig, nameFor } from "./config.js";
-import { listModels } from "./cerebras.js";
+import { listModels, probeModels } from "./cerebras.js";
 import { runAgent } from "./agent.js";
 import { undoLast } from "./tools.js";
 import { newSession, loadSession, saveSession, listSessions, deleteSession, validId } from "./sessions.js";
+import { spark, makePass, passLink, bestModel, discoverLocal, recommendOllamaModel, OLLAMA_MODELS, SPARK_PROVIDERS } from "./spark.js";
+import { installedApps, startPlan, startApp, pullOllama, ramGB, MODEL_NAME_RE } from "./local.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(__dirname, "..", "public");
-export const VERSION = JSON.parse(await fs.readFile(join(__dirname, "..", "package.json"), "utf8")).version;
+const PKG = JSON.parse(await fs.readFile(join(__dirname, "..", "package.json"), "utf8"));
+export const VERSION = PKG.version;
+// Where a Lantern Pass link opens: the hosted Lite (a fork's own Pages URL if it changed homepage).
+const LITE_URL = PKG.homepage || "https://jammx2.github.io/lantern/";
+const CATALOG = SPARK_PROVIDERS.map(({ id, label, kind, baseUrl, signup, note, howTo }) => ({ id, label, kind, baseUrl, signup, note, howTo }));
+const LOCAL_IDS = new Set(SPARK_PROVIDERS.filter((p) => p.kind === "local").map((p) => p.id));
+const probeLocal = (l) => probeModels(l.baseUrl);
+
+// Every local AI app: running (with its models), installed but off (with the
+// button Lantern can offer, if any), or neither.
+async function localReport() {
+  const [found, installed] = [await discoverLocal({ probe: probeLocal }), installedApps()];
+  return found.map((a) => {
+    const plan = !a.running && installed[a.id] ? startPlan(a.id) : null;
+    return { ...a, installed: a.running || Boolean(installed[a.id]), start: plan ? plan.label : "" };
+  });
+}
 
 const MAX_BODY = 5 * 1024 * 1024; // 5 MB request cap
 
@@ -199,7 +217,93 @@ async function router(req, res) {
         name: p.name, baseUrl: p.baseUrl, model: p.model, hasKey: Boolean(p.apiKey && p.apiKey !== "local"),
       })),
       cwd: cfg.lastCwd && existsSync(cfg.lastCwd) ? cfg.lastCwd : process.cwd(),
+      catalog: CATALOG,
     });
+  }
+
+  // Spark: paste anything (keys, a .env, URLs, a Lantern Pass) -> a tested chain
+  // for the page to review. Keys come back only if they arrived in this request
+  // (typed, or inside a pass the user unlocked); saved keys stay on disk.
+  if (req.method === "POST" && url === "/api/spark") {
+    const body = await readBody(req);
+    try {
+      const out = await spark({
+        text: String(body.text || "").slice(0, 100_000),
+        passphrase: String(body.passphrase || ""),
+        existing: loadConfig().providers || [],
+        verify: body.verify !== false,
+        probeLocal: true,
+        crypto: webcrypto,
+        test: (l) => listModels(l.apiKey || "local", l.baseUrl),
+        probe: probeLocal,
+      });
+      for (const l of out.links) {
+        if (l.keyFrom === "saved") { delete l.apiKey; l.hasKey = true; }
+      }
+      return send(res, 200, out);
+    } catch (e) {
+      if (e.code === "NEED_PASSPHRASE") return send(res, 200, { needPassphrase: true, message: e.message });
+      return send(res, 400, { error: e.message, code: e.code });
+    }
+  }
+
+  // Lantern Pass from the saved chain. Sealed passes are the one way saved keys
+  // leave config.json — encrypted under the passphrase the user chose.
+  if (req.method === "POST" && url === "/api/pass") {
+    const body = await readBody(req);
+    const providers = loadConfig().providers || [];
+    try {
+      const pass = await makePass(providers, {
+        passphrase: String(body.passphrase || ""),
+        sealed: body.sealed !== false,
+        crypto: webcrypto,
+      });
+      return send(res, 200, { pass, link: passLink(LITE_URL, pass) });
+    } catch (e) {
+      return send(res, 400, { error: e.message, code: e.code });
+    }
+  }
+
+  // ---- AI already on this computer (no terminal needed) ----
+  if (req.method === "GET" && url === "/api/local") {
+    const ram = ramGB();
+    return send(res, 200, { apps: await localReport(), ollamaModels: OLLAMA_MODELS, recommended: recommendOllamaModel(ram), ramGB: ram });
+  }
+  if (req.method === "POST" && url === "/api/local/start") {
+    const { id } = await readBody(req);
+    if (!LOCAL_IDS.has(id)) return send(res, 400, { error: "Unknown app." });
+    try {
+      const plan = await startApp(id);
+      return send(res, 200, { ok: true, message: `${plan.label}…` });
+    } catch (e) {
+      return send(res, 400, { error: e.message });
+    }
+  }
+  // Download a model into Ollama, streaming progress as NDJSON.
+  if (req.method === "POST" && url === "/api/local/pull") {
+    const { model } = await readBody(req);
+    if (!MODEL_NAME_RE.test(String(model || ""))) return send(res, 400, { error: "That doesn't look like an Ollama model name." });
+    res.writeHead(200, { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store" });
+    // Cancel the download if the page goes away (Cancel button, closed tab).
+    const stop = new AbortController();
+    res.on("close", () => { if (!res.writableFinished) stop.abort(); });
+    let last = 0;
+    try {
+      await pullOllama(String(model), {
+        signal: stop.signal,
+        onProgress: (p) => {
+          // Ollama reports every chunk; a few updates a second is plenty for a bar.
+          const now = Date.now();
+          if (now - last < 250 && p.total && p.completed < p.total) return;
+          last = now;
+          res.write(JSON.stringify({ type: "progress", ...p }) + "\n");
+        },
+      });
+      res.write(JSON.stringify({ type: "done", model }) + "\n");
+    } catch (e) {
+      if (!stop.signal.aborted) res.write(JSON.stringify({ type: "error", message: e.message }) + "\n");
+    }
+    return res.end();
   }
 
   // Validate one endpoint and list its usable models (no persistence).
@@ -210,7 +314,7 @@ async function router(req, res) {
     if (!baseUrl) return send(res, 400, { error: "Missing endpoint URL." });
     try {
       const models = await listModels(apiKey, baseUrl);
-      return send(res, 200, { ok: true, models });
+      return send(res, 200, { ok: true, models, best: bestModel(models, nameFor(baseUrl)) });
     } catch (e) {
       return send(res, 400, { error: `Couldn't connect: ${e.message}` });
     }

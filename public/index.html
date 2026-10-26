@@ -157,6 +157,23 @@
   }
   .assistant .body pre code{background:none; border:none; padding:0; font-size:12.5px; line-height:1.6; color:var(--text)}
   .assistant .body strong{color:var(--green-hi)}
+  .assistant .body h3,.assistant .body h4,.assistant .body h5,.assistant .body h6{
+    margin:16px 0 8px; color:var(--green-hi); font-size:14px; letter-spacing:.06em; text-shadow:var(--glow-g)}
+  .assistant .body h3{font-size:15.5px} .assistant .body h5,.assistant .body h6{font-size:13px; color:var(--text)}
+  .assistant .body > :first-child{margin-top:0}
+  .assistant .body ul,.assistant .body ol{margin:0 0 10px; padding-left:22px}
+  .assistant .body li{margin:3px 0}
+  .assistant .body li::marker{color:var(--green)}
+  .assistant .body em{color:var(--amber-hi); font-style:italic}
+  .assistant .body a{color:var(--green-hi); text-decoration:underline; text-decoration-color:var(--line-br); text-underline-offset:3px}
+  .assistant .body a:hover{text-decoration-color:var(--green)}
+  .assistant .body blockquote{margin:0 0 10px; padding:6px 12px; border-left:2px solid var(--amber-line); background:var(--amber-dim); color:var(--text)}
+  .assistant .body blockquote p:last-child{margin:0}
+  .assistant .body hr{border:0; border-top:1px dashed var(--line-br); margin:14px 0}
+  .assistant .body .tbl{overflow-x:auto; margin:0 0 12px}
+  .assistant .body table{border-collapse:collapse; font-size:12.5px; min-width:50%}
+  .assistant .body th,.assistant .body td{border:1px solid var(--line); padding:5px 10px; text-align:left; vertical-align:top}
+  .assistant .body th{color:var(--green-hi); background:var(--green-dim); font-weight:600}
 
   /* ---- tool activity (auto reads) ---- */
   .log{
@@ -265,9 +282,9 @@
   .hint::before{content:"// "; color:var(--line-br)}
 
   /* ---- empty state: boot log ---- */
-  .empty{color:var(--muted); text-align:center; margin-top:7vh; font-size:13px}
+  .empty{color:var(--muted); text-align:center; margin-top:4vh; font-size:13px}
   .empty::before{
-    content:""; display:block; width:172px; height:198px; margin:0 auto 18px;
+    content:""; display:block; width:112px; height:130px; margin:0 auto 14px;
     background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20331%20460%22%20font-family%3D%22ui-monospace%2C'Cascadia%20Mono'%2C'JetBrains%20Mono'%2CMenlo%2CConsolas%2Cmonospace%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22gG%22%20x%3D%22-40%25%22%20y%3D%22-40%25%22%20width%3D%22180%25%22%20height%3D%22180%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.4%22%20result%3D%22b%22%2F%3E%3CfeMerge%3E%3CfeMergeNode%20in%3D%22b%22%2F%3E%3CfeMergeNode%20in%3D%22SourceGraphic%22%2F%3E%3C%2FfeMerge%3E%3C%2Ffilter%3E%3Cfilter%20id%3D%22gA%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%222.2%22%20result%3D%22b%22%2F%3E%3CfeMerge%3E%3CfeMergeNode%20in%3D%22b%22%2F%3E%3CfeMergeNode%20in%3D%22b%22%2F%3E%3CfeMergeNode%20in%3D%22SourceGraphic%22%2F%3E%3C%2FfeMerge%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%22url(%23gG)%22%3E%3Cg%20font-size%3D%2214%22%20fill%3D%22%233bf07e%22%3E%3Ctext%20x%3D%22148.85%22%20y%3D%2228.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3EcXXa%3C%2Ftext%3E%3Ctext%20x%3D%22140.42%22%20y%3D%2244.00%22%20textLength%3D%2250.57%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ee%40ee%40X%3C%2Ftext%3E%3Ctext%20x%3D%22140.42%22%20y%3D%2260.00%22%20textLength%3D%2250.57%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ee%40ea%40X%3C%2Ftext%3E%3Ctext%20x%3D%22148.85%22%20y%3D%2276.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%22115.14%22%20y%3D%2292.00%22%20textLength%3D%22101.14%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Eeeeee%25%40eeeee%3C%2Ftext%3E%3Ctext%20x%3D%22106.71%22%20y%3D%22108.00%22%20textLength%3D%22117.99%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%23%40%40%40%40%40%40%40%40%40%40%40%40%23%3C%2Ftext%3E%3Ctext%20x%3D%2298.28%22%20y%3D%22124.00%22%20textLength%3D%22134.85%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E*cccccccccccccc*%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22140.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3EX%40%40%40%40%40%40%40%40%40%40%40%40%40%40%40%40%23%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22156.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ea%26amp%3B%26amp%3B%25%23%23%23%23%23%23%23%23%23%23%23%26amp%3B%26amp%3Be%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22172.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40%3D-----------%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22188.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40%2B%3D%3D%3D%3D--%3D%3D%3D%3D%3D%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22204.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40%2B%3D%3D%3D%2B%3D-%2B%3D%3D%3D%3D%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22220.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40%2B%3C%2Ftext%3E%3Ctext%20x%3D%22165.70%22%20y%3D%22220.00%22%20textLength%3D%228.43%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%3D%3C%2Ftext%3E%3Ctext%20x%3D%22207.84%22%20y%3D%22220.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%3D%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22236.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40o%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22236.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22252.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40o%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22252.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22268.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40x%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22268.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22284.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40*%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22284.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22300.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40*%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22300.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22316.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40x%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22316.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22332.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40o%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22332.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22348.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40o%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22348.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22364.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40ooooooooooo%2B%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22380.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ee%26amp%3B%26amp%3B%40%40%40%40%40%40%40%40%40%40%40%40%26amp%3B%26amp%3Be%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22396.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ea%40%40%40Xaaaaaaaae%40%40%40e%3C%2Ftext%3E%3Ctext%20x%3D%2298.28%22%20y%3D%22412.00%22%20textLength%3D%22134.85%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%23%40%40ecccccccce%40%40%25%3C%2Ftext%3E%3Ctext%20x%3D%2298.28%22%20y%3D%22428.00%22%20textLength%3D%22134.85%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%25%25%25%25%25%25%25%25%25%25%25%25%25%25a%3C%2Ftext%3E%3Ctext%20x%3D%22131.99%22%20y%3D%22444.00%22%20textLength%3D%2275.85%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E********o%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3Cg%20filter%3D%22url(%23gA)%22%3E%3Cg%20font-size%3D%2214%22%20fill%3D%22%23ffb454%22%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22220.00%22%20textLength%3D%2242.14%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%2Booo%3D%3C%2Ftext%3E%3Ctext%20x%3D%22174.13%22%20y%3D%22220.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Eooo%2B%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22236.00%22%20textLength%3D%2292.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Eoox*ss*xooo%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22252.00%22%20textLength%3D%2292.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ex*sc%40%26amp%3Bcs*xo%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22268.00%22%20textLength%3D%2292.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E*ce%23%26amp%3B%26amp%3B%25ec**%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22284.00%22%20textLength%3D%2242.14%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ese%23%26amp%3B%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22174.13%22%20y%3D%22284.00%22%20textLength%3D%2242.14%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%23es*%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22300.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ese%26amp%3B%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22182.56%22%20y%3D%22300.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3BXs*%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22316.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E*e%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22182.56%22%20y%3D%22316.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3BX**%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22332.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E*s%25%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22174.13%22%20y%3D%22332.00%22%20textLength%3D%2242.14%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%25s*o%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22348.00%22%20textLength%3D%2292.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Eox*ceec*xoo%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3Cg%20filter%3D%22url(%23gA)%22%3E%3Cg%20font-size%3D%2214%22%20fill%3D%22%23ffe9c4%22%3E%3Ctext%20x%3D%22165.70%22%20y%3D%22284.00%22%20textLength%3D%228.43%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22157.28%22%20y%3D%22300.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%26amp%3B%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22148.85%22%20y%3D%22316.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%26amp%3B%26amp%3B%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22157.28%22%20y%3D%22332.00%22%20textLength%3D%2216.86%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%26amp%3B%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E") center/contain no-repeat;
     animation:lamp 3.2s ease-in-out infinite;
   }
@@ -276,11 +293,21 @@
     50%{filter:drop-shadow(0 0 7px rgba(255,180,84,.14))}
   }
   .empty .mark{display:none}
-  .empty::after{
+  .empty .hello::after{
     content:"▮"; color:var(--green); margin-left:6px;
     animation:blink 1.1s steps(2,start) infinite; text-shadow:var(--glow-g);
   }
   @keyframes blink{to{visibility:hidden}}
+
+  /* ---- home: starter cards ---- */
+  .hello{font-size:15px; color:var(--green-hi); letter-spacing:.08em; text-shadow:var(--glow-g)}
+  .hello-sub{font-size:12px; color:var(--muted); margin:6px 0 18px}
+  .starters{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; max-width:760px; margin:0 auto; text-align:left}
+  .starter{background:var(--well); border:1px solid var(--line); border-left:2px solid var(--line-br); border-radius:2px;
+    padding:10px 12px; color:var(--text); font-family:var(--mono); font-size:12.5px; text-align:left; cursor:pointer}
+  .starter b{display:block; color:var(--green-hi); font-weight:600; margin-bottom:3px}
+  .starter span{color:var(--faint); font-size:11px; line-height:1.5}
+  .starter:hover,.starter:focus-visible{border-color:var(--green); border-left-color:var(--green); box-shadow:0 0 12px rgba(59,240,126,.15); outline:none}
 
   /* ---- thinking ---- */
   .thinking{
@@ -294,16 +321,16 @@
   /* ---- onboarding ---- */
   .overlay{
     position:fixed; inset:0; background:rgba(2,4,3,.92);
-    display:flex; align-items:center; justify-content:center; padding:20px; z-index:20;
-    backdrop-filter:blur(3px);
+    display:flex; align-items:flex-start; justify-content:center; padding:20px; z-index:20;
+    backdrop-filter:blur(3px); overflow:auto;
   }
   .card{
-    width:100%; max-width:540px; background:#070c08;
+    width:100%; max-width:560px; background:#070c08; margin:auto;
     border:1px solid var(--line-br); border-radius:3px; padding:0 26px 24px;
     box-shadow:0 0 70px rgba(59,240,126,.14), inset 0 0 60px rgba(59,240,126,.03);
   }
   .card::before{
-    content:"■ FIRST-RUN CONFIG"; display:block; margin:0 -26px 22px;
+    content:"■ SETUP"; display:block; margin:0 -26px 22px;
     padding:10px 16px; font-size:10px; letter-spacing:.28em; color:var(--faint);
     border-bottom:1px solid var(--line); background:rgba(59,240,126,.04);
   }
@@ -391,6 +418,60 @@
   .resumed{font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); text-align:center; margin:0 0 18px}
   .resumed::before{content:"── "} .resumed::after{content:" ──"}
   .toolnote{font-size:10.5px; color:var(--faint); letter-spacing:.08em; margin-top:4px}
+
+  /* ---- relay lights: one lamp per link in the chain ---- */
+  .relay{display:flex; align-items:center; gap:3px; padding:4px 2px; cursor:pointer}
+  .relay:empty{display:none}
+  .lamp{width:8px; height:14px; border-radius:1px; background:#0f1d14; border:1px solid var(--line-br);
+    transition:background .25s, box-shadow .25s, border-color .25s}
+  .lamp.ready{background:rgba(59,240,126,.28); border-color:rgba(59,240,126,.45)}
+  .lamp.ok{background:var(--green); border-color:var(--green); box-shadow:var(--glow-g)}
+  .lamp.live{background:var(--amber); border-color:var(--amber); box-shadow:var(--glow-a); animation:pulse 1.1s ease-in-out infinite}
+  .lamp.benched{background:rgba(255,109,94,.55); border-color:var(--red); box-shadow:0 0 6px rgba(255,109,94,.35)}
+  .log.hop, .log.hop .ic{color:var(--amber)}
+  .log.hop .ic{text-shadow:var(--glow-a)}
+
+  /* ---- spark + lantern pass ---- */
+  .card textarea{width:100%; flex:none; min-height:70px; max-height:180px; resize:vertical; font-size:12.5px; padding:9px 11px}
+  .spark-go{display:flex; gap:10px; align-items:center; margin-top:8px}
+  .spark-go button{flex:none; white-space:nowrap}
+  .spark-msg{font-size:11.5px; line-height:1.55; color:var(--muted)}
+  .spark-msg.ok{color:var(--ok)}
+  .spark-msg.err{color:var(--red)}
+  .or{font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--faint); text-align:center; margin:2px 0 16px}
+  .or::before,.or::after{content:" ── "; color:var(--line-br)}
+  .toggle{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin-top:6px; cursor:pointer}
+  .toggle input{width:15px; height:15px; accent-color:var(--green)}
+  .pass-out{margin-top:10px}
+  .pass-out[hidden]{display:none}
+
+  /* ---- guided free key ---- */
+  .guide{border:1px solid var(--line); border-radius:2px; background:var(--well); padding:10px 12px; margin-bottom:10px}
+  .gtabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px}
+  .gtab{background:transparent; border:1px solid var(--line-br); color:var(--muted); border-radius:2px; padding:5px 10px; font-size:11.5px; font-family:var(--mono); cursor:pointer}
+  .gtab small{color:var(--faint); margin-left:6px; font-size:10px}
+  .gtab.on{border-color:var(--green); color:var(--green-hi); box-shadow:0 0 10px rgba(59,240,126,.15)}
+  .gsteps{margin:0 0 4px; padding-left:20px; color:var(--text); font-size:12.5px; line-height:1.7}
+  .gsteps b{color:var(--green-hi)}
+  .gsteps code{color:var(--amber-hi)}
+  .glink{text-decoration:none; display:inline-block}
+
+  /* ---- ai on this computer ---- */
+  .lrow{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-start; border:1px solid var(--line); border-left:2px solid var(--line-br);
+    border-radius:2px; padding:8px 10px; margin-bottom:7px; background:var(--well)}
+  .lrow.on{border-left-color:var(--green)}
+  .lrow .lamp{margin-top:4px; flex:none}
+  .lmain{flex:1 1 220px; min-width:0}
+  .lname{color:var(--green-hi); font-size:12.5px}
+  .lstate{color:var(--faint); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; margin-left:6px}
+  .lhow{color:var(--muted); font-size:11.5px; line-height:1.55; margin-top:3px}
+  .lact{display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; margin-left:auto}
+  .lact select{background:#020403; border:1px solid var(--line-br); color:var(--green-hi); border-radius:2px; padding:5px 6px; font-family:var(--mono); font-size:11.5px; max-width:220px}
+  .ldone{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ok)}
+  .lbar{height:6px; background:#0f1d14; border:1px solid var(--line-br); border-radius:1px; margin-top:6px; overflow:hidden}
+  .lbar i{display:block; height:100%; width:0; background:var(--amber); box-shadow:var(--glow-a); transition:width .3s}
+  .lempty{color:var(--muted); font-size:12px; line-height:1.65; border:1px dashed var(--line-br); border-radius:2px; padding:10px 12px; margin-bottom:7px}
+  .lempty a{color:var(--green-hi)}
   @media (max-width:900px){ .sysline{display:none} }
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important; transition:none !important}
@@ -403,7 +484,7 @@
 <div class="crt-sweep" aria-hidden="true"></div>
 
 <header>
-  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver" id="ver">v0.4</span></div>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="ver" id="ver">v0.7</span></div>
   <span class="sysline">localhost · your model · your files</span>
   <div class="strip-spacer"></div>
   <div class="field">
@@ -419,50 +500,73 @@
   <button class="newchat ibtn" id="history" title="Resume an earlier chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</button>
   <button class="newchat ibtn" id="settings" title="Providers &amp; keys" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   <div class="field">
+    <span class="relay" id="relay" role="button" tabindex="0" aria-label="Relay chain status, click to edit"></span>
     <span class="micro" id="prov" title="Active provider"></span>
     <span class="dot" id="dot"></span>
   </div>
 </header>
 
 <main id="main">
-  <div class="col" id="log">
-    <div class="empty" id="empty">
-      <span class="mark">✦</span>
-      Ready. Ask Lantern to build, read, or change something in your folder.
-    </div>
-  </div>
+  <div class="col" id="log"></div>
 </main>
 
 <footer>
   <div class="composer">
     <span class="ps1" aria-hidden="true">❯</span>
-    <textarea id="input" rows="1" placeholder="tell lantern what to do…  (enter to send · shift+enter for newline)"></textarea>
+    <textarea id="input" rows="1" placeholder="Ask anything…  (Enter to send · Shift+Enter for a new line)"></textarea>
     <button class="stop" id="stop" style="display:none">Stop</button>
     <button class="send" id="send">Send</button>
   </div>
-  <div class="hint" id="hint">writes and commands always ask before running · type /undo to revert the last file change</div>
+  <div class="hint" id="hint">free and private · changes to your files always ask first · /undo takes back the last one · /help for more</div>
 </footer>
 
 <!-- onboarding -->
 <div class="overlay" id="overlay" style="display:none">
   <div class="card">
     <h1><span class="mark">✦</span> Lantern</h1>
-    <p class="sub">Build your relay chain: Lantern tries providers top-to-bottom and hops to the next when one rate-limits. Free tiers stack. Keys stay on this computer.</p>
+    <p class="sub">Free AI that works for you. Pick one way to switch it on: there's no account with us and nothing to pay.</p>
 
     <div class="step">
-      <div class="lbl"><b>01 /</b> Providers — fastest first.</div>
-      <div id="chain"></div>
-      <button class="minibtn" id="addProv">+ add fallback provider</button>
-      <div class="prov-note">Suggested free chain: Cerebras → Groq → Gemini. Add Ollama last as the offline safety net.</div>
+      <div class="lbl"><b>1 /</b> Get a free AI key. About 2 minutes, no credit card.</div>
+      <div class="guide">
+        <div class="gtabs" id="gtabs"></div>
+        <ol class="gsteps" id="gsteps"></ol>
+        <div class="spark-go"><a class="primary glink" id="glink" target="_blank" rel="noopener">Open</a><span class="spark-msg">opens in a new tab</span></div>
+      </div>
+      <textarea id="sparkIn" rows="2" spellcheck="false" autocomplete="off" placeholder="Paste your key here. (Several keys, a .env file or a Lantern Pass work too.)"></textarea>
+      <div class="row" id="sparkPhraseRow" style="display:none; margin-top:8px"><input id="sparkPhrase" type="password" placeholder="passphrase for this sealed pass" autocomplete="off" spellcheck="false" /></div>
+      <div class="spark-go"><button class="primary" id="sparkGo">Connect</button><span class="spark-msg" id="sparkMsg"></span></div>
+      <div class="prov-note">Also recognises keys from OpenRouter, NVIDIA, Hugging Face, SambaNova, Mistral, DeepSeek, OpenAI, xAI, Together and Fireworks. Each key only goes to the service it belongs to. Free services have their own privacy terms; for anything private, use AI on this computer.</div>
+    </div>
+    <div class="step">
+      <div class="lbl"><b>2 /</b> Or use AI already on this computer. No terminal needed.</div>
+      <div id="localList"></div>
+      <div class="spark-go"><button class="minibtn" id="findLocal">Find AI on this computer</button><span class="spark-msg" id="localMsg"></span></div>
     </div>
 
     <div class="step">
-      <div class="lbl"><b>02 /</b> Save.</div>
+      <div class="lbl"><b>3 /</b> Your AI. Check it, then save.</div>
+      <div id="chain"></div>
+      <button class="minibtn" id="addProv">+ add another by hand</button>
+      <div class="prov-note">Lantern uses these top to bottom. When one is busy it moves to the next, so a second free key means you're never stuck. Paid services always go last.</div>
       <div class="row">
-        <button class="primary" id="saveChain">Save chain</button>
+        <button class="primary" id="saveChain">Save and start</button>
         <button class="newchat" id="closeSetup" style="display:none">Close</button>
       </div>
       <div class="err-msg" id="keyErr"></div>
+    </div>
+
+    <div class="step" id="shareStep" style="display:none">
+      <div class="lbl"><b>4 /</b> Take it to another device with a Lantern Pass.</div>
+      <label class="toggle"><input type="radio" name="passKind" value="sealed" checked /> Sealed: includes your keys, locked with a passphrase</label>
+      <label class="toggle"><input type="radio" name="passKind" value="recipe" /> Recipe: no keys, safe to share with your team</label>
+      <div class="row" id="passPhraseRow" style="margin-top:9px"><input id="passPhrase" type="text" autocomplete="off" spellcheck="false" placeholder="passphrase (10+ characters)" /><button class="minibtn" id="passNew" title="Suggest a strong passphrase">new</button></div>
+      <div class="spark-go"><button class="minibtn" id="passMake">Make pass</button><span class="spark-msg" id="passMsg"></span></div>
+      <div class="pass-out" id="passOut" hidden>
+        <textarea id="passText" rows="3" readonly spellcheck="false"></textarea>
+        <div class="spark-go"><button class="minibtn" id="passCopy">Copy pass</button><button class="minibtn" id="passCopyLink">Copy Lite link</button></div>
+      </div>
+      <div class="prov-note">Paste a pass into Spark on another computer, or open the link in any browser to set up Lantern Lite in one step. Made from your saved chain. The passphrase is never inside the pass or the link: keep it, or send it separately.</div>
     </div>
   </div>
 </div>
@@ -500,27 +604,171 @@ function setDot(state){ dot.className = "dot" + (state?(" "+state):""); }
 function scroll(){ mainEl.scrollTop = mainEl.scrollHeight; }
 function hideEmpty(){ const e=document.getElementById("empty"); if(e) e.remove(); }
 
+// ---- home: things to try ----
+// Most people don't know what to ask an AI. Each card fills the box with a
+// sentence to finish and selects the first [blank] so typing replaces it.
+const STARTERS = [
+  { title:"Write an email", hint:"to anyone, about anything", prompt:"Help me write a short, friendly email to [who] about [what]." },
+  { title:"Explain it simply", hint:"any topic, in plain words", prompt:"Explain [topic] to me in simple words, like I'm new to it." },
+  { title:"Fix my writing", hint:"spelling, grammar, tone", prompt:"Check this for spelling and grammar and make it sound clearer:\n\n[paste your text]" },
+  { title:"Plan something", hint:"a trip, meals, a busy week", prompt:"Help me plan [a trip / a week of meals / a party] for [details]. Make it a simple checklist." },
+  { title:"Brainstorm ideas", hint:"names, gifts, things to do", prompt:"Give me 10 ideas for [a gift / a business name / a weekend activity]." },
+  { title:"Quiz me", hint:"learn and practise anything", prompt:"Quiz me on [topic] with 5 questions, one at a time, and tell me how I did at the end." },
+  { title:"Make a web page", hint:"saved as a file you can open", prompt:"Make me a simple web page for [my bakery / my club / a birthday invite]. Save it as an .html file I can open." },
+  { title:"Read a document", hint:"key points from a file in your folder", prompt:"Read [file name] in my folder and give me the key points as a short list." },
+];
+const HINT = $("#hint").textContent;
+function renderHome(){
+  logEl.innerHTML = '<div class="empty" id="empty"><div class="hello">What can I help with?</div><div class="hello-sub">Pick one to start, or just type below.</div><div class="starters"></div></div>';
+  const box = logEl.querySelector(".starters");
+  for(const s of STARTERS){
+    const b = document.createElement("button");
+    b.className = "starter"; b.innerHTML = "<b></b><span></span>";
+    b.querySelector("b").textContent = s.title; b.querySelector("span").textContent = s.hint;
+    b.onclick = ()=>useStarter(s);
+    box.appendChild(b);
+  }
+}
+function useStarter(s){
+  input.value = s.prompt;
+  input.dispatchEvent(new Event("input"));
+  input.focus();
+  const a = s.prompt.indexOf("["), b = s.prompt.indexOf("]", a);
+  if(a >= 0 && b > a) input.setSelectionRange(a, b + 1);
+  $("#hint").textContent = "type over the highlighted part (and any other [blanks]), then press Enter";
+}
+function resetHint(){ $("#hint").textContent = HINT; }
+renderHome();
+
+
 // ---- tiny safe markdown ----
 function esc(s){ return s.replace(/[&<>]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
-function md(text){
-  const parts = text.split(/```/);
-  let html = "";
-  parts.forEach((seg,i)=>{
-    if(i%2===1){
-      const nl = seg.indexOf("\n");
-      const code = nl>=0 ? seg.slice(nl+1) : seg;
-      html += "<pre><code>"+esc(code.replace(/\n$/,""))+"</code></pre>";
-    } else {
-      let t = esc(seg)
-        .replace(/`([^`]+)`/g,"<code>$1</code>")
-        .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
-        .replace(/\n{2,}/g,"</p><p>")
-        .replace(/\n/g,"<br>");
-      if(t.trim()) html += "<p>"+t+"</p>";
+// <markdown> generated from src/markdown.js by `npm run sync`. Edit that file, not this block.
+const Markdown = (() => {
+"use strict";
+// Markdown -> HTML for the chat, shared by both pages (embedded between
+// // <markdown> markers by `npm run sync`). Everything is escaped first, and the
+// only tags produced are the ones written here; links must be http(s) or mailto.
+// It runs on every streamed chunk, so an unfinished code fence or table is fine.
+
+const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ESC[c]);
+const SAFE_URL = /^(https?:\/\/|mailto:)/i;
+
+// Code spans and link tags are set aside as \u0000n\u0000 tokens so emphasis
+// markers inside them (a_b_c in a URL, *args in code) are left alone.
+function inline(raw) {
+  const kept = [];
+  const keep = (html) => `\u0000${kept.push(html) - 1}\u0000`;
+  const open = (url) => keep(`<a href="${url}" target="_blank" rel="noopener noreferrer">`);
+  let s = String(raw).replace(/`([^`\n]+)`/g, (_, c) => keep(`<code>${esc(c)}</code>`));
+  s = esc(s);
+  s = s.replace(/\[([^\]\n]+)\]\(([^()\s]+)\)/g, (m, text, url) => (SAFE_URL.test(url) ? open(url) + text + keep("</a>") : m));
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<\u0000]*[^\s<.,;:!?)'"\u0000])/g, (_, pre, url) => pre + open(url) + keep(url + "</a>"));
+  s = s.replace(/\*\*(?=\S)([^*\n]+?)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/__(?=\S)([^_\n]+?)__/g, "<strong>$1</strong>");
+  s = s.replace(/(^|[^\w*])\*(?=\S)([^*\n]+?)\*(?!\w)/g, "$1<em>$2</em>");
+  s = s.replace(/(^|[^\w])_(?=\S)([^_\n]+?)_(?!\w)/g, "$1<em>$2</em>");
+  s = s.replace(/~~(?=\S)([^~\n]+?)~~/g, "<del>$1</del>");
+  return s.replace(/\u0000(\d+)\u0000/g, (_, i) => kept[i]);
+}
+
+const LIST_ITEM = /^(\s*)([-*+]|\d{1,4}[.)])\s+(.*)$/;
+const TABLE_RULE = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+const cells = (line) => line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+
+function renderList(items) {
+  let html = "", i = 0;
+  while (i < items.length) {
+    const base = items[i].indent, ordered = items[i].ordered;
+    const start = ordered && items[i].num !== 1 ? ` start="${items[i].num}"` : "";
+    html += ordered ? `<ol${start}>` : "<ul>";
+    while (i < items.length && items[i].indent === base && items[i].ordered === ordered) {
+      let li = inline(items[i].text);
+      i++;
+      const kids = [];
+      while (i < items.length && items[i].indent > base) kids.push(items[i++]);
+      if (kids.length) li += renderList(kids);
+      html += `<li>${li}</li>`;
     }
-  });
+    html += ordered ? "</ol>" : "</ul>";
+  }
   return html;
 }
+
+/** Render chat Markdown to safe HTML. */
+function renderMarkdown(src) {
+  const lines = String(src || "").replace(/\r\n?/g, "\n").replace(/\u0000/g, "").split("\n");
+  let html = "", para = [], i = 0;
+  const flush = () => {
+    if (para.length) html += `<p>${para.map(inline).join("<br>")}</p>`;
+    para = [];
+  };
+  while (i < lines.length) {
+    const line = lines[i];
+    let m = /^\s*(```|~~~)\s*([\w+#.-]*)/.exec(line);
+    if (m) {
+      flush();
+      const code = [];
+      for (i++; i < lines.length && !lines[i].trim().startsWith(m[1]); i++) code.push(lines[i]);
+      i++;
+      html += `<pre><code>${esc(code.join("\n"))}</code></pre>`;
+      continue;
+    }
+    if (!line.trim()) { flush(); i++; continue; }
+    if ((m = /^\s*(#{1,6})\s+(.*?)(?:\s+#+)?\s*$/.exec(line))) {
+      flush();
+      const level = Math.min(6, m[1].length + 2);
+      html += `<h${level}>${inline(m[2])}</h${level}>`;
+      i++;
+      continue;
+    }
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) { flush(); html += "<hr>"; i++; continue; }
+    if (/^\s*>/.test(line)) {
+      flush();
+      const quote = [];
+      while (i < lines.length && /^\s*>/.test(lines[i])) quote.push(lines[i++].replace(/^\s*>\s?/, ""));
+      html += `<blockquote>${renderMarkdown(quote.join("\n"))}</blockquote>`;
+      continue;
+    }
+    if (line.includes("|") && i + 1 < lines.length && TABLE_RULE.test(lines[i + 1])) {
+      flush();
+      const head = cells(line);
+      const align = cells(lines[i + 1]).map((c) => (/^:-+:$/.test(c) ? "center" : /-+:$/.test(c) ? "right" : ""));
+      const td = (tag, c, k) => `<${tag}${align[k] ? ` style="text-align:${align[k]}"` : ""}>${inline(c)}</${tag}>`;
+      html += `<div class="tbl"><table><thead><tr>${head.map((c, k) => td("th", c, k)).join("")}</tr></thead><tbody>`;
+      for (i += 2; i < lines.length && lines[i].includes("|") && lines[i].trim(); i++) {
+        html += `<tr>${cells(lines[i]).map((c, k) => td("td", c, k)).join("")}</tr>`;
+      }
+      html += "</tbody></table></div>";
+      continue;
+    }
+    if ((m = LIST_ITEM.exec(line))) {
+      flush();
+      const items = [];
+      while (i < lines.length) {
+        const lm = LIST_ITEM.exec(lines[i]);
+        if (lm) {
+          items.push({ indent: lm[1].replace(/\t/g, "  ").length, ordered: /\d/.test(lm[2]), num: parseInt(lm[2], 10) || 1, text: lm[3] });
+          i++;
+        } else if (items.length && /^\s{2,}\S/.test(lines[i])) {
+          items[items.length - 1].text += " " + lines[i++].trim();
+        } else break;
+      }
+      const base = Math.min(...items.map((it) => it.indent));
+      html += renderList(items.map((it) => ({ ...it, indent: it.indent - base })));
+      continue;
+    }
+    para.push(line.trim());
+    i++;
+  }
+  flush();
+  return html;
+}
+return { renderMarkdown };
+})();
+// </markdown>
+function md(text){ return Markdown.renderMarkdown(text); }
 
 // ---- rendering ----
 function addTurn(cls){
@@ -655,13 +903,15 @@ function slashCommand(text){
   if(cmd==="/undo"){ undoLast(); return true; }
   if(cmd==="/new"){ $("#newchat").onclick(); return true; }
   if(cmd==="/history"){ openHistory(); return true; }
-  if(cmd==="/help"){ hideEmpty(); noteLine("commands: /undo (revert last file change) · /new (fresh chat) · /history (resume a chat)"); return true; }
+  if(cmd==="/spark"){ openSetup(); $("#sparkIn").focus(); return true; }
+  if(cmd==="/pass"){ openSetup(); $("#shareStep").scrollIntoView({block:"center"}); return true; }
+  if(cmd==="/help"){ hideEmpty(); noteLine("commands: /undo (revert last file change) · /new (fresh chat) · /history (resume a chat) · /spark (paste keys to rebuild the chain) · /pass (take your setup to another device)"); return true; }
   return false;
 }
 async function send(){
   const text = input.value.trim();
   if(!text || running) return;
-  input.value=""; input.style.height="auto";
+  input.value=""; input.style.height="auto"; resetHint();
   if(text.startsWith("/") && slashCommand(text)) return;
   userTurn(text);
   running = true; sendBtn.disabled=true; stopBtn.style.display="";
@@ -736,12 +986,46 @@ function noteLine(text){
   logEl.appendChild(d); scroll();
 }
 
+// ---- relay lights ----
+let LINKS = [], LAMP_ACTIVE = -1, LAMP_STATE = "";
+function setLamps(links, active, state){
+  LINKS = links || []; LAMP_ACTIVE = active ?? -1; LAMP_STATE = state || "";
+  renderLamps();
+}
+function renderLamps(){
+  const box = $("#relay"), now = Date.now();
+  while(box.children.length > LINKS.length) box.lastChild.remove();
+  while(box.children.length < LINKS.length) box.appendChild(document.createElement("span"));
+  LINKS.forEach((l, i)=>{
+    const benched = l.state==="benched" && l.until > now;
+    const cls = benched ? "benched" : (i===LAMP_ACTIVE && LAMP_STATE) ? LAMP_STATE : "ready";
+    const what = benched ? (l.reason||"resting")+", back in "+Math.ceil((l.until-now)/1000)+"s"
+      : cls==="live" ? "answering" : cls==="ok" ? "answered last" : "ready";
+    const lamp = box.children[i];
+    lamp.className = "lamp "+cls;
+    lamp.title = (i+1)+". "+l.name+" · "+what;
+  });
+  box.title = LINKS.length ? "Relay: "+LINKS.map(l=>l.name).join(" → ")+" · click to edit" : "";
+}
+setInterval(()=>{ if(LINKS.some(l=>l.state==="benched")) renderLamps(); }, 1000);
+function hopLine(evt){
+  const d = document.createElement("div");
+  d.className = "log hop";
+  d.innerHTML = '<span class="ic">↷</span><span></span>';
+  d.querySelector("span:last-child").textContent = evt.from+" "+evt.reason+" · trying "+evt.to;
+  logEl.appendChild(d); scroll();
+}
+$("#relay").onclick = ()=>openSetup();
+$("#relay").onkeydown = (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openSetup(); } };
+
 function handleEvent(evt){
   // First real output arrives -> drop the thinking placeholder. Reads and
   // further steps re-show it while the model works on the next step.
   if(evt.type!=="done") clearThinking();
   switch(evt.type){
     case "provider": setProv(evt.name); break;
+    case "relay": setLamps(evt.links, evt.active, evt.state); break;
+    case "hop": hopLine(evt); break;
     case "usage": setUsage(evt.total); break;
     case "context": noteLine("loaded project notes from "+evt.file+" ("+evt.chars+" chars)"); break;
     case "assistant_delta": streamDelta(evt.text); break;
@@ -768,7 +1052,7 @@ stopBtn.onclick = ()=>{ if(controller) controller.abort(); };
 $("#newchat").onclick = ()=>{
   if(controller) controller.abort();
   SESSION = (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
-  logEl.innerHTML = '<div class="empty" id="empty"><span class="mark">✦</span>Ready. Ask Lantern to build, read, or change something in your folder.</div>';
+  renderHome(); resetHint();
   setUsage(null); UNDOABLE=false;
   if(dot.className.indexOf("err")<0) setDot("ok");
   input.focus();
@@ -861,30 +1145,41 @@ function fillModels(models, selected){
 }
 
 // ---- relay chain setup ----
-const PRESETS = {
-  cerebras:  { url:"https://api.cerebras.ai/v1", link:"https://cloud.cerebras.ai/", note:"~1M tokens/day free · fastest" },
-  groq:      { url:"https://api.groq.com/openai/v1", link:"https://console.groq.com/keys", note:"14.4k requests/day free · very fast" },
-  sambanova: { url:"https://api.sambanova.ai/v1", link:"https://cloud.sambanova.ai/", note:"free tier · big models, fast" },
-  gemini:    { url:"https://generativelanguage.googleapis.com/v1beta/openai", link:"https://aistudio.google.com/apikey", note:"generous free tier" },
-  ollama:    { url:"http://localhost:11434/v1", link:"https://ollama.com/download", note:"local · free forever · no key" },
-  custom:    { url:"", link:"", note:"any OpenAI-compatible endpoint" },
-};
+// Filled from the server's provider catalog at boot (same list Spark uses).
+const PRESETS = { custom: { url:"", link:"", note:"any OpenAI-compatible endpoint", kind:"custom", label:"Custom endpoint" } };
+function loadCatalog(catalog){
+  const rest = PRESETS.custom;
+  for(const k of Object.keys(PRESETS)) delete PRESETS[k];
+  for(const p of catalog||[]) PRESETS[p.id] = { url:p.baseUrl, link:p.signup, note:p.note, kind:p.kind, label:p.label, howTo:p.howTo };
+  PRESETS.custom = rest;
+}
+const GROUPS = [["free","Free cloud"],["local","On this computer"],["paid","Paid cloud"]];
+function presetOptions(selected){
+  const opt = (id)=>'<option value="'+id+'"'+(id===selected?" selected":"")+'>'+esc(PRESETS[id].label||id)+'</option>';
+  return GROUPS.map(([kind,title])=>'<optgroup label="'+title+'">'+Object.keys(PRESETS).filter(id=>PRESETS[id].kind===kind).map(opt).join("")+'</optgroup>').join("") + opt("custom");
+}
 let CURRENT = { providers: [], configured:false };
+const jpost = (body)=>({ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
 
+function hostName(url){ try{ return new URL(url).host; }catch{ return "custom"; } }
 function presetFor(url){
+  url = String(url||"").replace(/\/+$/,"");
   for(const [k,v] of Object.entries(PRESETS)){ if(v.url && v.url===url) return k; }
   return "custom";
 }
+// p: a saved link {name, baseUrl, model, hasKey} or a Spark result
+// {name, baseUrl, apiKey, model, models, ok, error, needsKey, hasKey}.
 function chainRow(p){
-  p = p || { name:"cerebras", baseUrl:PRESETS.cerebras.url, model:"", hasKey:false };
+  const pristine = !p;  // an untouched blank row that found apps may replace
+  const first = Object.keys(PRESETS)[0];
+  p = p || { name:first, baseUrl:PRESETS[first].url, model:"", hasKey:false };
   const row = document.createElement("div");
-  row.className = "prow" + (p.hasKey ? " ok" : "");
-  row.dataset.saved = p.hasKey ? "1" : "";
-  const preset = presetFor(p.baseUrl || PRESETS[p.name||"cerebras"].url);
+  row.className = "prow";
+  const preset = presetFor(p.baseUrl);
+  row.dataset.pristine = pristine ? "1" : "";
+  row.addEventListener("input", ()=>{ row.dataset.pristine = ""; });
   row.innerHTML =
-    '<select class="p-preset">' +
-      Object.keys(PRESETS).map(k=>'<option value="'+k+'"'+(k===preset?" selected":"")+'>'+k+'</option>').join("") +
-    '</select>' +
+    '<select class="p-preset">' + presetOptions(preset) + '</select>' +
     '<input class="p-key" type="password" placeholder="API key" autocomplete="off" spellcheck="false" />' +
     '<button class="minibtn p-test">Test</button>' +
     '<select class="p-model" style="display:none"></select>' +
@@ -895,36 +1190,48 @@ function chainRow(p){
   const sel=row.querySelector(".p-preset"), urlIn=row.querySelector(".p-url");
   const keyIn=row.querySelector(".p-key"), modelSel2=row.querySelector(".p-model");
   const status=row.querySelector(".p-status"), link=row.querySelector(".p-link");
-  if(preset==="custom"){ urlIn.style.display=""; urlIn.value = p.baseUrl||""; }
-  if(p.model){ modelSel2.style.display=""; modelSel2.innerHTML='<option>'+esc(p.model)+'</option>'; }
-  if(p.hasKey){ keyIn.placeholder="key saved — leave blank to keep"; status.textContent="SAVED"; status.className="p-status ok"; }
-  function syncRow(){
-    const k = sel.value;
+  const setStatus = (text, cls)=>{ status.textContent = String(text||"").toUpperCase().slice(0,96); status.className = "p-status"+(cls?" "+cls:""); };
+  const setModels = (models, pick)=>{
+    modelSel2.innerHTML = models.map(m=>'<option'+(m===pick?' selected':'')+'>'+esc(m)+'</option>').join("");
+    modelSel2.style.display = models.length ? "" : "none";
+  };
+  const markOk = (on)=>{ row.dataset.saved = on ? "1" : ""; row.classList.toggle("ok", !!on); };
+  function showPreset(k){
     urlIn.style.display = k==="custom" ? "" : "none";
-    keyIn.placeholder = k==="ollama" ? "no key needed" : (row.dataset.saved ? "key saved — leave blank to keep" : "API key");
+    const local = PRESETS[k].kind==="local";
+    keyIn.placeholder = local ? "no key needed" : (row.dataset.haskey ? "key saved — leave blank to keep" : "API key");
     link.style.display = PRESETS[k].link ? "" : "none";
     link.href = PRESETS[k].link || "#";
-    status.textContent = PRESETS[k].note.toUpperCase();
-    status.className = "p-status";
-    row.dataset.saved=""; row.classList.remove("ok");
-    modelSel2.style.display="none"; modelSel2.innerHTML="";
+    link.textContent = local ? "get app ↗" : "key ↗";
   }
-  sel.onchange = syncRow;
+  row.dataset.haskey = p.hasKey ? "1" : "";
+  if(preset==="custom") urlIn.value = p.baseUrl || "";
+  if(p.apiKey && p.apiKey!=="local") keyIn.value = p.apiKey;
+  if(p.models && p.models.length) setModels(p.models, p.model);
+  else if(p.model) setModels([p.model], p.model);
+  if(p.ok){ markOk(true); setStatus("ok · "+p.models.length+" model"+(p.models.length===1?"":"s")+" · picked "+p.model, "ok"); }
+  else if(p.error){ markOk(false); setStatus(p.error, p.needsKey ? "" : "err"); }
+  else if(p.ok===undefined && (p.hasKey || p.model)){ markOk(true); setStatus("saved", "ok"); }
+  else setStatus(PRESETS[preset].note);
+  showPreset(preset);
+  sel.onchange = ()=>{
+    row.dataset.haskey=""; row.dataset.pristine=""; markOk(false); setModels([], "");
+    showPreset(sel.value); setStatus(PRESETS[sel.value].kind==="local" ? PRESETS[sel.value].howTo : PRESETS[sel.value].note);
+  };
   row.querySelector(".p-test").onclick = async ()=>{
     const k = sel.value;
     const url = k==="custom" ? urlIn.value.trim() : PRESETS[k].url;
-    if(!url){ status.textContent="ENTER A URL FIRST"; status.className="p-status err"; return; }
-    status.textContent="TESTING…"; status.className="p-status";
+    if(!url){ setStatus("enter a url first", "err"); return; }
+    setStatus("testing…");
     try{
-      const r = await api("/api/provider/test",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({baseUrl:url, apiKey:keyIn.value.trim()})});
+      const r = await api("/api/provider/test", jpost({baseUrl:url, apiKey:keyIn.value.trim()}));
       const j = await r.json();
       if(!r.ok) throw new Error(j.error||"failed");
-      modelSel2.innerHTML = j.models.map(m=>'<option>'+esc(m)+'</option>').join("");
-      modelSel2.style.display="";
-      row.dataset.saved="1"; row.classList.add("ok");
-      status.textContent = "OK · "+j.models.length+" MODELS"; status.className="p-status ok";
-    }catch(e){ status.textContent = String(e.message).toUpperCase().slice(0,80); status.className="p-status err"; }
+      const keep = modelSel2.value && j.models.includes(modelSel2.value) ? modelSel2.value : j.best;
+      setModels(j.models, keep);
+      markOk(true);
+      setStatus("ok · "+j.models.length+" model"+(j.models.length===1?"":"s")+" · picked "+keep, "ok");
+    }catch(e){ setStatus(e.message, "err"); }
   };
   row.querySelector(".p-del").onclick = ()=>row.remove();
   return row;
@@ -934,10 +1241,250 @@ function openSetup(){
   const list = CURRENT.providers.length ? CURRENT.providers : [null];
   list.forEach(p=>box.appendChild(chainRow(p)));
   $("#closeSetup").style.display = CURRENT.configured ? "" : "none";
+  $("#shareStep").style.display = CURRENT.configured ? "" : "none";
+  $("#passOut").hidden = true; sparkSay($("#passMsg"), "");
+  if(!$("#passPhrase").value) $("#passPhrase").value = newPassphrase();
   keyErr.textContent="";
   overlay.style.display="flex";
+  if(!CURRENT.configured) $("#sparkIn").focus();
+  findLocal({ adopt: !CURRENT.configured });
 }
 $("#settings").onclick = openSetup;
+
+// ---- guided free key: the shortest path for someone who has never used an AI API ----
+const GUIDES = [
+  { id:"gemini", name:"Gemini", tag:"have a Google account?", url:"https://aistudio.google.com/apikey", open:"Open Google AI Studio",
+    steps:["Sign in with your Google account.", "Click <b>Create API key</b>. If it asks about a project, let it make a new one.", "Copy the key. It starts with <code>AIza</code>."] },
+  { id:"groq", name:"Groq", tag:"very fast", url:"https://console.groq.com/keys", open:"Open Groq",
+    steps:["Sign in with Google, GitHub or your email.", "Click <b>Create API Key</b>, give it any name, and submit.", "Copy the key right away (it's shown only once). It starts with <code>gsk_</code>."] },
+  { id:"cerebras", name:"Cerebras", tag:"fastest", url:"https://cloud.cerebras.ai/", open:"Open Cerebras",
+    steps:["Sign up with Google or your email.", "Open <b>API Keys</b> in the menu and create one if none is shown.", "Copy the key. It starts with <code>csk-</code>."] },
+];
+let guideOpened = false;
+function showGuide(id){
+  const g = GUIDES.find(x=>x.id===id) || GUIDES[0];
+  $("#gtabs").innerHTML = GUIDES.map(x=>'<button class="gtab'+(x.id===g.id?' on':'')+'" data-id="'+x.id+'">'+x.name+'<small>'+x.tag+'</small></button>').join("");
+  for(const b of $("#gtabs").children) b.onclick = ()=>showGuide(b.dataset.id);
+  $("#gsteps").innerHTML = g.steps.map(t=>'<li>'+t+'</li>').join("") + '<li>Come back here and paste it in the box below. Lantern connects by itself.</li>';
+  $("#glink").href = g.url; $("#glink").textContent = g.open+" ↗";
+}
+$("#glink").addEventListener("click", ()=>{ guideOpened = true; });
+// Back from the key page: put the cursor in the paste box, ready for Ctrl+V.
+window.addEventListener("focus", ()=>{
+  if(guideOpened && $("#overlay").style.display!=="none" && !$("#sparkIn").value) $("#sparkIn").focus();
+});
+showGuide("gemini");
+
+
+// ---- AI already on this computer ----
+// The server checks each local app's port, which installed apps are switched
+// off, and how to switch them on. Running apps can join the chain in a click.
+function rowUrl(row){
+  const k = row.querySelector(".p-preset").value;
+  return (k==="custom" ? row.querySelector(".p-url").value.trim() : PRESETS[k].url).replace(/\/+$/,"");
+}
+function inChain(baseUrl){ return [...$("#chain").querySelectorAll(".prow")].some(r=>rowUrl(r)===baseUrl); }
+function addToChain(links){
+  const box = $("#chain"), rows = box.querySelectorAll(".prow");
+  if(rows.length===1 && rows[0].dataset.pristine) box.innerHTML = "";
+  for(const l of links) if(!inChain(l.baseUrl)) box.appendChild(chainRow(l));
+}
+const fmtGB = (b)=>(b/1e9).toFixed(b>=1e10?0:1)+" GB";
+let LOCAL = null, pulling = null;
+async function findLocal({ adopt=false, quiet=false } = {}){
+  const msg = $("#localMsg");
+  if(!quiet) sparkSay(msg, "Looking…");
+  try{
+    const r = await api("/api/local");
+    LOCAL = await r.json();
+    if(!r.ok) throw new Error(LOCAL.error || "HTTP "+r.status);
+  }catch(e){ sparkSay(msg, e.message, "err"); return; }
+  const fresh = LOCAL.apps.filter(a=>a.running && a.models.length && !inChain(a.baseUrl));
+  if(adopt && fresh.length){
+    addToChain(fresh.map(a=>({ name:a.id, baseUrl:a.baseUrl, model:a.model, models:a.models, ok:true })));
+    sparkSay(msg, "Added "+fresh.map(a=>a.label).join(" and ")+" below. Press Save and start.", "ok");
+  } else if(!quiet){
+    const seen = LOCAL.apps.filter(a=>a.installed).length;
+    sparkSay(msg, seen ? "Found "+seen+" AI app"+(seen===1?"":"s")+" on this computer." : "", seen ? "ok" : "");
+  }
+  if(!pulling) renderLocal();  // don't wipe a download's progress bar
+}
+function renderLocal(){
+  const box = $("#localList");
+  if(!LOCAL) return;
+  const apps = LOCAL.apps.filter(a=>a.installed);
+  if(!apps.length){
+    box.innerHTML = '<div class="lempty">No AI apps found on this computer. The easiest one needs no terminal: '+
+      '<a href="https://ollama.com/download" target="_blank" rel="noopener">get Ollama ↗</a>, install it like any app, open it, then press Find again. '+
+      'Lantern will download a coding model for you. Prefer a window you can see? <a href="https://lmstudio.ai/download" target="_blank" rel="noopener">LM Studio ↗</a> works too.</div>';
+    return;
+  }
+  box.innerHTML = "";
+  for(const a of apps){
+    const row = document.createElement("div");
+    const ready = a.running && a.models.length;
+    row.className = "lrow"+(ready?" on":"");
+    const state = ready ? "running · "+a.models.length+" model"+(a.models.length===1?"":"s")
+      : a.running ? "running · no model yet" : "installed · switched off";
+    let how = "";
+    if(ready) how = "Will use "+a.model+".";
+    else if(a.running && a.id!=="ollama") how = "Load a model in "+a.label+", then press Find again.";
+    else if(!a.running) how = a.howTo;
+    row.innerHTML = '<span class="lamp '+(ready?"ok":a.running?"live":"ready")+'"></span>'+
+      '<div class="lmain"><div class="lname"></div><div class="lhow"></div></div><div class="lact"></div>';
+    row.querySelector(".lname").innerHTML = esc(a.label)+'<span class="lstate">'+state+'</span>';
+    row.querySelector(".lhow").textContent = how;
+    const act = row.querySelector(".lact");
+    if(ready){
+      if(inChain(a.baseUrl)) act.innerHTML = '<span class="ldone">in your chain</span>';
+      else { const b = document.createElement("button"); b.className="minibtn"; b.textContent="Use it";
+        b.onclick = ()=>{ addToChain([{ name:a.id, baseUrl:a.baseUrl, model:a.model, models:a.models, ok:true }]); renderLocal(); };
+        act.appendChild(b); }
+    } else if(a.running && a.id==="ollama"){
+      ollamaDownload(row, act);
+    } else if(a.start){
+      const b = document.createElement("button"); b.className="minibtn"; b.textContent=a.start;
+      b.onclick = ()=>startLocal(a, b);
+      act.appendChild(b);
+    }
+    box.appendChild(row);
+  }
+}
+function ollamaDownload(row, act){
+  const pick = document.createElement("select");
+  pick.innerHTML = LOCAL.ollamaModels.map(m=>'<option value="'+esc(m.name)+'"'+(m.name===LOCAL.recommended?" selected":"")+'>'+
+    esc(m.name)+' · '+m.size+(m.name===LOCAL.recommended?' (fits this computer)':'')+'</option>').join("");
+  const go = document.createElement("button"); go.className="minibtn"; go.textContent="Download";
+  act.append(pick, go);
+  row.querySelector(".lhow").textContent = "Pick a coding model and Lantern downloads it into Ollama for you.";
+  go.onclick = ()=>pullModel(pick.value, row, act);
+}
+async function pullModel(model, row, act){
+  const how = row.querySelector(".lhow"), bar = document.createElement("div");
+  bar.className = "lbar"; bar.innerHTML = "<i></i>";
+  act.innerHTML = ""; const stop = document.createElement("button"); stop.className="minibtn"; stop.textContent="Cancel"; act.appendChild(stop);
+  row.querySelector(".lmain").appendChild(bar);
+  how.textContent = "Starting download of "+model+"…";
+  pulling = new AbortController();
+  stop.onclick = ()=>pulling && pulling.abort();
+  try{
+    const res = await api("/api/local/pull", Object.assign(jpost({ model }), { signal:pulling.signal }));
+    if(!res.ok){ const e = await res.json().catch(()=>({})); throw new Error(e.error || "HTTP "+res.status); }
+    const reader = res.body.getReader(), dec = new TextDecoder(); let buf = "", done = false;
+    while(true){
+      const chunk = await reader.read(); if(chunk.done) break;
+      buf += dec.decode(chunk.value, {stream:true});
+      let nl; while((nl = buf.indexOf("\n"))>=0){
+        const line = buf.slice(0,nl).trim(); buf = buf.slice(nl+1); if(!line) continue;
+        const evt = JSON.parse(line);
+        if(evt.type==="error") throw new Error(evt.message);
+        if(evt.type==="done") done = true;
+        if(evt.type==="progress"){
+          if(evt.total){ bar.firstChild.style.width = Math.round(100*evt.completed/evt.total)+"%"; how.textContent = "Downloading "+model+" · "+fmtGB(evt.completed)+" of "+fmtGB(evt.total); }
+          else how.textContent = evt.status;
+        }
+      }
+    }
+    if(!done) throw new Error("The download stopped early. Press Find again to retry.");
+    how.textContent = "Downloaded. Checking it…";
+    pulling = null;
+    await findLocal({ adopt:true });
+  }catch(e){
+    act.innerHTML = ""; bar.remove(); ollamaDownload(row, act);
+    how.textContent = e.name==="AbortError" ? "Download cancelled." : e.message;
+  }finally{ pulling = null; }
+}
+async function startLocal(a, btn){
+  btn.disabled = true; btn.textContent = "Starting…";
+  const r = await api("/api/local/start", jpost({ id:a.id }));
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok){ btn.disabled=false; btn.textContent=a.start; sparkSay($("#localMsg"), j.error || "Couldn't start it.", "err"); return; }
+  // Apps take a few seconds to open their server; keep checking for a while.
+  for(let i=0;i<12;i++){
+    await new Promise(res=>setTimeout(res, 1500));
+    await findLocal({ quiet:true });
+    const now = LOCAL.apps.find(x=>x.id===a.id);
+    if(now && now.running){
+      if(now.models.length) await findLocal({ adopt:true });
+      return;
+    }
+  }
+  sparkSay($("#localMsg"), a.label+" hasn't answered yet. "+a.howTo+" Then press Find again.");
+}
+$("#findLocal").onclick = ()=>findLocal({ adopt:true });
+
+// ---- spark: paste anything -> a tested chain ----
+function sparkSay(el, text, cls){ el.textContent = text; el.className = "spark-msg"+(cls?" "+cls:""); }
+function sparkSummary(j){
+  const ok = j.links.filter(l=>l.ok), n = j.links.length;
+  const label = (l)=>(l.name!=="custom" && PRESETS[l.name] && PRESETS[l.name].label) || hostName(l.baseUrl);
+  const parts = [(ok.length===n ? "Connected "+ok.map(label).join(", ") : ok.length+" of "+n+" working")+(j.from!=="paste" ? " from your "+j.from : "")];
+  if(j.localFound && j.localFound.length) parts.push("found "+j.localFound.join(" and ")+" on this computer");
+  const need = j.links.filter(l=>l.needsKey).length;
+  if(need) parts.push(need+(need===1?" needs":" need")+" your key");
+  if(j.unknown.length) parts.push("couldn't place "+j.unknown.join(", "));
+  for(const t of j.notes||[]) parts.push(t.replace(/\.$/,""));
+  return parts.join(" · ")+". Check it below, then press Save and start.";
+}
+let sparking = false;
+async function runSpark(){
+  const msg = $("#sparkMsg"), text = $("#sparkIn").value.trim();
+  if(sparking) return;
+  if(!text){ sparkSay(msg, "Paste a key, a .env file, an endpoint URL, or a Lantern Pass first.", "err"); $("#sparkIn").focus(); return; }
+  sparking = true; $("#sparkGo").disabled = true;
+  sparkSay(msg, "Checking…");
+  try{
+    const r = await api("/api/spark", jpost({ text, passphrase:$("#sparkPhrase").value }));
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.error || "Spark failed (HTTP "+r.status+").");
+    if(j.needPassphrase){ $("#sparkPhraseRow").style.display=""; $("#sparkPhrase").focus(); sparkSay(msg, j.message); return; }
+    if(!j.links.length){
+      sparkSay(msg, j.unknown.length
+        ? "Couldn't tell which provider "+j.unknown.join(", ")+" belongs to. Put the provider's name on the line above the key, or add it by hand below."
+        : "Nothing recognised. Paste an API key (csk-…, gsk_…, AIza…, sk-or-…), an endpoint URL, or a Lantern Pass.", "err");
+      return;
+    }
+    const box = $("#chain"); box.innerHTML = "";
+    j.links.forEach(l=>box.appendChild(chainRow(l)));
+    $("#sparkIn").value = ""; $("#sparkPhrase").value = ""; $("#sparkPhraseRow").style.display = "none";
+    sparkSay(msg, sparkSummary(j), j.links.some(l=>l.ok) ? "ok" : "err");
+    $("#saveChain").focus();
+  }catch(e){ sparkSay(msg, e.message, "err"); }
+  finally{ sparking = false; $("#sparkGo").disabled = false; }
+}
+$("#sparkGo").onclick = runSpark;
+$("#sparkIn").addEventListener("paste", ()=>setTimeout(runSpark, 0));
+$("#sparkIn").addEventListener("keydown", (e)=>{ if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); runSpark(); } });
+$("#sparkPhrase").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); runSpark(); } });
+
+// ---- lantern pass ----
+function newPassphrase(){
+  const abc = "ABCDEFGHJKMNPQRSTVWXYZ23456789"; let out = "";
+  while(out.length<16){ for(const b of crypto.getRandomValues(new Uint8Array(24))){ if(b<240 && out.length<16) out += abc[b%abc.length]; } }
+  return out.match(/.{4}/g).join("-");
+}
+const passKind = ()=>document.querySelector('input[name="passKind"]:checked').value;
+for(const r of document.querySelectorAll('input[name="passKind"]')){
+  r.onchange = ()=>{ $("#passPhraseRow").style.display = passKind()==="sealed" ? "" : "none"; $("#passOut").hidden = true; };
+}
+$("#passNew").onclick = ()=>{ $("#passPhrase").value = newPassphrase(); };
+let PASS = null;
+$("#passMake").onclick = async ()=>{
+  const msg = $("#passMsg"), sealed = passKind()==="sealed";
+  sparkSay(msg, sealed ? "Sealing…" : "Packing…");
+  const r = await api("/api/pass", jpost({ sealed, passphrase:$("#passPhrase").value }));
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok){ sparkSay(msg, j.error || "Couldn't make a pass.", "err"); return; }
+  PASS = j; $("#passText").value = j.pass; $("#passOut").hidden = false;
+  sparkSay(msg, sealed ? "Sealed. Keep the passphrase: without it this pass can't be opened." : "Recipe ready: endpoints and models only, no keys.", "ok");
+};
+async function copyText(text, btn){
+  try{ await navigator.clipboard.writeText(text); }
+  catch{ const t=$("#passText"), v=t.value; t.value=text; t.select(); document.execCommand("copy"); t.value=v; }
+  const was = btn.textContent; btn.textContent = "Copied"; setTimeout(()=>{ btn.textContent = was; }, 1400);
+}
+$("#passCopy").onclick = ()=>PASS && copyText(PASS.pass, $("#passCopy"));
+$("#passCopyLink").onclick = ()=>PASS && copyText(PASS.link, $("#passCopyLink"));
 $("#closeSetup").onclick = ()=>{ overlay.style.display="none"; };
 $("#addProv").onclick = ()=>$("#chain").appendChild(chainRow());
 
@@ -950,9 +1497,9 @@ $("#saveChain").onclick = async ()=>{
     const k = row.querySelector(".p-preset").value;
     const url = k==="custom" ? row.querySelector(".p-url").value.trim() : PRESETS[k].url;
     if(!url){ keyErr.textContent="A custom row is missing its URL."; return; }
-    if(!row.dataset.saved){ keyErr.textContent="Press Test on each new provider first."; return; }
+    if(!row.dataset.saved){ keyErr.textContent="Press Test on each new provider first, or remove the rows you don't need."; return; }
     providers.push({
-      name:k, baseUrl:url,
+      name: k==="custom" ? hostName(url) : k, baseUrl:url,
       apiKey: row.querySelector(".p-key").value.trim(),
       model: row.querySelector(".p-model").value || "",
     });
@@ -966,6 +1513,7 @@ $("#saveChain").onclick = async ()=>{
     const cfg = await (await api("/api/config")).json();
     CURRENT = { providers:cfg.providers||[], configured:!!cfg.configured };
     setProv(CURRENT.providers[0] ? CURRENT.providers[0].name : "");
+    setLamps(CURRENT.providers.map(p=>({ name:p.name, state:"ready" })));
     const mr = await api("/api/models");
     if(mr.ok){
       const { models } = await mr.json();
@@ -979,15 +1527,17 @@ $("#saveChain").onclick = async ()=>{
     overlay.style.display="none";
     setDot("ok"); input.focus();
   }catch(e){ keyErr.textContent = e.message; }
-  finally{ btn.disabled=false; btn.textContent="Save chain"; }
+  finally{ btn.disabled=false; btn.textContent="Save and start"; }
 };
 
 // ---- boot ----
 (async function boot(){
   const cfg = await (await api("/api/config")).json();
   CURRENT = { providers: cfg.providers||[], configured: !!cfg.configured };
+  loadCatalog(cfg.catalog);
   if(cfg.version) $("#ver").textContent = "v"+cfg.version;
   setProv(CURRENT.providers[0] ? CURRENT.providers[0].name : "");
+  setLamps(CURRENT.providers.map(p=>({ name:p.name, state:"ready" })));
   setFolder(cfg.cwd);
   if(!cfg.configured){ openSetup(); return; }
   try{

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { parseToolArgs, trimConversation, loadProjectContext } from "../src/agent.js";
+import { parseToolArgs, trimConversation, loadProjectContext, SYSTEM_PROMPT, today } from "../src/agent.js";
 
 test("parseToolArgs handles clean, empty, double-encoded and junk-wrapped JSON", () => {
   assert.deepEqual(parseToolArgs('{"path":"a.txt"}'), { path: "a.txt" });
@@ -39,4 +39,15 @@ test("loadProjectContext reads LANTERN.md when present", async () => {
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+test("the system prompt is an everyday helper that knows the date and stays byte-stable", () => {
+  const p = SYSTEM_PROMPT("/work", "", "Thursday, October 22, 2026");
+  assert.match(p, /friendly AI helper/);
+  assert.match(p, /Today is Thursday, October 22, 2026\./);
+  assert.match(p, /Use tools only when the request is about their files or making something/);
+  assert.match(p, /\/work/);
+  assert.equal(SYSTEM_PROMPT("/work", "", "Thursday, October 22, 2026"), p, "same inputs, same bytes (prompt caching)");
+  assert.match(SYSTEM_PROMPT("/work", "Use tabs."), /<project-notes>\nUse tabs\.\n<\/project-notes>/);
+  assert.match(today(), /^[A-Z][a-z]+day, [A-Z][a-z]+ \d{1,2}, \d{4}$/);
 });

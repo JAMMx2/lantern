@@ -6,8 +6,8 @@ Thanks for wanting to help. Lantern is small on purpose — that's the feature.
 
 1. **Zero runtime dependencies.** The app uses only what ships with Node 18+ (`http`, `fs`, `child_process`, native `fetch`). Lantern Lite uses only what ships with a browser. PRs that add a package will be asked to do it without one.
 2. **The approval gate is sacred.** Anything that writes files or runs commands must go through the Allow/Deny card. No silent writes, ever — not even "harmless" ones.
-3. **Two builds, one behavior.** If you change agent behavior in `src/`, check whether `lantern-lite.html` needs the same change (it carries its own copy of the loop).
-4. **No build step.** The UI is one HTML file per build. Keep it that way — it's what makes "download and double-click" possible.
+3. **Two builds, one behavior.** If you change agent behavior in `src/`, check whether `lantern-lite.html` needs the same change (it carries its own copy of the loop). `src/spark.js` and `src/markdown.js` are the exception: they're shared verbatim. Edit them there, run `npm run sync` to refresh the copies embedded in the pages, and commit everything; `npm test` fails if a copy drifts.
+4. **No build step for users.** The UI is one HTML file per build, always committed complete. Keep it that way — it's what makes "download and double-click" possible. (`npm run sync` is a contributor tool, not a build.)
 
 ## Running from source
 
@@ -18,6 +18,8 @@ node bin/lantern.js     # or: npm start
 ```
 
 No install step. Set `PORT` or pass `--port` to change the port (default 4317). `npm test` runs the suite.
+
+No API key handy? `node test/fake-provider.js 4499` starts a local OpenAI-compatible stub. Paste `http://127.0.0.1:4499/limited/v1` and `http://localhost:4499/ok/v1` into Spark to get a two-link chain where the first link always rate-limits, which shows the relay lights and failover notes.
 
 For Lantern Lite, just open `lantern-lite.html` in a browser. To test real-folder access you need https or localhost — easiest is `npx serve .` or pushing to your fork's GitHub Pages.
 

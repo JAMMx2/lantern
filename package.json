@@ -1,7 +1,7 @@
 {
   "name": "lantern-agent",
-  "version": "0.4.0",
-  "description": "A private coding agent that asks before it acts. Relay chain of free tiers (Cerebras, Groq, SambaNova, Gemini) with automatic failover, streaming, diff previews, chat history, /undo, and a fully local mode via Ollama. Zero dependencies.",
+  "version": "0.7.0",
+  "description": "A free, private AI helper for everyone, and a coding agent that asks before it acts. Guided free-key setup, starter tasks, readable answers. Uses the AI you already have (Ollama, LM Studio, Jan, GPT4All and more, no terminal needed) or pasted API keys, relayed free tiers first with automatic failover; carry your setup anywhere with an encrypted Lantern Pass. Streaming, diff previews, chat history, /undo. Zero dependencies.",
   "type": "module",
   "bin": {
     "lantern": "bin/lantern.js"
@@ -11,7 +11,8 @@
   },
   "scripts": {
     "start": "node bin/lantern.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "sync": "node scripts/sync-shared.js"
   },
   "files": [
     "bin",
