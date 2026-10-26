@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="dark" />
 <meta name="theme-color" content="#040604" />
-<meta name="description" content="Lantern Lite v0.6 — a private coding agent that runs entirely in your browser. No install, no server. Uses AI already on your computer (LM Studio, Ollama, Jan and more) or your API keys, free tiers first." />
-<meta name="version" content="0.6.0" />
+<meta name="description" content="Lantern Lite — a free, private AI helper that runs in your browser. No install, no account with us. Get a free key in two minutes, or use AI already on your computer." />
+<meta name="version" content="0.7.0" />
 <meta property="og:title" content="Lantern Lite — in-browser coding agent" />
 <meta property="og:description" content="A private coding agent in a single HTML file. No install, no server, no telemetry. Bring your own model — free Cerebras cloud tier or local Ollama." />
 <title>Lantern Lite</title>
@@ -188,6 +188,23 @@
   }
   .assistant .body pre code{background:none; border:none; padding:0; font-size:12.5px; line-height:1.6; color:var(--text)}
   .assistant .body strong{color:var(--green-hi)}
+  .assistant .body h3,.assistant .body h4,.assistant .body h5,.assistant .body h6{
+    margin:16px 0 8px; color:var(--green-hi); font-size:14px; letter-spacing:.06em; text-shadow:var(--glow-g)}
+  .assistant .body h3{font-size:15.5px} .assistant .body h5,.assistant .body h6{font-size:13px; color:var(--text)}
+  .assistant .body > :first-child{margin-top:0}
+  .assistant .body ul,.assistant .body ol{margin:0 0 10px; padding-left:22px}
+  .assistant .body li{margin:3px 0}
+  .assistant .body li::marker{color:var(--green)}
+  .assistant .body em{color:var(--amber-hi); font-style:italic}
+  .assistant .body a{color:var(--green-hi); text-decoration:underline; text-decoration-color:var(--line-br); text-underline-offset:3px}
+  .assistant .body a:hover{text-decoration-color:var(--green)}
+  .assistant .body blockquote{margin:0 0 10px; padding:6px 12px; border-left:2px solid var(--amber-line); background:var(--amber-dim); color:var(--text)}
+  .assistant .body blockquote p:last-child{margin:0}
+  .assistant .body hr{border:0; border-top:1px dashed var(--line-br); margin:14px 0}
+  .assistant .body .tbl{overflow-x:auto; margin:0 0 12px}
+  .assistant .body table{border-collapse:collapse; font-size:12.5px; min-width:50%}
+  .assistant .body th,.assistant .body td{border:1px solid var(--line); padding:5px 10px; text-align:left; vertical-align:top}
+  .assistant .body th{color:var(--green-hi); background:var(--green-dim); font-weight:600}
 
   .log{display:flex; align-items:flex-start; gap:9px; font-size:12px; color:var(--muted); padding:5px 2px}
   .log .ic{color:var(--green); flex:0 0 auto; margin-top:1px; text-shadow:var(--glow-g)}
@@ -303,7 +320,7 @@
     box-shadow:0 0 70px rgba(59,240,126,.14), inset 0 0 60px rgba(59,240,126,.03);
   }
   .card::before{
-    content:"■ CONFIG"; display:block; margin:0 -26px 22px;
+    content:"■ SETUP"; display:block; margin:0 -26px 22px;
     padding:10px 16px; font-size:10px; letter-spacing:.28em; color:var(--faint);
     border-bottom:1px solid var(--line); background:rgba(59,240,126,.04);
   }
@@ -364,9 +381,9 @@
   .caps .n{color:var(--red)}
 
   /* ---- empty state: boot log ---- */
-  .empty{color:var(--muted); text-align:center; margin-top:7vh; font-size:13px}
+  .empty{color:var(--muted); text-align:center; margin-top:4vh; font-size:13px}
   .empty::before{
-    content:""; display:block; width:172px; height:198px; margin:0 auto 18px;
+    content:""; display:block; width:112px; height:130px; margin:0 auto 14px;
     background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20331%20460%22%20font-family%3D%22ui-monospace%2C'Cascadia%20Mono'%2C'JetBrains%20Mono'%2CMenlo%2CConsolas%2Cmonospace%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22gG%22%20x%3D%22-40%25%22%20y%3D%22-40%25%22%20width%3D%22180%25%22%20height%3D%22180%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.4%22%20result%3D%22b%22%2F%3E%3CfeMerge%3E%3CfeMergeNode%20in%3D%22b%22%2F%3E%3CfeMergeNode%20in%3D%22SourceGraphic%22%2F%3E%3C%2FfeMerge%3E%3C%2Ffilter%3E%3Cfilter%20id%3D%22gA%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%222.2%22%20result%3D%22b%22%2F%3E%3CfeMerge%3E%3CfeMergeNode%20in%3D%22b%22%2F%3E%3CfeMergeNode%20in%3D%22b%22%2F%3E%3CfeMergeNode%20in%3D%22SourceGraphic%22%2F%3E%3C%2FfeMerge%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%22url(%23gG)%22%3E%3Cg%20font-size%3D%2214%22%20fill%3D%22%233bf07e%22%3E%3Ctext%20x%3D%22148.85%22%20y%3D%2228.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3EcXXa%3C%2Ftext%3E%3Ctext%20x%3D%22140.42%22%20y%3D%2244.00%22%20textLength%3D%2250.57%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ee%40ee%40X%3C%2Ftext%3E%3Ctext%20x%3D%22140.42%22%20y%3D%2260.00%22%20textLength%3D%2250.57%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ee%40ea%40X%3C%2Ftext%3E%3Ctext%20x%3D%22148.85%22%20y%3D%2276.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%22115.14%22%20y%3D%2292.00%22%20textLength%3D%22101.14%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Eeeeee%25%40eeeee%3C%2Ftext%3E%3Ctext%20x%3D%22106.71%22%20y%3D%22108.00%22%20textLength%3D%22117.99%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%23%40%40%40%40%40%40%40%40%40%40%40%40%23%3C%2Ftext%3E%3Ctext%20x%3D%2298.28%22%20y%3D%22124.00%22%20textLength%3D%22134.85%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E*cccccccccccccc*%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22140.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3EX%40%40%40%40%40%40%40%40%40%40%40%40%40%40%40%40%23%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22156.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ea%26amp%3B%26amp%3B%25%23%23%23%23%23%23%23%23%23%23%23%26amp%3B%26amp%3Be%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22172.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40%3D-----------%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22188.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40%2B%3D%3D%3D%3D--%3D%3D%3D%3D%3D%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22204.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40%2B%3D%3D%3D%2B%3D-%2B%3D%3D%3D%3D%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22220.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40%2B%3C%2Ftext%3E%3Ctext%20x%3D%22165.70%22%20y%3D%22220.00%22%20textLength%3D%228.43%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%3D%3C%2Ftext%3E%3Ctext%20x%3D%22207.84%22%20y%3D%22220.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%3D%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22236.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40o%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22236.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22252.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40o%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22252.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22268.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40x%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22268.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22284.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40*%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22284.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22300.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40*%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22300.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22316.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40x%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22316.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22332.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40o%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22332.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22348.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40o%3C%2Ftext%3E%3Ctext%20x%3D%22216.27%22%20y%3D%22348.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22364.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%40%40ooooooooooo%2B%40%40a%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22380.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ee%26amp%3B%26amp%3B%40%40%40%40%40%40%40%40%40%40%40%40%26amp%3B%26amp%3Be%3C%2Ftext%3E%3Ctext%20x%3D%2289.85%22%20y%3D%22396.00%22%20textLength%3D%22151.70%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ea%40%40%40Xaaaaaaaae%40%40%40e%3C%2Ftext%3E%3Ctext%20x%3D%2298.28%22%20y%3D%22412.00%22%20textLength%3D%22134.85%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%23%40%40ecccccccce%40%40%25%3C%2Ftext%3E%3Ctext%20x%3D%2298.28%22%20y%3D%22428.00%22%20textLength%3D%22134.85%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ec%25%25%25%25%25%25%25%25%25%25%25%25%25%25a%3C%2Ftext%3E%3Ctext%20x%3D%22131.99%22%20y%3D%22444.00%22%20textLength%3D%2275.85%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E********o%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3Cg%20filter%3D%22url(%23gA)%22%3E%3Cg%20font-size%3D%2214%22%20fill%3D%22%23ffb454%22%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22220.00%22%20textLength%3D%2242.14%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%2Booo%3D%3C%2Ftext%3E%3Ctext%20x%3D%22174.13%22%20y%3D%22220.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Eooo%2B%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22236.00%22%20textLength%3D%2292.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Eoox*ss*xooo%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22252.00%22%20textLength%3D%2292.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ex*sc%40%26amp%3Bcs*xo%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22268.00%22%20textLength%3D%2292.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E*ce%23%26amp%3B%26amp%3B%25ec**%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22284.00%22%20textLength%3D%2242.14%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ese%23%26amp%3B%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22174.13%22%20y%3D%22284.00%22%20textLength%3D%2242.14%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%23es*%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22300.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Ese%26amp%3B%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22182.56%22%20y%3D%22300.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3BXs*%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22316.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E*e%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22182.56%22%20y%3D%22316.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3BX**%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22332.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E*s%25%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22174.13%22%20y%3D%22332.00%22%20textLength%3D%2242.14%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%25s*o%3C%2Ftext%3E%3Ctext%20x%3D%22123.56%22%20y%3D%22348.00%22%20textLength%3D%2292.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3Eox*ceec*xoo%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3Cg%20filter%3D%22url(%23gA)%22%3E%3Cg%20font-size%3D%2214%22%20fill%3D%22%23ffe9c4%22%3E%3Ctext%20x%3D%22165.70%22%20y%3D%22284.00%22%20textLength%3D%228.43%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22157.28%22%20y%3D%22300.00%22%20textLength%3D%2225.28%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%26amp%3B%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22148.85%22%20y%3D%22316.00%22%20textLength%3D%2233.71%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%26amp%3B%26amp%3B%26amp%3B%3C%2Ftext%3E%3Ctext%20x%3D%22157.28%22%20y%3D%22332.00%22%20textLength%3D%2216.86%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%26amp%3B%26amp%3B%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E") center/contain no-repeat;
     animation:lamp 3.2s ease-in-out infinite;
   }
@@ -375,11 +392,21 @@
     50%{filter:drop-shadow(0 0 7px rgba(255,180,84,.14))}
   }
   .empty .mark{display:none}
-  .empty::after{
+  .empty .hello::after{
     content:"▮"; color:var(--green); margin-left:6px;
     animation:blink 1.1s steps(2,start) infinite; text-shadow:var(--glow-g);
   }
   @keyframes blink{to{visibility:hidden}}
+
+  /* ---- home: starter cards ---- */
+  .hello{font-size:15px; color:var(--green-hi); letter-spacing:.08em; text-shadow:var(--glow-g)}
+  .hello-sub{font-size:12px; color:var(--muted); margin:6px 0 18px}
+  .starters{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; max-width:760px; margin:0 auto; text-align:left}
+  .starter{background:var(--well); border:1px solid var(--line); border-left:2px solid var(--line-br); border-radius:2px;
+    padding:10px 12px; color:var(--text); font-family:var(--mono); font-size:12.5px; text-align:left; cursor:pointer}
+  .starter b{display:block; color:var(--green-hi); font-weight:600; margin-bottom:3px}
+  .starter span{color:var(--faint); font-size:11px; line-height:1.5}
+  .starter:hover,.starter:focus-visible{border-color:var(--green); border-left-color:var(--green); box-shadow:0 0 12px rgba(59,240,126,.15); outline:none}
 
   .brand .ver{font-size:10px; letter-spacing:.18em; color:var(--faint)}
   .ibtn{display:inline-flex; align-items:center; gap:6px}
@@ -440,6 +467,17 @@
   .pass-out{margin-top:10px}
   .pass-out[hidden]{display:none}
 
+  /* ---- guided free key ---- */
+  .guide{border:1px solid var(--line); border-radius:2px; background:var(--well); padding:10px 12px; margin-bottom:10px}
+  .gtabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px}
+  .gtab{background:transparent; border:1px solid var(--line-br); color:var(--muted); border-radius:2px; padding:5px 10px; font-size:11.5px; font-family:var(--mono); cursor:pointer}
+  .gtab small{color:var(--faint); margin-left:6px; font-size:10px}
+  .gtab.on{border-color:var(--green); color:var(--green-hi); box-shadow:0 0 10px rgba(59,240,126,.15)}
+  .gsteps{margin:0 0 4px; padding-left:20px; color:var(--text); font-size:12.5px; line-height:1.7}
+  .gsteps b{color:var(--green-hi)}
+  .gsteps code{color:var(--amber-hi)}
+  .glink{text-decoration:none; display:inline-block}
+
   /* ---- ai on this computer ---- */
   .lrow{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-start; border:1px solid var(--line); border-left:2px solid var(--line-br);
     border-radius:2px; padding:8px 10px; margin-bottom:7px; background:var(--well)}
@@ -469,7 +507,7 @@
 <div class="crt-sweep" aria-hidden="true"></div>
 
 <header>
-  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="lite">Lite</span><span class="ver" id="ver">v0.6</span></div>
+  <div class="brand"><span class="mark">✦</span><b>Lantern</b><span class="lite">Lite</span><span class="ver" id="ver">v0.7</span></div>
   <div class="spacer"></div>
   <span class="usage" id="usage" title="Tokens used in this chat (prompt / completion)"></span>
   <div class="field"><span class="micro">Model</span><select id="model" title="Model"></select></div>
@@ -488,7 +526,6 @@
 <div class="stage">
   <main id="main">
     <div class="col" id="log">
-      <div class="empty" id="empty"><span class="mark">✦</span>Ready. Ask Lantern to build, read, or change something.</div>
     </div>
   </main>
   <aside id="ws">
@@ -504,11 +541,11 @@
 <footer>
   <div class="composer">
     <span class="ps1" aria-hidden="true">❯</span>
-    <textarea id="input" rows="1" placeholder="tell lantern what to do…  (enter to send · shift+enter for newline)"></textarea>
+    <textarea id="input" rows="1" placeholder="Ask anything…  (Enter to send · Shift+Enter for a new line)"></textarea>
     <button class="stop" id="stop" style="display:none">Stop</button>
     <button class="send" id="send">Send</button>
   </div>
-  <div class="hint" id="hint">writes always ask first · /undo reverts the last file change · to run commands too, start the full app with: npx github:JAMMx2/lantern</div>
+  <div class="hint" id="hint">free and private · changes to files always ask first · /undo takes back the last one · /help for more</div>
 </footer>
 
 <input type="file" id="filepick" multiple style="display:none" />
@@ -527,38 +564,39 @@
 <div class="overlay" id="overlay">
   <div class="card">
     <h1><span class="mark">✦</span> Lantern Lite</h1>
-    <p class="sub">A coding agent that runs entirely in your browser — no install, no server. It keeps a relay chain: Lantern tries providers top-to-bottom and hops when one rate-limits, so free tiers stack.</p>
+    <p class="sub">Free AI that runs in your browser: nothing to install, no account with us, nothing to pay. Pick one way to switch it on.</p>
 
     <div class="step">
-      <div class="lbl"><b>00 /</b> Spark — paste anything.</div>
-      <textarea id="sparkIn" rows="3" spellcheck="false" autocomplete="off" placeholder="Paste your API keys in any order (a whole .env file is fine), an endpoint URL, or a Lantern Pass…"></textarea>
+      <div class="lbl"><b>1 /</b> Get a free AI key. About 2 minutes, no credit card.</div>
+      <div class="guide">
+        <div class="gtabs" id="gtabs"></div>
+        <ol class="gsteps" id="gsteps"></ol>
+        <div class="spark-go"><a class="primary glink" id="glink" target="_blank" rel="noopener">Open</a><span class="spark-msg">opens in a new tab</span></div>
+      </div>
+      <textarea id="sparkIn" rows="2" spellcheck="false" autocomplete="off" placeholder="Paste your key here. (Several keys, a .env file or a Lantern Pass work too.)"></textarea>
       <div class="row" id="sparkPhraseRow" style="display:none; margin-top:8px"><input id="sparkPhrase" type="password" placeholder="passphrase for this sealed pass" autocomplete="off" spellcheck="false" /></div>
-      <div class="spark-go"><button class="primary" id="sparkGo">Spark</button><span class="spark-msg" id="sparkMsg"></span></div>
-      <div class="prov-note">Recognises keys from Cerebras, Groq, Gemini, OpenRouter, NVIDIA, Hugging Face, SambaNova, Mistral, DeepSeek, OpenAI, xAI, Together and Fireworks. Tests them all at once, picks a coding model for each, and orders them: free tiers first, paid APIs last. Each key only goes to the provider it belongs to, straight from this browser.</div>
+      <div class="spark-go"><button class="primary" id="sparkGo">Connect</button><span class="spark-msg" id="sparkMsg"></span></div>
+      <div class="prov-note">Also recognises keys from OpenRouter, NVIDIA, Hugging Face, SambaNova, Mistral, DeepSeek, OpenAI, xAI, Together and Fireworks. Each key only goes to the service it belongs to, straight from this browser. Free services have their own privacy terms; for anything private, use AI on this computer.</div>
     </div>
     <div class="step">
-      <div class="lbl"><b>+ /</b> AI already on this computer? No terminal needed.</div>
+      <div class="lbl"><b>2 /</b> Or use AI already on this computer. No terminal needed.</div>
       <div id="localList"></div>
       <div class="spark-go"><button class="minibtn" id="findLocal">Find AI on this computer</button><span class="spark-msg" id="localMsg"></span></div>
     </div>
-    <div class="or">or build it by hand</div>
 
     <div class="step">
-      <div class="lbl"><b>01 /</b> Providers — fastest first.</div>
+      <div class="lbl"><b>3 /</b> Your AI. Check it, then save.</div>
       <div id="chain"></div>
-      <button class="minibtn" id="addProv">+ add fallback provider</button>
-      <div class="prov-note">Suggested free chain: Cerebras → Groq → Gemini. Paid APIs go last, so Lantern only spends money when nothing free can answer.</div>
-    </div>
-    <div class="step">
-      <div class="lbl"><b>02 /</b> Save.</div>
+      <button class="minibtn" id="addProv">+ add another by hand</button>
+      <div class="prov-note">Lantern uses these top to bottom. When one is busy it moves to the next, so a second free key means you're never stuck. Paid services always go last.</div>
       <div class="row">
-        <button class="primary" id="saveChain">Save chain</button>
+        <button class="primary" id="saveChain">Save and start</button>
       </div>
       <label class="toggle"><input type="checkbox" id="sessionOnly" /> Don't save keys — forget when I close this tab</label>
       <div class="err-msg" id="keyErr"></div>
     </div>
     <div class="step" id="shareStep" style="display:none">
-      <div class="lbl"><b>03 /</b> Take it anywhere — Lantern Pass.</div>
+      <div class="lbl"><b>4 /</b> Take it to another device with a Lantern Pass.</div>
       <label class="toggle"><input type="radio" name="passKind" value="sealed" checked /> Sealed: includes your keys, locked with a passphrase</label>
       <label class="toggle"><input type="radio" name="passKind" value="recipe" /> Recipe: no keys, safe to share with your team</label>
       <div class="row" id="passPhraseRow" style="margin-top:9px"><input id="passPhrase" type="text" autocomplete="off" spellcheck="false" placeholder="passphrase (10+ characters)" /><button class="minibtn" id="passNew" title="Suggest a strong passphrase">new</button></div>
@@ -582,18 +620,19 @@
 
 <script>
 "use strict";
-const LITE_VERSION = "0.6.0";
+const LITE_VERSION = "0.7.0";
 const HOSTED_URL = "https://jammx2.github.io/lantern/";
 const $ = (s)=>document.querySelector(s);
 
-// <spark> generated from src/spark.js by `npm run sync-lite`. Edit that file, not this block.
+// <spark> generated from src/spark.js by `npm run sync`. Edit that file, not this block.
 const Spark = (() => {
+"use strict";
 // Spark: turn whatever the user pastes (keys, a .env file, endpoint URLs, a
 // Lantern Pass) into a tested, ordered relay chain.
 // Lantern Pass: a whole chain as one string, sealed with a passphrase.
 //
 // Shared by both builds. The app imports this file; lantern-lite.html embeds
-// a copy between its <spark> markers — run `npm run sync-lite` after editing.
+// a copy between its <spark> markers — run `npm run sync` after editing.
 // Keep it free of Node and DOM APIs: web standards only (WebCrypto is passed in).
 
 // kind: "free" cloud tiers come first, then custom endpoints, then AI running
@@ -1325,19 +1364,24 @@ async function loadProjectContext(){
 }
 function systemPrompt(){
   const where = store.mode==="real"
-    ? "a real folder on the user's computer that they connected"
-    : "an in-browser workspace (files the user can download; they can also upload files for you to read)";
-  return `You are Lantern Lite, a coding assistant running entirely in the user's web browser, powered by their own AI provider.
+    ? "a folder on their computer that they connected"
+    : "an in-browser workspace (they can upload files for you to read; files you create appear in the Workspace panel on the right, with a Download button)";
+  const date = new Date().toLocaleDateString("en-US", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+  return `You are Lantern, a friendly AI helper running in the user's web browser, powered by the AI they chose. Many people who use you have never used AI before, so be warm, clear and practical, use everyday words, and explain any technical term you can't avoid.
 
-You are working in ${where}.
+Today is ${date}.
+
+Help with anything people ask an AI assistant: answer questions, explain things simply, write and polish text (emails, letters, posts, CVs), summarise, brainstorm, plan, teach and quiz, and build things like web pages and small apps. Keep answers as short as the question allows, and use headings, lists or a table when they make an answer easier to scan.
+
+You can also work with files in ${where}.
 Tools:
-- list_dir, read_file, search_files — explore. These run automatically.
-- edit_file — change a specific snippet in an existing file (preferred for small changes; the user sees a diff).
-- write_file — create a new file or rewrite one completely.
-edit_file and write_file require the user's approval each time — they see the exact change before it's written. If denied, adapt; never work around a denial.
-- You CANNOT run shell commands or install anything — that's not possible in a browser. If a task needs that, say so and explain what the user would run themselves, or suggest the full Lantern app, which can run commands with their approval: with Node.js installed, \`npx github:JAMMx2/lantern\` starts it.
+- list_dir, read_file, search_files: look around. These run automatically.
+- edit_file: change part of an existing file (the user sees exactly what changes).
+- write_file: create a new file or rewrite one.
+edit_file and write_file need the user's approval each time. If they deny, adapt or ask why; never work around a denial.
+Use tools only when the request is about their files or making something; for questions, writing help and conversation, just answer. When you make something they'll open, such as a web page, save it as a file and tell them its name and how to open it. Before using a tool, say in one plain sentence what you're about to do, and afterwards sum up what changed.
 
-Explore before changing things. Work in small, clear steps and explain what you're doing in plain, non-technical language. Assume the user may not be a programmer.`
+You can't run commands or install anything from a browser. If a task truly needs that, say so and explain what they would do, or suggest the full Lantern app, which can run commands with their approval (with Node.js installed, \`npx github:JAMMx2/lantern\` starts it).`
   + (projectContext ? `\n\nThe user keeps project notes for you in LANTERN.md. Follow them:\n<project-notes>\n${projectContext}\n</project-notes>` : "");
 }
 
@@ -1604,14 +1648,132 @@ const logEl=$("#log"), mainEl=$("#main");
 function scroll(){ mainEl.scrollTop=mainEl.scrollHeight; }
 function hideEmpty(){ const e=$("#empty"); if(e) e.remove(); }
 function esc(s){ return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
-function md(t){
-  const parts=t.split(/```/); let h="";
-  parts.forEach((seg,i)=>{
-    if(i%2===1){ const nl=seg.indexOf("\n"); const code=nl>=0?seg.slice(nl+1):seg; h+="<pre><code>"+esc(code.replace(/\n$/,""))+"</code></pre>"; }
-    else { let x=esc(seg).replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>").replace(/\n{2,}/g,"</p><p>").replace(/\n/g,"<br>"); if(x.trim()) h+="<p>"+x+"</p>"; }
-  });
-  return h;
+// <markdown> generated from src/markdown.js by `npm run sync`. Edit that file, not this block.
+const Markdown = (() => {
+"use strict";
+// Markdown -> HTML for the chat, shared by both pages (embedded between
+// // <markdown> markers by `npm run sync`). Everything is escaped first, and the
+// only tags produced are the ones written here; links must be http(s) or mailto.
+// It runs on every streamed chunk, so an unfinished code fence or table is fine.
+
+const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ESC[c]);
+const SAFE_URL = /^(https?:\/\/|mailto:)/i;
+
+// Code spans and link tags are set aside as \u0000n\u0000 tokens so emphasis
+// markers inside them (a_b_c in a URL, *args in code) are left alone.
+function inline(raw) {
+  const kept = [];
+  const keep = (html) => `\u0000${kept.push(html) - 1}\u0000`;
+  const open = (url) => keep(`<a href="${url}" target="_blank" rel="noopener noreferrer">`);
+  let s = String(raw).replace(/`([^`\n]+)`/g, (_, c) => keep(`<code>${esc(c)}</code>`));
+  s = esc(s);
+  s = s.replace(/\[([^\]\n]+)\]\(([^()\s]+)\)/g, (m, text, url) => (SAFE_URL.test(url) ? open(url) + text + keep("</a>") : m));
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<\u0000]*[^\s<.,;:!?)'"\u0000])/g, (_, pre, url) => pre + open(url) + keep(url + "</a>"));
+  s = s.replace(/\*\*(?=\S)([^*\n]+?)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/__(?=\S)([^_\n]+?)__/g, "<strong>$1</strong>");
+  s = s.replace(/(^|[^\w*])\*(?=\S)([^*\n]+?)\*(?!\w)/g, "$1<em>$2</em>");
+  s = s.replace(/(^|[^\w])_(?=\S)([^_\n]+?)_(?!\w)/g, "$1<em>$2</em>");
+  s = s.replace(/~~(?=\S)([^~\n]+?)~~/g, "<del>$1</del>");
+  return s.replace(/\u0000(\d+)\u0000/g, (_, i) => kept[i]);
 }
+
+const LIST_ITEM = /^(\s*)([-*+]|\d{1,4}[.)])\s+(.*)$/;
+const TABLE_RULE = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+const cells = (line) => line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+
+function renderList(items) {
+  let html = "", i = 0;
+  while (i < items.length) {
+    const base = items[i].indent, ordered = items[i].ordered;
+    const start = ordered && items[i].num !== 1 ? ` start="${items[i].num}"` : "";
+    html += ordered ? `<ol${start}>` : "<ul>";
+    while (i < items.length && items[i].indent === base && items[i].ordered === ordered) {
+      let li = inline(items[i].text);
+      i++;
+      const kids = [];
+      while (i < items.length && items[i].indent > base) kids.push(items[i++]);
+      if (kids.length) li += renderList(kids);
+      html += `<li>${li}</li>`;
+    }
+    html += ordered ? "</ol>" : "</ul>";
+  }
+  return html;
+}
+
+/** Render chat Markdown to safe HTML. */
+function renderMarkdown(src) {
+  const lines = String(src || "").replace(/\r\n?/g, "\n").replace(/\u0000/g, "").split("\n");
+  let html = "", para = [], i = 0;
+  const flush = () => {
+    if (para.length) html += `<p>${para.map(inline).join("<br>")}</p>`;
+    para = [];
+  };
+  while (i < lines.length) {
+    const line = lines[i];
+    let m = /^\s*(```|~~~)\s*([\w+#.-]*)/.exec(line);
+    if (m) {
+      flush();
+      const code = [];
+      for (i++; i < lines.length && !lines[i].trim().startsWith(m[1]); i++) code.push(lines[i]);
+      i++;
+      html += `<pre><code>${esc(code.join("\n"))}</code></pre>`;
+      continue;
+    }
+    if (!line.trim()) { flush(); i++; continue; }
+    if ((m = /^\s*(#{1,6})\s+(.*?)(?:\s+#+)?\s*$/.exec(line))) {
+      flush();
+      const level = Math.min(6, m[1].length + 2);
+      html += `<h${level}>${inline(m[2])}</h${level}>`;
+      i++;
+      continue;
+    }
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) { flush(); html += "<hr>"; i++; continue; }
+    if (/^\s*>/.test(line)) {
+      flush();
+      const quote = [];
+      while (i < lines.length && /^\s*>/.test(lines[i])) quote.push(lines[i++].replace(/^\s*>\s?/, ""));
+      html += `<blockquote>${renderMarkdown(quote.join("\n"))}</blockquote>`;
+      continue;
+    }
+    if (line.includes("|") && i + 1 < lines.length && TABLE_RULE.test(lines[i + 1])) {
+      flush();
+      const head = cells(line);
+      const align = cells(lines[i + 1]).map((c) => (/^:-+:$/.test(c) ? "center" : /-+:$/.test(c) ? "right" : ""));
+      const td = (tag, c, k) => `<${tag}${align[k] ? ` style="text-align:${align[k]}"` : ""}>${inline(c)}</${tag}>`;
+      html += `<div class="tbl"><table><thead><tr>${head.map((c, k) => td("th", c, k)).join("")}</tr></thead><tbody>`;
+      for (i += 2; i < lines.length && lines[i].includes("|") && lines[i].trim(); i++) {
+        html += `<tr>${cells(lines[i]).map((c, k) => td("td", c, k)).join("")}</tr>`;
+      }
+      html += "</tbody></table></div>";
+      continue;
+    }
+    if ((m = LIST_ITEM.exec(line))) {
+      flush();
+      const items = [];
+      while (i < lines.length) {
+        const lm = LIST_ITEM.exec(lines[i]);
+        if (lm) {
+          items.push({ indent: lm[1].replace(/\t/g, "  ").length, ordered: /\d/.test(lm[2]), num: parseInt(lm[2], 10) || 1, text: lm[3] });
+          i++;
+        } else if (items.length && /^\s{2,}\S/.test(lines[i])) {
+          items[items.length - 1].text += " " + lines[i++].trim();
+        } else break;
+      }
+      const base = Math.min(...items.map((it) => it.indent));
+      html += renderList(items.map((it) => ({ ...it, indent: it.indent - base })));
+      continue;
+    }
+    para.push(line.trim());
+    i++;
+  }
+  flush();
+  return html;
+}
+return { renderMarkdown };
+})();
+// </markdown>
+function md(t){ return Markdown.renderMarkdown(t); }
 function addTurn(cls){ const d=document.createElement("div"); d.className="turn "+cls; logEl.appendChild(d); return d; }
 function userTurn(t){ hideEmpty(); const el=addTurn("user"); el.innerHTML='<div class="who">You</div><div class="bubble"></div>'; el.querySelector(".bubble").textContent=t; scroll(); }
 function assistantText(t){ clearThinking(); const el=addTurn("assistant"); el.innerHTML='<div class="who">Lantern</div><div class="body"></div>'; el.querySelector(".body").innerHTML=md(t); scroll(); }
@@ -1771,18 +1933,55 @@ $("#folder").onclick=async ()=>{
 
 // ---------- compose ----------
 const input=$("#input"), sendBtn=$("#send"), stopBtn=$("#stop");
+
+// ---- home: things to try ----
+// Most people don't know what to ask an AI. Each card fills the box with a
+// sentence to finish and selects the first [blank] so typing replaces it.
+const STARTERS = [
+  { title:"Write an email", hint:"to anyone, about anything", prompt:"Help me write a short, friendly email to [who] about [what]." },
+  { title:"Explain it simply", hint:"any topic, in plain words", prompt:"Explain [topic] to me in simple words, like I'm new to it." },
+  { title:"Fix my writing", hint:"spelling, grammar, tone", prompt:"Check this for spelling and grammar and make it sound clearer:\n\n[paste your text]" },
+  { title:"Plan something", hint:"a trip, meals, a busy week", prompt:"Help me plan [a trip / a week of meals / a party] for [details]. Make it a simple checklist." },
+  { title:"Brainstorm ideas", hint:"names, gifts, things to do", prompt:"Give me 10 ideas for [a gift / a business name / a weekend activity]." },
+  { title:"Quiz me", hint:"learn and practise anything", prompt:"Quiz me on [topic] with 5 questions, one at a time, and tell me how I did at the end." },
+  { title:"Make a web page", hint:"saved as a file you can open", prompt:"Make me a simple web page for [my bakery / my club / a birthday invite]. Save it as an .html file I can open." },
+  { title:"Read a document", hint:"add it with Workspace first", prompt:"Read [file name] and give me the key points as a short list." },
+];
+const HINT = $("#hint").textContent;
+function renderHome(){
+  logEl.innerHTML = '<div class="empty" id="empty"><div class="hello">What can I help with?</div><div class="hello-sub">Pick one to start, or just type below. Your chats stay in this browser.</div><div class="starters"></div></div>';
+  const box = logEl.querySelector(".starters");
+  for(const s of STARTERS){
+    const b = document.createElement("button");
+    b.className = "starter"; b.innerHTML = "<b></b><span></span>";
+    b.querySelector("b").textContent = s.title; b.querySelector("span").textContent = s.hint;
+    b.onclick = ()=>useStarter(s);
+    box.appendChild(b);
+  }
+}
+function useStarter(s){
+  input.value = s.prompt;
+  input.dispatchEvent(new Event("input"));
+  input.focus();
+  const a = s.prompt.indexOf("["), b = s.prompt.indexOf("]", a);
+  if(a >= 0 && b > a) input.setSelectionRange(a, b + 1);
+  $("#hint").textContent = "type over the highlighted part (and any other [blanks]), then press Enter";
+}
+function resetHint(){ $("#hint").textContent = HINT; }
+renderHome();
+
 input.addEventListener("input",()=>{ input.style.height="auto"; input.style.height=Math.min(input.scrollHeight,200)+"px"; });
 input.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); send(); } });
 sendBtn.onclick=send;
 stopBtn.onclick=()=>{ runId++; if(cancelApproval) cancelApproval(); };
-$("#newchat").onclick=()=>{ runId++; if(cancelApproval) cancelApproval(); saveSession(); conversation=[]; SESSION_ID=newId(); USAGE={prompt:0,completion:0}; setUsage(USAGE); store.undo=[]; logEl.innerHTML='<div class="empty" id="empty"><span class="mark">✦</span>Ready. Ask Lantern to build, read, or change something.</div>'; if($("#dot").className.indexOf("err")<0) setDot("ok"); input.focus(); };
+$("#newchat").onclick=()=>{ runId++; if(cancelApproval) cancelApproval(); saveSession(); conversation=[]; SESSION_ID=newId(); USAGE={prompt:0,completion:0}; setUsage(USAGE); store.undo=[]; renderHome(); resetHint(); if($("#dot").className.indexOf("err")<0) setDot("ok"); input.focus(); };
 $("#history").onclick=openHistory;
 $("#closeHist").onclick=()=>{ $("#histOverlay").style.display="none"; };
 $("#export").onclick=exportChat;
 
 async function send(){
   const text=input.value.trim(); if(!text||running) return;
-  input.value=""; input.style.height="auto";
+  input.value=""; input.style.height="auto"; resetHint();
   if(text.startsWith("/") && slashCommand(text)) return;
   if(!chain.length){ input.value=text; openSetup(); return; }
   userTurn(text);
@@ -1884,6 +2083,31 @@ function openSetup(){
   else if(!LOCAL) renderLocal();
 }
 $("#settings").onclick=()=>openSetup();
+
+// ---- guided free key: the shortest path for someone who has never used an AI API ----
+const GUIDES = [
+  { id:"gemini", name:"Gemini", tag:"have a Google account?", url:"https://aistudio.google.com/apikey", open:"Open Google AI Studio",
+    steps:["Sign in with your Google account.", "Click <b>Create API key</b>. If it asks about a project, let it make a new one.", "Copy the key. It starts with <code>AIza</code>."] },
+  { id:"groq", name:"Groq", tag:"very fast", url:"https://console.groq.com/keys", open:"Open Groq",
+    steps:["Sign in with Google, GitHub or your email.", "Click <b>Create API Key</b>, give it any name, and submit.", "Copy the key right away (it's shown only once). It starts with <code>gsk_</code>."] },
+  { id:"cerebras", name:"Cerebras", tag:"fastest", url:"https://cloud.cerebras.ai/", open:"Open Cerebras",
+    steps:["Sign up with Google or your email.", "Open <b>API Keys</b> in the menu and create one if none is shown.", "Copy the key. It starts with <code>csk-</code>."] },
+];
+let guideOpened = false;
+function showGuide(id){
+  const g = GUIDES.find(x=>x.id===id) || GUIDES[0];
+  $("#gtabs").innerHTML = GUIDES.map(x=>'<button class="gtab'+(x.id===g.id?' on':'')+'" data-id="'+x.id+'">'+x.name+'<small>'+x.tag+'</small></button>').join("");
+  for(const b of $("#gtabs").children) b.onclick = ()=>showGuide(b.dataset.id);
+  $("#gsteps").innerHTML = g.steps.map(t=>'<li>'+t+'</li>').join("") + '<li>Come back here and paste it in the box below. Lantern connects by itself.</li>';
+  $("#glink").href = g.url; $("#glink").textContent = g.open+" ↗";
+}
+$("#glink").addEventListener("click", ()=>{ guideOpened = true; });
+// Back from the key page: put the cursor in the paste box, ready for Ctrl+V.
+window.addEventListener("focus", ()=>{
+  if(guideOpened && $("#overlay").style.display!=="none" && !$("#sparkIn").value) $("#sparkIn").focus();
+});
+showGuide("gemini");
+
 $("#relay").onclick=()=>openSetup();
 $("#relay").onkeydown=(e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openSetup(); } };
 $("#closeSettings").onclick=()=>{ $("#overlay").style.display="none"; };
@@ -1945,7 +2169,7 @@ async function findLocal({ adopt=false, quiet=false }={}){
   const fresh=apps.filter(a=>a.running && a.models.length && !inChain(a.baseUrl));
   if(adopt && fresh.length){
     addToChain(fresh.map(a=>({ name:a.id, baseUrl:a.baseUrl, model:a.model, models:a.models, ok:true })));
-    sparkSay(msg, "Added "+fresh.map(a=>a.label).join(" and ")+" to your chain below. Save to start.", "ok");
+    sparkSay(msg, "Added "+fresh.map(a=>a.label).join(" and ")+" below. Press Save and start.", "ok");
   } else if(!quiet){
     const n=apps.filter(a=>a.running).length;
     sparkSay(msg, n?"Found "+n+" AI app"+(n===1?"":"s")+" answering.":"", n?"ok":"");
@@ -2018,14 +2242,15 @@ $("#findLocal").onclick=()=>findLocal({ adopt:true });
 // ---------- spark: paste anything -> a tested chain ----------
 function sparkSay(el, text, cls){ el.textContent=text; el.className="spark-msg"+(cls?" "+cls:""); }
 function sparkSummary(j){
-  const ok=j.links.filter(l=>l.ok).length, n=j.links.length;
-  const parts=[ok+" of "+n+" link"+(n===1?"":"s")+" working"+(j.from!=="paste"?" from your "+j.from:"")];
+  const ok=j.links.filter(l=>l.ok), n=j.links.length;
+  const label=(l)=>(l.name!=="custom" && PRESETS[l.name] && PRESETS[l.name].label) || hostName(l.baseUrl);
+  const parts=[(ok.length===n ? "Connected "+ok.map(label).join(", ") : ok.length+" of "+n+" working")+(j.from!=="paste"?" from your "+j.from:"")];
   if(j.localFound && j.localFound.length) parts.push("found "+j.localFound.join(" and ")+" on this computer");
   const need=j.links.filter(l=>l.needsKey).length;
   if(need) parts.push(need+(need===1?" needs":" need")+" your key");
   if(j.unknown.length) parts.push("couldn't place "+j.unknown.join(", "));
   for(const t of j.notes||[]) parts.push(t.replace(/\.$/,""));
-  return parts.join(" · ")+". Check the chain below, then Save.";
+  return parts.join(" · ")+". Check it below, then press Save and start.";
 }
 let sparking=false;
 async function runSpark(){
@@ -2033,7 +2258,7 @@ async function runSpark(){
   if(sparking) return;
   if(!text){ sparkSay(msg, "Paste a key, a .env file, an endpoint URL, or a Lantern Pass first.", "err"); $("#sparkIn").focus(); return; }
   sparking=true; $("#sparkGo").disabled=true;
-  sparkSay(msg, "Testing everything at once…");
+  sparkSay(msg, "Checking…");
   try{
     // Probing localhost from a hosted page can trigger a browser permission
     // prompt, so only look for Ollama there when the user mentioned it.

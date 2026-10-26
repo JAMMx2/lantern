@@ -11,13 +11,13 @@
 [![Lantern Lite](https://img.shields.io/badge/lantern%20lite-single%20HTML%20file-ffb454?style=flat-square&labelColor=0a0f0b)](https://jammx2.github.io/lantern/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ffb454?style=flat-square&labelColor=0a0f0b)](CONTRIBUTING.md)
 
-**A private coding agent that runs on _your_ computer, powered by _your own_ AI — the AI app you already have (Ollama, LM Studio, Jan, GPT4All…), a relay of free cloud tiers, or any OpenAI-compatible API.**
+**A free, private AI helper for everyone, and a coding agent that asks before it acts. It runs on _your_ computer with _your own_ AI: a free key it walks you through getting, the AI app you already have (Ollama, LM Studio, Jan, GPT4All…), or any OpenAI-compatible API.**
 
-It reads files, writes files, and runs commands in a folder you choose — but it **always shows you
-exactly what it's about to do and waits for your OK** before it changes anything.
-Nothing goes anywhere except to the provider you chose — and with Ollama, nothing leaves your machine at all.
+Never used AI before? Lantern shows you what to ask, gets you a free key in about two minutes, and answers in plain words: write an email, explain something, plan a week, quiz yourself, build a web page.
+When it works with your files it **always shows you exactly what it's about to do and waits for your OK**.
+Nothing goes anywhere except to the AI service you chose — and with AI on your own computer, nothing leaves it at all.
 
-**[Try Lantern Lite in your browser →](https://jammx2.github.io/lantern/)** — no install, no server, just your key
+**[Try Lantern Lite in your browser →](https://jammx2.github.io/lantern/)** — free, no install, no account with us
 
 Have Node.js? One command starts the full app: `npx github:JAMMx2/lantern`
 
@@ -45,6 +45,14 @@ The approval card is the whole idea — nothing writes or runs until you say so:
 </table>
 
 ---
+
+## New in 0.7: a free AI helper anyone can use
+
+- **Things to try, right on the home screen.** Cards like *Write an email*, *Explain it simply*, *Fix my writing*, *Plan something*, *Brainstorm ideas*, *Quiz me*, *Make a web page* and *Read a document*. Click one and the box fills with a sentence to finish, with the part to change already selected.
+- **A free key in about two minutes.** Setup walks you through getting a free key from Gemini (just a Google account), Groq or Cerebras, step by step, with a button that opens the right page. Paste the key and Lantern connects by itself.
+- **An everyday assistant, not just a coding tool.** It answers questions, writes, explains, plans and tutors, knows today's date, and only touches files when you ask it to make or change something.
+- **Answers that read well.** Headings, numbered and bulleted lists, tables, quotes and links are formatted properly, safely (nothing an answer contains can run as code in the page).
+- **Plain words everywhere.** Setup is four numbered steps: get a free key, or use AI on this computer, check and save, take it to another device.
 
 ## New in 0.6: use the AI you already have, no terminal
 
@@ -169,8 +177,12 @@ Setup's **AI already on this computer?** panel looks for these apps on their usu
 
 ## How to use it
 
-Just tell it what you want, in plain language:
+Just tell it what you want, in plain language, or pick one of the cards on the home screen:
 
+- *"Help me write a short, friendly email to my landlord about the broken heater."*
+- *"Explain how compound interest works, like I'm new to it."*
+- *"Plan a week of cheap, healthy dinners for two. Make it a checklist."*
+- *"Quiz me on the planets with 5 questions, one at a time."*
 - *"Make a simple webpage that shows a countdown to New Year's."*
 - *"Look at the files in this folder and tell me what they do."*
 - *"Fix the typo in notes.txt where it says 'teh'."*
@@ -262,12 +274,13 @@ lantern/
     cerebras.js       # OpenAI-compatible relay client (streaming, usage, failover, relay status)
     spark.js          # provider catalog, Spark key detection, model picking, local discovery, Lantern Pass; shared with Lite
     local.js          # installed-app detection, one-click start, Ollama model downloads (app only)
+    markdown.js       # safe Markdown renderer for chat answers; embedded in both pages
     tools.js          # list/read/search/write/edit/run/git + path confinement + undo
     diff.js           # unified diff for approval cards
     sessions.js       # ~/.lantern/sessions/*.json
     cli.js            # --port / --dir / --model parsing
     config.js         # ~/.lantern/config.json
-  scripts/sync-lite.js # copies src/spark.js into lantern-lite.html (npm run sync-lite)
+  scripts/sync-shared.js # copies src/spark.js and src/markdown.js into the pages (npm run sync)
   test/               # node:test suite (npm test); fake-provider.js is a local OpenAI-compatible stub
   public/index.html   # the whole UI (single file, vanilla JS, zero deps, CRT included)
   install/            # per-OS launchers
@@ -278,11 +291,11 @@ lantern/
 - **Requirements:** Node 18+ (uses native `fetch`, `http`, `fs`, `child_process`). No `npm install` needed.
 - **Run directly:** `node bin/lantern.js` (or `npm start`). Flags: `--port <n>` (default 4317 or `$PORT`; auto-increments if busy), `--dir <path>` (working folder), `--model <id>` (model for the first provider), `--no-open`, `--version`, `--help`. Set `LANTERN_HOME` to move config and history away from `~/.lantern`.
 - **Tests:** `npm test` runs the `node:test` suite (tool confinement, edit/undo, diff, CLI parsing, server auth, Spark detection, Lantern Pass crypto, relay failover against a local fake provider, and a check that Lite's embedded Spark matches `src/spark.js`). No test framework to install.
-- **Spark is shared code.** `src/spark.js` is imported by the app and embedded in `lantern-lite.html` between `// <spark>` markers. Edit the module, then run `npm run sync-lite`; the test suite fails if the two drift.
+- **Shared code.** `src/spark.js` is imported by the app and embedded in `lantern-lite.html`; `src/markdown.js` (the chat's safe Markdown renderer) is embedded in both pages. Each copy sits between `// <spark>` / `// <markdown>` markers. Edit the module, then run `npm run sync`; the test suite fails if a copy drifts.
 - **API:** any OpenAI-compatible endpoint works — Cerebras, Groq, SambaNova, Gemini (OpenAI mode), Ollama, LM Studio… The relay lives in `src/cerebras.js`: streaming SSE client with incremental tool-call assembly, plus per-provider cooldown benching (60s after a 429). Model lists are fetched live and filtered to chat-capable models.
 - **Events:** the server streams NDJSON — `provider`, `relay` (per-link lamp state), `hop` (a failover, with the reason), `context`, `assistant_delta`, `assistant_done`, `usage`, `tool_activity`, `tool_request` (with `diff`/`preview`), `tool_result`, `error`, `done`.
 - **Setup routes:** `POST /api/spark` (`{text, passphrase?, verify?}` → a tested, ordered chain for the page to review; saved keys are reused but never sent back to the page), `POST /api/pass` (`{sealed, passphrase}` → a pass and a Lite link, made from the saved chain), `GET /api/local` (every local app: running with its models, installed, or neither; plus the Ollama model list sized to this computer), `POST /api/local/start` (`{id}`), and `POST /api/local/pull` (`{model}` → NDJSON download progress).
-- **Adding a provider:** one entry in `SPARK_PROVIDERS` in `src/spark.js` (kind `free`, `paid` or `local`; base URL; key pattern or name hint; signup link), then `npm run sync-lite`. Local apps also get a default port and a `howTo` line; to let the app detect or start one, add its install paths to `src/local.js`.
+- **Adding a provider:** one entry in `SPARK_PROVIDERS` in `src/spark.js` (kind `free`, `paid` or `local`; base URL; key pattern or name hint; signup link), then `npm run sync`. Local apps also get a default port and a `howTo` line; to let the app detect or start one, add its install paths to `src/local.js`.
 - **Tools:** `list_dir`, `read_file`, `search_files`, `git` (status/diff/log, read-only) run automatically; `write_file`, `edit_file`, `run_command` stop for approval. The approval card for file changes carries a unified diff built by `src/diff.js`.
 - **History:** one JSON file per chat in `~/.lantern/sessions/` (owner-only permissions), written after every step. The `/undo` stack lives in the same file.
 - **Extending:** add a tool by (1) implementing it in `tools.js`, (2) adding its JSON schema to `TOOL_DEFS`, (3) deciding whether it belongs in `NEEDS_APPROVAL`, (4) adding a test in `test/`.

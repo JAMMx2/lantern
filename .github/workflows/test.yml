@@ -22,5 +22,5 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm test
-      - name: Lantern Lite embeds the current src/spark.js
-        run: node scripts/sync-lite.js --check
+      - name: The pages embed the current shared code
+        run: node scripts/sync-shared.js --check

@@ -6,8 +6,8 @@ Thanks for wanting to help. Lantern is small on purpose — that's the feature.
 
 1. **Zero runtime dependencies.** The app uses only what ships with Node 18+ (`http`, `fs`, `child_process`, native `fetch`). Lantern Lite uses only what ships with a browser. PRs that add a package will be asked to do it without one.
 2. **The approval gate is sacred.** Anything that writes files or runs commands must go through the Allow/Deny card. No silent writes, ever — not even "harmless" ones.
-3. **Two builds, one behavior.** If you change agent behavior in `src/`, check whether `lantern-lite.html` needs the same change (it carries its own copy of the loop). `src/spark.js` is the exception: it's shared verbatim. Edit it there, run `npm run sync-lite` to refresh the copy embedded in Lite, and commit both; `npm test` fails if they drift.
-4. **No build step for users.** The UI is one HTML file per build, always committed complete. Keep it that way — it's what makes "download and double-click" possible. (`sync-lite` is a contributor tool, not a build.)
+3. **Two builds, one behavior.** If you change agent behavior in `src/`, check whether `lantern-lite.html` needs the same change (it carries its own copy of the loop). `src/spark.js` and `src/markdown.js` are the exception: they're shared verbatim. Edit them there, run `npm run sync` to refresh the copies embedded in the pages, and commit everything; `npm test` fails if a copy drifts.
+4. **No build step for users.** The UI is one HTML file per build, always committed complete. Keep it that way — it's what makes "download and double-click" possible. (`npm run sync` is a contributor tool, not a build.)
 
 ## Running from source
 

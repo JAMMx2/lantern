@@ -3,7 +3,7 @@
 // Lantern Pass: a whole chain as one string, sealed with a passphrase.
 //
 // Shared by both builds. The app imports this file; lantern-lite.html embeds
-// a copy between its <spark> markers — run `npm run sync-lite` after editing.
+// a copy between its <spark> markers — run `npm run sync` after editing.
 // Keep it free of Node and DOM APIs: web standards only (WebCrypto is passed in).
 
 // kind: "free" cloud tiers come first, then custom endpoints, then AI running

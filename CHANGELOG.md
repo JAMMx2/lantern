@@ -2,6 +2,24 @@
 
 All notable changes to Lantern. Versions follow [semver](https://semver.org).
 
+## 0.7.0 — 2026-10-26
+
+Lantern becomes a free AI helper for people who have never used AI, not only a coding agent.
+
+### Added — both builds
+- **Home screen with things to try:** Write an email, Explain it simply, Fix my writing, Plan something, Brainstorm ideas, Quiz me, Make a web page, Read a document. A card fills the message box with a sentence to finish and selects the first `[blank]`; the hint line says what to do.
+- **Guided free key:** setup walks through getting a free key from Gemini (a Google account is enough), Groq or Cerebras, with a button that opens the right page. Coming back to the tab puts the cursor in the paste box, and pasting connects by itself.
+- **Everyday-helper instructions:** the model is told it's a friendly assistant for people who may never have used AI (questions, writing, explaining, planning, tutoring, building), to use file tools only when the request involves files or making something, and today's date (it changes once a day, so prompt caching still works).
+- **Readable answers:** a shared, safe Markdown renderer (`src/markdown.js`) for headings, nested lists, numbered lists with a start, tables with alignment, quotes, rules, links and code. All text is escaped first, and links must be http(s) or mailto and open in a new tab without access to the page.
+
+### Changed
+- Setup reads as four plain steps: *Get a free AI key*, *Or use AI already on this computer*, *Your AI: check it, then save*, *Take it to another device*. "Spark" is now the **Connect** button, "Save chain" is **Save and start**, and successful connections name the service ("Connected Groq") instead of counting links.
+- The message box says "Ask anything…"; the footer hint is written for non-programmers.
+
+### Developer
+- `scripts/sync-lite.js` is now `scripts/sync-shared.js` (`npm run sync`): it embeds `src/spark.js` in Lite and `src/markdown.js` in both pages, and `test/shared-sync.test.js` checks every copy, including that both pages render Markdown exactly like the module.
+- `test/fake-provider.js` streams newlines correctly and answers "plan" requests with a formatted reply, for checking the renderer in the UI.
+
 ## 0.6.0 — 2026-10-22
 
 Lantern now works with the AI people already have, with no terminal anywhere in the path, and recognises many more APIs.

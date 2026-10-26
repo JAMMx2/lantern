@@ -6,6 +6,8 @@
 import http from "node:http";
 
 const MODELS = ["llama-3.3-70b", "qwen-3-coder-480b", "text-embedding-3"];
+// A formatted answer for messages that ask for a plan, to exercise the chat's Markdown.
+const PLAN = "## Your week of meals\n\nHere's a simple plan:\n\n1. **Monday**: pasta with tomato sauce\n2. **Tuesday**: tacos\n   - use the leftover beans\n3. **Wednesday**: soup\n\n| Day | Cost |\n|---|--:|\n| Mon | $6 |\n| Tue | $8 |\n\n> Tip: cook double on Monday.\n\nMore ideas at https://example.com/recipes.";
 
 function sse(res, chunks) {
   res.writeHead(200, { "Content-Type": "text/event-stream", "Access-Control-Allow-Origin": "*" });
@@ -49,8 +51,10 @@ export function startFakeProvider(port = 0) {
           { choices: [], usage },
         ]);
       }
-      const text = last.role === "tool" ? "Done. hello.txt is ready." : `Hello from ${name}.`;
-      sse(res, [...text.match(/.{1,6}/g).map((t) => ({ choices: [{ delta: { content: t } }] })), { choices: [], usage }]);
+      const text = last.role === "tool" ? "Done. hello.txt is ready."
+        : /\bplan\b/i.test(last.content || "") ? PLAN
+        : `Hello from ${name}.`;
+      sse(res, [...text.match(/[\s\S]{1,6}/g).map((t) => ({ choices: [{ delta: { content: t } }] })), { choices: [], usage }]);
     });
   });
   return new Promise((resolve) => server.listen(port, "127.0.0.1", () => {

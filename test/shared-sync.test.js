@@ -1,17 +1,20 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { webcrypto as crypto } from "node:crypto";
-import { syncLite, extractBlock, LITE_FILE, SPARK_FILE } from "../scripts/sync-lite.js";
+import { syncAll, extractBlock, ROOT } from "../scripts/sync-shared.js";
 import * as spark from "../src/spark.js";
+import { renderMarkdown } from "../src/markdown.js";
 
-const html = readFileSync(LITE_FILE, "utf8");
-const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
-// Lite's copy runs as a classic strict-mode script; evaluate it the same way.
-const LiteSpark = new Function(`"use strict";\n${extractBlock(html).block}\nreturn Spark;`)();
+const read = (p) => readFileSync(join(ROOT, p), "utf8");
+const pkg = JSON.parse(read("package.json"));
+// The pages run these blocks as classic scripts; evaluate them the same way.
+const load = (page, tag, name) => new Function(`${extractBlock(read(page), tag).block}\nreturn ${name};`)();
+const LiteSpark = load("lantern-lite.html", "spark", "Spark");
 
-test("lantern-lite.html embeds the current src/spark.js (run `npm run sync-lite` if this fails)", () => {
-  assert.ok(syncLite(html, readFileSync(SPARK_FILE, "utf8")) === html);
+test("every page embeds the current shared code (run `npm run sync` if this fails)", () => {
+  for (const [page, p] of Object.entries(syncAll())) assert.ok(p.next === p.current, `${page} is out of date`);
 });
 
 test("Lite's Spark exposes everything the module exports", () => {
@@ -33,7 +36,16 @@ test("a pass sealed by the app opens in Lite, and the other way round", async ()
   assert.equal((await spark.openPass(fromLite, { passphrase: "shared passphrase", crypto })).links[0].apiKey, "gsk_secret");
 });
 
+test("both pages render chat Markdown exactly like the module", () => {
+  const sample = "# Hi\n\n- **one**\n- [two](https://example.com)\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n<script>x</script>";
+  for (const page of ["lantern-lite.html", "public/index.html"]) {
+    assert.equal(load(page, "markdown", "Markdown").renderMarkdown(sample), renderMarkdown(sample), page);
+  }
+});
+
 test("Lite's version matches package.json", () => {
-  assert.match(html, new RegExp(`const LITE_VERSION = "${pkg.version.replace(/\./g, "\\.")}"`));
-  assert.match(html, new RegExp(`<meta name="version" content="${pkg.version.replace(/\./g, "\\.")}"`));
+  const v = pkg.version.replace(/\./g, "\\.");
+  const lite = read("lantern-lite.html");
+  assert.match(lite, new RegExp(`const LITE_VERSION = "${v}"`));
+  assert.match(lite, new RegExp(`<meta name="version" content="${v}"`));
 });
